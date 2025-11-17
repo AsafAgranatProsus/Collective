@@ -1,0 +1,393 @@
+/* Utility Classes for Ad-hoc Inline Styling */
+
+/* ============================================
+   DISPLAY UTILITIES
+   ============================================ */
+
+.block {
+  display: block;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.inline {
+  display: inline;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+/* ============================================
+   POSITION UTILITIES
+   ============================================ */
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.sticky {
+  position: sticky;
+}
+
+/* Position Helpers */
+.top-0 {
+  top: 0;
+}
+
+.right-0 {
+  right: 0;
+}
+
+.bottom-0 {
+  bottom: 0;
+}
+
+.left-0 {
+  left: 0;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* ============================================
+   OVERFLOW UTILITIES
+   ============================================ */
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+.overflow-scroll {
+  overflow: scroll;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* ============================================
+   Z-INDEX UTILITIES
+   ============================================ */
+
+.z-base {
+  z-index: var(--z-base);
+}
+
+.z-dropdown {
+  z-index: var(--z-dropdown);
+}
+
+.z-sticky {
+  z-index: var(--z-sticky);
+}
+
+.z-fixed {
+  z-index: var(--z-fixed);
+}
+
+.z-modal {
+  z-index: var(--z-modal);
+}
+
+/* ============================================
+   BORDER UTILITIES
+   ============================================ */
+
+.border {
+  border: 1px solid var(--border-primary);
+}
+
+.border-0 {
+  border: none;
+}
+
+.border-t {
+  border-top: 1px solid var(--border-primary);
+}
+
+.border-r {
+  border-right: 1px solid var(--border-primary);
+}
+
+.border-b {
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.border-l {
+  border-left: 1px solid var(--border-primary);
+}
+
+/* Border Radius */
+.rounded-none {
+  border-radius: 0;
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+.rounded {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+
+.rounded-full {
+  border-radius: var(--radius-full);
+}
+
+/* ============================================
+   SHADOW UTILITIES
+   ============================================ */
+
+.shadow-none {
+  box-shadow: none;
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow {
+  box-shadow: var(--shadow-base);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+/* ============================================
+   POINTER & CURSOR UTILITIES
+   ============================================ */
+
+.pointer-events-none {
+  pointer-events: none;
+}
+
+.pointer-events-auto {
+  pointer-events: auto;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-default {
+  cursor: default;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.cursor-move {
+  cursor: move;
+}
+
+/* ============================================
+   USER SELECT UTILITIES
+   ============================================ */
+
+.select-none {
+  user-select: none;
+}
+
+.select-text {
+  user-select: text;
+}
+
+.select-all {
+  user-select: all;
+}
+
+/* ============================================
+   ASPECT RATIO
+   ============================================ */
+
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+/* ============================================
+   OBJECT FIT
+   ============================================ */
+
+.object-contain {
+  object-fit: contain;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+.object-fill {
+  object-fit: fill;
+}
+
+/* ============================================
+   BACKDROP FILTER
+   ============================================ */
+
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.backdrop-blur-lg {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ============================================
+   TRANSFORM UTILITIES
+   ============================================ */
+
+.transform {
+  transform: translateZ(0);
+}
+
+.scale-95 {
+  transform: scale(0.95);
+}
+
+.scale-100 {
+  transform: scale(1);
+}
+
+.scale-105 {
+  transform: scale(1.05);
+}
+
+.rotate-0 {
+  transform: rotate(0deg);
+}
+
+.rotate-45 {
+  transform: rotate(45deg);
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* ============================================
+   SPECIAL EFFECTS
+   ============================================ */
+
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow {
+  box-shadow: 0 0 20px rgba(191, 255, 0, 0.3);
+}
+
+.glow-strong {
+  box-shadow: 0 0 30px rgba(191, 255, 0, 0.5);
+}
+
+/* ============================================
+   RESPONSIVE HELPERS
+   ============================================ */
+
+.show-mobile {
+  display: block;
+}
+
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .show-mobile {
+    display: none;
+  }
+  
+  .hide-mobile {
+    display: block;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
