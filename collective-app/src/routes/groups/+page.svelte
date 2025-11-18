@@ -4,7 +4,7 @@
 	import MetaMenu from '$lib/components/MetaMenu.svelte';
 	import { getAllGroups } from '$lib/data/groups';
 	import { setDemoMenuOpen, setNavigationDirection } from '$lib/stores/app.svelte';
-	import { slideContent, getStaggerDelay, PARALLAX, DURATIONS } from '$lib/utils/viewTransitions';
+	import { sharedAxisTransition } from 'm3-svelte';
 	
 	const groups = getAllGroups();
 	
@@ -39,7 +39,7 @@
 	<!-- Header -->
 	<header 
 		class="page-header"
-		in:slideContent={{ duration: DURATIONS.FAST, parallaxFactor: PARALLAX.HEADER }}
+		in:sharedAxisTransition={{ direction: 'Y', rightSeam: true }}
 	>
 		<button class="logo" onclick={handleLogoTap} aria-label="Open menu">
 			<span class="logo-text">collective</span>
@@ -48,21 +48,14 @@
 	
 	<!-- Groups List -->
 	<div class="groups-container">
-		<!-- <h1 
-			class="page-title"
-			in:slideContent={{ delay: 50, duration: DURATIONS.NORMAL, parallaxFactor: PARALLAX.CONTENT }}
-		>
-			My Groups
-		</h1> -->
-		
 		<div class="groups-list">
 			{#each groups as group, index (group.id)}
 				<div
-					in:slideContent={{ 
-						delay: getStaggerDelay(index, 100), 
-						duration: DURATIONS.NORMAL, 
-						parallaxFactor: PARALLAX.CARDS 
+					in:sharedAxisTransition={{ 
+						direction: 'Y', 
+						rightSeam: true 
 					}}
+					style="transition-delay: {index * 50}ms;"
 				>
 					<GroupCard 
 						{group}
@@ -76,11 +69,11 @@
 			class="create-group-btn" 
 			disabled 
 			aria-label="Create new group"
-			in:slideContent={{ 
-				delay: getStaggerDelay(groups.length, 100), 
-				duration: DURATIONS.NORMAL, 
-				parallaxFactor: PARALLAX.FLOATING 
+			in:sharedAxisTransition={{ 
+				direction: 'Y', 
+				rightSeam: true 
 			}}
+			style="transition-delay: {groups.length * 50}ms;"
 		>
 			<span class="plus-icon">+</span>
 			<span>Create New Group</span>
@@ -102,23 +95,19 @@
 	.background-gradient {
 		position: fixed;
 		inset: 0;
-		background: var(--gradient-mesh);
+		background: rgb(var(--m3-scheme-background));
 		z-index: -1;
 	}
 	
 	.page-header {
 		position: sticky;
 		top: 0;
-		z-index: var(--z-sticky);
-		padding: var(--space-4) var(--space-5);
-		background-color: transparent;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		z-index: 200;
+		padding: 1rem 1.5rem;
+		background-color: rgba(var(--m3-scheme-surface), 0.8);
+		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant));
 		backdrop-filter: blur(20px);
 		-webkit-backdrop-filter: blur(20px);
-	}
-	
-	:global(html[data-mode='dark']) .page-header {
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	
 	.logo {
@@ -130,76 +119,58 @@
 	
 	.logo-text {
 		font-family: var(--font-logo);
-		font-size: var(--text-2xl);
-		font-weight: var(--weight-bold);
-		color: var(--text-primary);
+		font-size: 2rem;
+		font-weight: 700;
+		color: rgb(var(--m3-scheme-on-surface));
 		letter-spacing: -0.02em;
 	}
 	
 	.groups-container {
 		flex: 1;
-		padding: var(--space-6) var(--space-5);
+		padding: 2rem 1.5rem;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-5);
+		gap: 1.5rem;
 		max-width: 600px;
 		width: 100%;
 		margin: 0 auto;
 	}
 	
-	.page-title {
-		font-size: var(--text-2xl);
-		font-weight: var(--weight-bold);
-		color: var(--text-primary);
-		margin: 0;
-		align-self: flex-start;
-		font-family: var(--font-sans);
-	}
-	
 	.groups-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-3);
+		gap: 0.75rem;
 		width: 100%;
 	}
 	
 	.create-group-btn {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
-		padding: var(--space-3) var(--space-4);
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
 		background: transparent;
-		border: 2px dashed rgba(255, 255, 255, 0.3);
-		border-radius: var(--radius-lg);
-		color: var(--text-secondary);
-		font-size: var(--text-base);
-		font-family: var(--font-sans);
+		border: 2px dashed rgb(var(--m3-scheme-outline-variant));
+		border-radius: var(--m3-util-rounding-large);
+		color: rgb(var(--m3-scheme-on-surface-variant));
+		font-size: 0.9375rem;
 		cursor: not-allowed;
-		transition: all var(--transition-base);
+		transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 		opacity: 0.6;
 		width: 100%;
 		max-width: 500px;
 		justify-content: center;
 	}
 	
-	:global(html[data-mode='dark']) .create-group-btn {
-		border-color: rgba(255, 255, 255, 0.2);
-	}
-	
 	.plus-icon {
-		font-size: var(--text-xl);
-		font-weight: var(--weight-bold);
+		font-size: 1.25rem;
+		font-weight: 700;
 	}
 	
 	/* Mobile responsiveness */
 	@media (max-width: 640px) {
 		.groups-container {
-			padding: var(--space-5) var(--space-4);
-		}
-		
-		.page-title {
-			font-size: var(--text-xl);
+			padding: 1.5rem 1rem;
 		}
 	}
 </style>

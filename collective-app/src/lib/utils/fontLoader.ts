@@ -10,6 +10,8 @@ export interface FontOption {
 }
 
 export const SANS_SERIF_FONTS: FontOption[] = [
+	{ name: 'Figtree', family: 'Figtree', weights: '400,500,600,700' },
+	{ name: 'Roboto', family: 'Roboto', weights: '400,500,700' },
 	{ name: 'Inter', family: 'Inter', weights: '400,500,600,700' },
 	{ name: 'DM Sans', family: 'DM Sans', weights: '400,500,600,700' },
 	{ name: 'Plus Jakarta Sans', family: 'Plus Jakarta Sans', weights: '400,500,600,700' },

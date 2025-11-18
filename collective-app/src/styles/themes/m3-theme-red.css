@@ -1,0 +1,205 @@
+/* Material You Theme - Red (Vibrant) */
+/* Energetic red theme */
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--md-sys-color-primary: 182 28 28;
+		--md-sys-color-on-primary: 255 255 255;
+		--md-sys-color-primary-container: 255 218 214;
+		--md-sys-color-on-primary-container: 65 0 2;
+		
+		--md-sys-color-secondary: 119 68 63;
+		--md-sys-color-on-secondary: 255 255 255;
+		--md-sys-color-secondary-container: 255 218 214;
+		--md-sys-color-on-secondary-container: 44 19 16;
+		
+		--md-sys-color-tertiary: 120 87 0;
+		--md-sys-color-on-tertiary: 255 255 255;
+		--md-sys-color-tertiary-container: 255 223 160;
+		--md-sys-color-on-tertiary-container: 37 26 0;
+		
+		--md-sys-color-error: 186 26 26;
+		--md-sys-color-on-error: 255 255 255;
+		--md-sys-color-error-container: 255 218 214;
+		--md-sys-color-on-error-container: 65 0 2;
+		
+		--md-sys-color-background: 255 248 247;
+		--md-sys-color-on-background: 32 26 25;
+		
+		--md-sys-color-surface: 255 248 247;
+		--md-sys-color-on-surface: 32 26 25;
+		--md-sys-color-surface-variant: 245 221 218;
+		--md-sys-color-on-surface-variant: 83 67 65;
+		
+		--md-sys-color-outline: 133 115 113;
+		--md-sys-color-outline-variant: 216 194 191;
+		
+		--md-sys-color-shadow: 0 0 0;
+		--md-sys-color-scrim: 0 0 0;
+		
+		--md-sys-color-inverse-surface: 54 47 46;
+		--md-sys-color-inverse-on-surface: 251 238 237;
+		--md-sys-color-inverse-primary: 255 179 170;
+		
+		--md-sys-color-surface-dim: 229 217 215;
+		--md-sys-color-surface-bright: 255 248 247;
+		--md-sys-color-surface-container-lowest: 255 255 255;
+		--md-sys-color-surface-container-low: 255 241 239;
+		--md-sys-color-surface-container: 255 236 233;
+		--md-sys-color-surface-container-high: 247 229 227;
+		--md-sys-color-surface-container-highest: 241 224 222;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--md-sys-color-primary: 255 179 170;
+		--md-sys-color-on-primary: 105 0 5;
+		--md-sys-color-primary-container: 147 0 10;
+		--md-sys-color-on-primary-container: 255 218 214;
+		
+		--md-sys-color-secondary: 231 189 185;
+		--md-sys-color-on-secondary: 68 41 37;
+		--md-sys-color-secondary-container: 93 58 54;
+		--md-sys-color-on-secondary-container: 255 218 214;
+		
+		--md-sys-color-tertiary: 238 195 102;
+		--md-sys-color-on-tertiary: 64 48 0;
+		--md-sys-color-tertiary-container: 91 67 0;
+		--md-sys-color-on-tertiary-container: 255 223 160;
+		
+		--md-sys-color-error: 255 180 171;
+		--md-sys-color-on-error: 105 0 5;
+		--md-sys-color-error-container: 147 0 10;
+		--md-sys-color-on-error-container: 255 218 214;
+		
+		--md-sys-color-background: 32 26 25;
+		--md-sys-color-on-background: 241 224 222;
+		
+		--md-sys-color-surface: 32 26 25;
+		--md-sys-color-on-surface: 241 224 222;
+		--md-sys-color-surface-variant: 83 67 65;
+		--md-sys-color-on-surface-variant: 216 194 191;
+		
+		--md-sys-color-outline: 161 140 137;
+		--md-sys-color-outline-variant: 83 67 65;
+		
+		--md-sys-color-shadow: 0 0 0;
+		--md-sys-color-scrim: 0 0 0;
+		
+		--md-sys-color-inverse-surface: 241 224 222;
+		--md-sys-color-inverse-on-surface: 54 47 46;
+		--md-sys-color-inverse-primary: 182 28 28;
+		
+		--md-sys-color-surface-dim: 32 26 25;
+		--md-sys-color-surface-bright: 75 57 55;
+		--md-sys-color-surface-container-lowest: 27 22 21;
+		--md-sys-color-surface-container-low: 41 33 32;
+		--md-sys-color-surface-container: 45 37 36;
+		--md-sys-color-surface-container-high: 56 47 46;
+		--md-sys-color-surface-container-highest: 67 58 57;
+	}
+}
+
+/* Manual overrides for light mode */
+:root[data-theme='m3-red'][data-mode='light'] {
+	color-scheme: light;
+	
+	--m3-scheme-primary: 182 28 28;
+	--m3-scheme-on-primary: 255 255 255;
+	--m3-scheme-primary-container: 255 218 214;
+	--m3-scheme-on-primary-container: 65 0 2;
+	
+	--m3-scheme-secondary: 119 68 63;
+	--m3-scheme-on-secondary: 255 255 255;
+	--m3-scheme-secondary-container: 255 218 214;
+	--m3-scheme-on-secondary-container: 44 19 16;
+	
+	--m3-scheme-tertiary: 120 87 0;
+	--m3-scheme-on-tertiary: 255 255 255;
+	--m3-scheme-tertiary-container: 255 223 160;
+	--m3-scheme-on-tertiary-container: 37 26 0;
+	
+	--m3-scheme-error: 186 26 26;
+	--m3-scheme-on-error: 255 255 255;
+	--m3-scheme-error-container: 255 218 214;
+	--m3-scheme-on-error-container: 65 0 2;
+	
+	--m3-scheme-background: 255 248 247;
+	--m3-scheme-on-background: 32 26 25;
+	
+	--m3-scheme-surface: 255 248 247;
+	--m3-scheme-on-surface: 32 26 25;
+	--m3-scheme-surface-variant: 245 221 218;
+	--m3-scheme-on-surface-variant: 83 67 65;
+	
+	--m3-scheme-outline: 133 115 113;
+	--m3-scheme-outline-variant: 216 194 191;
+	
+	--m3-scheme-shadow: 0 0 0;
+	--m3-scheme-scrim: 0 0 0;
+	
+	--m3-scheme-inverse-surface: 54 47 46;
+	--m3-scheme-inverse-on-surface: 251 238 237;
+	--m3-scheme-inverse-primary: 255 179 170;
+	
+	--m3-scheme-surface-dim: 229 217 215;
+	--m3-scheme-surface-bright: 255 248 247;
+	--m3-scheme-surface-container-lowest: 255 255 255;
+	--m3-scheme-surface-container-low: 255 241 239;
+	--m3-scheme-surface-container: 255 236 233;
+	--m3-scheme-surface-container-high: 247 229 227;
+	--m3-scheme-surface-container-highest: 241 224 222;
+}
+
+/* Manual overrides for dark mode */
+:root[data-theme='m3-red'][data-mode='dark'] {
+	color-scheme: dark;
+	
+	--m3-scheme-primary: 255 179 170;
+	--m3-scheme-on-primary: 105 0 5;
+	--m3-scheme-primary-container: 147 0 10;
+	--m3-scheme-on-primary-container: 255 218 214;
+	
+	--m3-scheme-secondary: 231 189 185;
+	--m3-scheme-on-secondary: 68 41 37;
+	--m3-scheme-secondary-container: 93 58 54;
+	--m3-scheme-on-secondary-container: 255 218 214;
+	
+	--m3-scheme-tertiary: 238 195 102;
+	--m3-scheme-on-tertiary: 64 48 0;
+	--m3-scheme-tertiary-container: 91 67 0;
+	--m3-scheme-on-tertiary-container: 255 223 160;
+	
+	--m3-scheme-error: 255 180 171;
+	--m3-scheme-on-error: 105 0 5;
+	--m3-scheme-error-container: 147 0 10;
+	--m3-scheme-on-error-container: 255 218 214;
+	
+	--m3-scheme-background: 32 26 25;
+	--m3-scheme-on-background: 241 224 222;
+	
+	--m3-scheme-surface: 32 26 25;
+	--m3-scheme-on-surface: 241 224 222;
+	--m3-scheme-surface-variant: 83 67 65;
+	--m3-scheme-on-surface-variant: 216 194 191;
+	
+	--m3-scheme-outline: 161 140 137;
+	--m3-scheme-outline-variant: 83 67 65;
+	
+	--m3-scheme-shadow: 0 0 0;
+	--m3-scheme-scrim: 0 0 0;
+	
+	--m3-scheme-inverse-surface: 241 224 222;
+	--m3-scheme-inverse-on-surface: 54 47 46;
+	--m3-scheme-inverse-primary: 182 28 28;
+	
+	--m3-scheme-surface-dim: 32 26 25;
+	--m3-scheme-surface-bright: 75 57 55;
+	--m3-scheme-surface-container-lowest: 27 22 21;
+	--m3-scheme-surface-container-low: 41 33 32;
+	--m3-scheme-surface-container: 45 37 36;
+	--m3-scheme-surface-container-high: 56 47 46;
+	--m3-scheme-surface-container-highest: 67 58 57;
+}
+

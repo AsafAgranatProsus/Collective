@@ -13,8 +13,10 @@
 	import AnalyticsSummaryCard from '$lib/components/Cards/AnalyticsSummaryCard.svelte';
 	import AnalyticsDetailCard from '$lib/components/Cards/AnalyticsDetailCard.svelte';
 	import GroupChat from '$lib/components/GroupChat.svelte';
-	import UsersThree from 'phosphor-svelte/lib/UsersThree';
-	import { slideContent, getStaggerDelay, PARALLAX, DURATIONS } from '$lib/utils/viewTransitions';
+	import { Icon, Button } from 'm3-svelte';
+	import iconArrowBack from '@ktibow/iconset-material-symbols/arrow-back';
+	import iconGroup from '@ktibow/iconset-material-symbols/group';
+	import { sharedAxisTransition } from 'm3-svelte';
 	import {
 		getCurrentUser,
 		getCurrentConversation,
@@ -347,39 +349,34 @@
 	<!-- Header -->
 	<header 
 		class="app-header"
-		in:slideContent={{ 
-			duration: DURATIONS.FAST, 
-			parallaxFactor: PARALLAX.HEADER,
-			direction: navDirection || 'forward'
+		in:sharedAxisTransition={{ 
+			direction: navDirection === 'back' ? 'X' : 'X', 
+			rightSeam: navDirection !== 'back'
 		}}
 	>
 		<!-- Back Button -->
-		<button class="back-button" onclick={handleBack} aria-label="Back to groups">
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			</svg>
-		</button>
+		<Button variant="text" iconType="full" onclick={handleBack} aria-label="Back to groups">
+			<Icon icon={iconArrowBack} />
+		</Button>
 		
 		<!-- Group Title -->
 		<div class="group-title-container">
-			<h1 class="group-title">{group?.name || 'Group'}</h1>
+			<h1 class="group-title m3-font-title-large">{group?.name || 'Group'}</h1>
 		</div>
 		
 		<!-- Group Chat Icon -->
-		<button class="group-chat-button" onclick={handleGroupChatToggle} aria-label="Open group chat">
-			<UsersThree size={24} weight="duotone" />
-		</button>
+		<Button variant="text" iconType="full" onclick={handleGroupChatToggle} aria-label="Open group chat">
+			<Icon icon={iconGroup} />
+		</Button>
 	</header>
 	
 	<!-- Messages Area -->
 	<div class="messages-area custom-scrollbar" bind:this={messagesContainer}>
 		<div 
 			class="messages-container"
-			in:slideContent={{ 
-				delay: 50, 
-				duration: DURATIONS.NORMAL, 
-				parallaxFactor: PARALLAX.CONTENT,
-				direction: navDirection || 'forward'
+			in:sharedAxisTransition={{ 
+				direction: 'X', 
+				rightSeam: navDirection !== 'back'
 			}}
 		>
 			{#each conversation as message (message.id)}
@@ -467,49 +464,23 @@
 	.background-gradient {
 		position: fixed;
 		inset: 0;
-		background: var(--gradient-mesh);
+		background: rgb(var(--m3-scheme-background));
 		z-index: -1;
 	}
 	
 	.app-header {
 		position: sticky;
 		top: 0;
-		z-index: var(--z-sticky);
-		padding: var(--space-4) var(--space-5);
-		background-color: transparent;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		z-index: 200;
+		padding: 1rem 1.5rem;
+		background-color: rgba(var(--m3-scheme-surface), 0.8);
+		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant));
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: var(--space-3);
+		gap: 0.75rem;
 		backdrop-filter: blur(20px);
 		-webkit-backdrop-filter: blur(20px);
-	}
-	
-	:global(html[data-mode='dark']) .app-header {
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-	}
-	
-	.back-button {
-		background: none;
-		border: none;
-		color: var(--text-primary);
-		cursor: pointer;
-		padding: var(--space-2);
-		border-radius: var(--radius-md);
-		transition: all var(--transition-base);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-	
-	.back-button:hover {
-		background-color: rgba(255, 255, 255, 0.1);
-	}
-	
-	.back-button:active {
-		transform: scale(0.95);
 	}
 	
 	.group-title-container {
@@ -519,37 +490,12 @@
 	}
 	
 	.group-title {
-		font-size: var(--text-lg);
-		font-weight: var(--weight-semibold);
-		color: var(--text-primary);
+		color: rgb(var(--m3-scheme-on-surface));
 		margin: 0;
-		font-family: var(--font-sans);
 		white-space: nowrap;
+		font-family: var(--font-sans) !important;
 		overflow: hidden;
 		text-overflow: ellipsis;
-	}
-	
-	.group-chat-button {
-		background: none;
-		border: none;
-		color: var(--text-primary);
-		cursor: pointer;
-		padding: var(--space-2);
-		border-radius: var(--radius-md);
-		transition: all var(--transition-base);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-	
-	.group-chat-button:hover {
-		background-color: rgba(255, 255, 255, 0.1);
-		transform: scale(1.05);
-	}
-	
-	.group-chat-button:active {
-		transform: scale(0.95);
 	}
 	
 	.messages-area {

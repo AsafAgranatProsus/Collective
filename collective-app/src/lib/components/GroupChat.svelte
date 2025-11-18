@@ -4,6 +4,9 @@
 	import GroupChatMessage from './GroupChatMessage.svelte';
 	import { getGroupChatMessages, addGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from '$lib/data/groupChat';
 	import { getCurrentUser, getMemberInfo } from '$lib/stores/app.svelte';
+	import { Icon, Button, TextField } from 'm3-svelte';
+	import iconArrowBack from '@ktibow/iconset-material-symbols/arrow-back';
+	import iconSend from '@ktibow/iconset-material-symbols/send';
 	
 	let {
 		groupId,
@@ -100,12 +103,10 @@
 	>
 		<!-- Header -->
 		<header class="chat-header">
-			<button class="back-button" onclick={onClose} aria-label="Close group chat">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
-			<h2 class="chat-title">Group Chat</h2>
+			<Button variant="text" iconType="full" onclick={onClose} aria-label="Close group chat">
+				<Icon icon={iconArrowBack} />
+			</Button>
+			<h2 class="chat-title m3-font-title-medium">Group Chat</h2>
 		</header>
 		
 		<!-- Messages Area -->
@@ -119,25 +120,23 @@
 		
 		<!-- Input Area -->
 		<form class="chat-input-form" onsubmit={handleSend}>
-			<input
-				bind:value={inputValue}
-				onkeydown={handleKeydown}
-				type="text"
-				class="chat-input"
-				placeholder="Type a message..."
-				autocomplete="off"
-			/>
-			<button 
-				type="submit" 
-				class="send-button"
+			<div class="text-field-wrapper">
+				<TextField
+					bind:value={inputValue}
+					label="Type a message..."
+					type="filled"
+					onkeydown={handleKeydown}
+				/>
+			</div>
+			<Button
+				variant="filled"
+				iconType="full"
+				type="submit"
 				disabled={!inputValue.trim()}
 				aria-label="Send message"
 			>
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-					<path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+				<Icon icon={iconSend} />
+			</Button>
 		</form>
 	</div>
 {/if}
@@ -159,64 +158,32 @@
 		height: 100vh;
 		width: 400px;
 		max-width: 100vw;
-		background-color: #F8F9FA;
-		box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+		background-color: rgb(var(--m3-scheme-surface));
+		box-shadow: var(--m3-util-elevation-3);
 		z-index: 1000;
 		display: flex;
 		flex-direction: column;
 	}
 	
-	:global(html[data-mode='dark']) .group-chat-panel {
-		background-color: #1A1A1A;
-		box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
-	}
-	
 	.chat-header {
-		padding: var(--space-4) var(--space-5);
-		border-bottom: 1px solid #E5E7EB;
+		padding: 1rem 1.5rem;
+		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant));
 		display: flex;
 		align-items: center;
-		gap: var(--space-3);
+		gap: 0.75rem;
 		flex-shrink: 0;
 	}
 	
-	:global(html[data-mode='dark']) .chat-header {
-		border-bottom: 1px solid #2A2A2A;
-	}
-	
-	.back-button {
-		background: none;
-		border: none;
-		color: var(--text-primary);
-		cursor: pointer;
-		padding: var(--space-2);
-		border-radius: var(--radius-md);
-		transition: all var(--transition-base);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	
-	.back-button:hover {
-		background-color: rgba(0, 0, 0, 0.05);
-	}
-	
-	:global(html[data-mode='dark']) .back-button:hover {
-		background-color: rgba(255, 255, 255, 0.1);
-	}
-	
 	.chat-title {
-		font-size: var(--text-lg);
-		font-weight: var(--weight-semibold);
-		color: var(--text-primary);
+		color: rgb(var(--m3-scheme-on-surface));
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-sans) !important;
 	}
 	
 	.messages-area {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-5);
+		padding: 1.5rem;
 		scroll-behavior: smooth;
 	}
 	
@@ -227,73 +194,16 @@
 	
 	.chat-input-form {
 		display: flex;
-		align-items: center;
-		gap: var(--space-3);
-		padding: var(--space-4) var(--space-5);
-		border-top: 1px solid #E5E7EB;
-		background-color: #FFFFFF;
+		align-items: flex-end;
+		gap: 0.75rem;
+		padding: 1rem 1.5rem;
+		border-top: 1px solid rgb(var(--m3-scheme-outline-variant));
+		background-color: rgb(var(--m3-scheme-surface-container-low));
 		flex-shrink: 0;
 	}
 	
-	:global(html[data-mode='dark']) .chat-input-form {
-		border-top: 1px solid #2A2A2A;
-		background-color: #0A0A0A;
-	}
-	
-	.chat-input {
+	.text-field-wrapper {
 		flex: 1;
-		padding: var(--space-3) var(--space-4);
-		border-radius: var(--radius-lg);
-		border: 1px solid #D1D5DB;
-		background-color: #F9FAFB;
-		color: var(--text-primary);
-		font-size: var(--text-base);
-		font-family: var(--font-sans);
-		transition: all var(--transition-base);
-		outline: none;
-	}
-	
-	.chat-input:focus {
-		border-color: #9CA3AF;
-		background-color: #FFFFFF;
-	}
-	
-	:global(html[data-mode='dark']) .chat-input {
-		border-color: #3A3A3A;
-		background-color: #2A2A2A;
-	}
-	
-	:global(html[data-mode='dark']) .chat-input:focus {
-		border-color: #4A4A4A;
-		background-color: #1A1A1A;
-	}
-	
-	.send-button {
-		background-color: #3B82F6;
-		color: #FFFFFF;
-		border: none;
-		border-radius: var(--radius-lg);
-		padding: var(--space-3);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		transition: all var(--transition-base);
-		flex-shrink: 0;
-	}
-	
-	.send-button:hover:not(:disabled) {
-		background-color: #2563EB;
-		transform: translateY(-1px);
-	}
-	
-	.send-button:active:not(:disabled) {
-		transform: translateY(0);
-	}
-	
-	.send-button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 	
 	/* Mobile: full screen overlay */
@@ -303,15 +213,15 @@
 		}
 		
 		.chat-header {
-			padding: var(--space-3) var(--space-4);
+			padding: 0.75rem 1rem;
 		}
 		
 		.messages-area {
-			padding: var(--space-4);
+			padding: 1rem;
 		}
 		
 		.chat-input-form {
-			padding: var(--space-3) var(--space-4);
+			padding: 0.75rem 1rem;
 		}
 	}
 	
@@ -321,29 +231,17 @@
 	}
 	
 	.messages-area::-webkit-scrollbar-track {
-		background: #E5E7EB;
-		border-radius: var(--radius-full);
-	}
-	
-	:global(html[data-mode='dark']) .messages-area::-webkit-scrollbar-track {
-		background: #2A2A2A;
+		background: rgb(var(--m3-scheme-surface-container));
+		border-radius: var(--m3-util-rounding-full);
 	}
 	
 	.messages-area::-webkit-scrollbar-thumb {
-		background: #9CA3AF;
-		border-radius: var(--radius-full);
-	}
-	
-	:global(html[data-mode='dark']) .messages-area::-webkit-scrollbar-thumb {
-		background: #4A4A4A;
+		background: rgb(var(--m3-scheme-outline));
+		border-radius: var(--m3-util-rounding-full);
 	}
 	
 	.messages-area::-webkit-scrollbar-thumb:hover {
-		background: #6B7280;
-	}
-	
-	:global(html[data-mode='dark']) .messages-area::-webkit-scrollbar-thumb:hover {
-		background: #5A5A5A;
+		background: rgb(var(--m3-scheme-on-surface-variant));
 	}
 </style>
 

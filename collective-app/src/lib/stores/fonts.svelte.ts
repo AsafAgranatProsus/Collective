@@ -21,7 +21,7 @@ interface FontState {
 
 // Create reactive state using Svelte 5 runes
 let fontState = $state<FontState>({
-	sansSerif: SANS_SERIF_FONTS[0], // Inter (default)
+	sansSerif: SANS_SERIF_FONTS[0], // Figtree (default)
 	serif: SERIF_FONTS[0], // Playfair Display (default)
 	mono: MONO_FONT, // JetBrains Mono (fixed)
 	logo: LOGO_FONTS[0] // Beth Ellen (default)

@@ -12,6 +12,20 @@ export interface Group {
 	pending_count?: number;
 	is_active: boolean; // true = clickable, false = grayed out
 	members?: string[]; // member IDs
+	avatars?: string[]; // avatar image URLs
+	next_action?: {
+		text: string;
+		amount?: string;
+		due?: string;
+	};
+	money_info?: {
+		text: string;
+		amount?: string;
+	};
+	recent_activity?: {
+		text: string;
+		time_ago: string;
+	};
 }
 
 export const groups: Group[] = [
@@ -23,7 +37,26 @@ export const groups: Group[] = [
 		member_count: 4,
 		pending_count: 3,
 		is_active: true,
-		members: ['sarah', 'mike', 'jessica', 'bob']
+		members: ['sarah', 'mike', 'jessica', 'bob'],
+		avatars: [
+			'https://randomuser.me/api/portraits/women/44.jpg',
+			'https://randomuser.me/api/portraits/men/32.jpg',
+			'https://randomuser.me/api/portraits/women/68.jpg',
+			'https://randomuser.me/api/portraits/men/85.jpg'
+		],
+		next_action: {
+			text: 'Pay rent',
+			amount: '$850',
+			due: 'due tom.'
+		},
+		money_info: {
+			text: 'You owe Emma for groceries',
+			amount: '$23'
+		},
+		recent_activity: {
+			text: 'Jake completed trash duty',
+			time_ago: '15m ago'
+		}
 	},
 	{
 		id: 'tokyo-trip',
@@ -33,7 +66,19 @@ export const groups: Group[] = [
 		member_count: 3,
 		pending_count: 0,
 		is_active: false,
-		members: ['sarah', 'alex', 'jordan']
+		members: ['sarah', 'alex', 'jordan'],
+		next_action: {
+			text: 'Book flights to Tokyo',
+			due: 'due Feb 12'
+		},
+		money_info: {
+			text: 'You owe Alex for hotel deposit',
+			amount: '$450'
+		},
+		recent_activity: {
+			text: 'Jordan added itinerary notes',
+			time_ago: '2h ago'
+		}
 	},
 	{
 		id: 'q1-marketing',
@@ -43,7 +88,19 @@ export const groups: Group[] = [
 		member_count: 5,
 		pending_count: 0,
 		is_active: false,
-		members: ['sarah', 'team1', 'team2', 'team3', 'team4']
+		members: ['sarah', 'team1', 'team2', 'team3', 'team4'],
+		next_action: {
+			text: 'Review ad creatives',
+			due: 'due Mon'
+		},
+		money_info: {
+			text: 'Budget remaining',
+			amount: '$12,500'
+		},
+		recent_activity: {
+			text: 'Team uploaded new designs',
+			time_ago: '1d ago'
+		}
 	}
 ];
 

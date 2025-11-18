@@ -25,14 +25,14 @@
 	<div class="message-bubble" class:user-bubble={message.sender === 'user'} class:ai-bubble={message.sender === 'ai'}>
 		<p class="message-content">{message.content}</p>
 	</div>
-	<span class="message-timestamp">{formatTime(message.timestamp)}</span>
+	<span class="message-timestamp m3-font-body-small">{formatTime(message.timestamp)}</span>
 </div>
 
 <style>
 	.message-container {
 		display: flex;
 		flex-direction: column;
-		margin-bottom: var(--space-4);
+		margin-bottom: 1rem;
 		animation: slideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 	
@@ -46,30 +46,28 @@
 	
 	.message-bubble {
 		max-width: 80%;
-		padding: var(--space-3) var(--space-4);
-		border-radius: var(--radius-xl);
+		padding: 0.75rem 1rem;
+		border-radius: var(--m3-util-rounding-large);
 		word-wrap: break-word;
-		box-shadow: var(--shadow-sm);
-		transition: all var(--transition-base);
+		transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	
 	.user-bubble {
-		background-color: var(--chat-bubble-user-bg);
-		color: var(--chat-bubble-user-text);
-		border-radius: var(--radius-xl) var(--radius-xl) var(--radius-sm) var(--radius-xl);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-		font-family: var(--font-serif);
-		font-size: var(--text-md);
+		background-color: rgb(var(--m3-scheme-secondary-container));
+		color: rgb(var(--m3-scheme-on-secondary-container));
+		border-radius: var(--m3-util-rounding-large) var(--m3-util-rounding-large) var(--m3-util-rounding-small) var(--m3-util-rounding-large);
+		/* font-family: var(--font-sans);
+		font-size: 1rem; */
 	}
 	
 	.ai-bubble {
-		background-color: var(--chat-bubble-ai-bg);
-		color: var(--chat-bubble-ai-text);
-		border: 1px solid var(--chat-bubble-ai-border);
-		border-radius: var(--radius-xl) var(--radius-xl) var(--radius-xl) var(--radius-sm);
-		font-family: var(--font-sans);
-		font-size: var(--text-base);
-		letter-spacing: -0.01em;
+		/* background-color: rgb(var(--m3-scheme-surface-container-highest)); */
+		color: rgb(var(--m3-scheme-on-surface));
+		border-radius: var(--m3-util-rounding-large) var(--m3-util-rounding-large) var(--m3-util-rounding-large) var(--m3-util-rounding-small);
+		/* font-family: var(--font-sans);
+		font-size: 0.9375rem;
+		letter-spacing: -0.01em; */
+		padding-left: .5rem
 	}
 	
 	.message-content {
@@ -80,10 +78,10 @@
 	
 	.message-timestamp {
 		font-family: var(--font-mono);
-		font-size: var(--text-xs);
-		color: var(--text-tertiary);
-		margin-top: var(--space-1);
-		padding: 0 var(--space-2);
+		/* font-size: 0.75rem; */
+		color: rgb(var(--m3-scheme-outline));
+		margin-top: 0.25rem;
+		padding: 0 0.5rem;
 	}
 	
 	@keyframes slideUp {

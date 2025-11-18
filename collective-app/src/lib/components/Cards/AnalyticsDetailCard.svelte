@@ -1,7 +1,17 @@
 <script lang="ts">
 	import type { MonthAnalytics, GroupMonthAnalytics } from '$lib/data/analytics';
 	import { getMemberName } from '$lib/data/household';
-	import SimpleBarChart from './SimpleBarChart.svelte';
+	import { get30DayTrendData } from '$lib/data/analytics';
+	import CircularProgress from '$lib/components/CircularProgress.svelte';
+	import GradientAreaChart from '$lib/components/Charts/GradientAreaChart.svelte';
+	import GradientLineChart from '$lib/components/Charts/GradientLineChart.svelte';
+	import SmoothBarChart from '$lib/components/Charts/SmoothBarChart.svelte';
+	import { Icon, Card } from 'm3-svelte';
+	import iconInsights from '@ktibow/iconset-material-symbols/insights';
+	import iconTrendingUp from '@ktibow/iconset-material-symbols/trending-up';
+	import iconChecklist from '@ktibow/iconset-material-symbols/checklist';
+	import iconAttachMoney from '@ktibow/iconset-material-symbols/attach-money';
+	import iconGroupWork from '@ktibow/iconset-material-symbols/group-work';
 	import { scale } from 'svelte/transition';
 	
 	let {
@@ -31,81 +41,135 @@
 		return 'Low';
 	}
 	
+	// Calculate completion percentage
+	const completionPercentage = $derived(Math.round(userData.completion_rate * 100));
+	
+	// Get 30-day trend data
+	const trendData = get30DayTrendData(userId);
+	
 	// Prepare weekly breakdown data for chart
-	const weeklyData = userData.weekly_breakdown.map((week: { week: number; completion_rate: number }) => ({
-		label: `Week ${week.week}`,
-		value: week.completion_rate
-	}));
+	const weeklyLabels = userData.weekly_breakdown.map((week: { week: number }) => `Week ${week.week}`);
+	const weeklyData = userData.weekly_breakdown.map((week: { completion_rate: number }) => week.completion_rate);
 	
 	// Prepare tasks by type data for chart
-	const tasksByTypeData = Object.entries(userData.tasks_by_type).map(([type, data]) => ({
-		label: type.charAt(0).toUpperCase() + type.slice(1),
-		value: (data as { completed: number; assigned: number }).completed
-	}));
-	
-	const maxTasksByType = Math.max(...tasksByTypeData.map(d => d.value), 1);
+	const taskTypeLabels = Object.keys(userData.tasks_by_type).map(type => 
+		type.charAt(0).toUpperCase() + type.slice(1)
+	);
+	const taskTypeData = Object.values(userData.tasks_by_type).map((data: any) => data.completed);
+	const maxTasksByType = Math.max(...taskTypeData, 1);
 </script>
 
-<div class="analytics-detail-card" transition:scale={{ duration: 200, start: 0.95 }}>
-	<h3 class="card-title">Last 30 Days</h3>
-	
-	<!-- Performance Summary -->
-	<div class="section">
-		<h4 class="section-title">YOUR PERFORMANCE</h4>
-		<ul class="stat-list">
-			<li class="stat-item">
-				<span class="stat-label">Tasks completed:</span>
-				<span class="stat-value">{userData.tasks_completed} of {userData.tasks_assigned} 
-					<span class="percentage">({Math.round(userData.completion_rate * 100)}%)</span>
-				</span>
-			</li>
-			<li class="stat-item">
-				<span class="stat-label">Average time-to-completion:</span>
-				<span class="stat-value">
-					{#if userData.avg_time_to_complete < 0}
-						{Math.abs(userData.avg_time_to_complete).toFixed(1)} days early
-					{:else if userData.avg_time_to_complete > 0}
-						{userData.avg_time_to_complete.toFixed(1)} days late
-					{:else}
-						On time
-					{/if}
-				</span>
-			</li>
-			<li class="stat-item">
-				<span class="stat-label">Consistency:</span>
-				<span class="stat-value">{getConsistencyLabel(userData.completion_rate)}</span>
-			</li>
-		</ul>
-	</div>
-	
-	<!-- Weekly Completion Chart -->
-	{#if weeklyData.length > 0}
-		<div class="section">
-			<h4 class="section-title">WEEKLY COMPLETION</h4>
+<div class="card-wrapper" transition:scale={{ duration: 200, start: 0.95 }}>
+	<Card variant="filled">
+		<div class="header">
+			<h3 class="card-title m3-font-title-large">Last 30 Days</h3>
+			<CircularProgress 
+				value={completionPercentage} 
+				size="medium"
+				showLabel={true}
+			/>
+		</div>
+		
+		<!-- 30-Day Trend Overview -->
+		<div class="chart-section primary">
+			<h4 class="section-title">
+				<Icon icon={iconTrendingUp} />
+				<span>30-DAY TREND</span>
+			</h4>
 			<div class="chart-container">
-				<SimpleBarChart data={weeklyData} max={1.0} />
+				<GradientAreaChart 
+					datasets={[{ data: trendData.data, label: 'Completion Rate', color: 'primary' }]}
+					labels={trendData.labels}
+					height={180}
+					showPoints={false}
+					showGrid={true}
+					showLegend={false}
+				/>
 			</div>
 		</div>
-	{/if}
-	
-	<!-- Tasks by Type -->
-	{#if tasksByTypeData.length > 0}
+		
+		<!-- Performance Summary -->
 		<div class="section">
-			<h4 class="section-title">TASKS BY TYPE</h4>
-			<div class="chart-container">
-				<SimpleBarChart data={tasksByTypeData} max={maxTasksByType} />
+			<h4 class="section-title">
+				<Icon icon={iconInsights} />
+				<span>YOUR PERFORMANCE</span>
+			</h4>
+			<div class="stats-grid">
+				<div class="stat-card">
+					<div class="stat-number m3-font-headline-medium">{userData.tasks_completed}</div>
+					<div class="stat-label m3-font-body-small">of {userData.tasks_assigned} tasks</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-number m3-font-headline-medium">
+						{#if userData.avg_time_to_complete < 0}
+							<span class="positive">-{Math.abs(userData.avg_time_to_complete).toFixed(1)}d</span>
+						{:else if userData.avg_time_to_complete > 0}
+							<span class="negative">+{userData.avg_time_to_complete.toFixed(1)}d</span>
+						{:else}
+							0d
+						{/if}
+					</div>
+					<div class="stat-label m3-font-body-small">avg completion time</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-number m3-font-headline-medium">{getConsistencyLabel(userData.completion_rate)}</div>
+					<div class="stat-label m3-font-body-small">consistency</div>
+				</div>
 			</div>
 		</div>
-	{/if}
+		
+		<!-- Weekly Completion Chart -->
+		{#if weeklyData.length > 0}
+			<div class="chart-section">
+				<h4 class="section-title">
+					<Icon icon={iconTrendingUp} />
+					<span>WEEKLY BREAKDOWN</span>
+				</h4>
+				<div class="chart-container">
+					<GradientLineChart 
+						data={weeklyData}
+						labels={weeklyLabels}
+						height={160}
+						gradientColor="secondary"
+						showPoints={true}
+						showGrid={true}
+					/>
+				</div>
+			</div>
+		{/if}
+		
+		<!-- Tasks by Type -->
+		{#if taskTypeData.length > 0}
+			<div class="chart-section">
+				<h4 class="section-title">
+					<Icon icon={iconChecklist} />
+					<span>TASKS BY TYPE</span>
+				</h4>
+				<div class="chart-container">
+					<SmoothBarChart 
+						data={taskTypeData}
+						labels={taskTypeLabels}
+						height={200}
+						gradientColor="tertiary"
+						horizontal={true}
+						showGrid={true}
+						max={maxTasksByType}
+					/>
+				</div>
+			</div>
+		{/if}
 	
 	<!-- Expenses -->
 	<div class="section">
-		<h4 class="section-title">EXPENSES</h4>
+		<h4 class="section-title">
+			<Icon icon={iconAttachMoney} />
+			<span>EXPENSES</span>
+		</h4>
 		<ul class="stat-list">
 			<li class="stat-item">
 				<span class="stat-label">Paid:</span>
-				<span class="stat-value">{formatCurrency(userData.expenses.paid_amount)} 
-					<span class="muted">({userData.expenses.paid_count} {userData.expenses.paid_count === 1 ? 'item' : 'items'})</span>
+				<span class="stat-value highlight">{formatCurrency(userData.expenses.paid_amount)} 
+					<span class="muted-inline">({userData.expenses.paid_count} {userData.expenses.paid_count === 1 ? 'item' : 'items'})</span>
 				</span>
 			</li>
 			{#if userData.expenses.owed_amount > 0}
@@ -113,7 +177,7 @@
 					<span class="stat-label">Owed:</span>
 					<span class="stat-value">{formatCurrency(userData.expenses.owed_amount)} 
 						{#if userData.expenses.owed_to}
-							<span class="muted">to {getMemberName(userData.expenses.owed_to)}</span>
+							<span class="muted-inline">to {getMemberName(userData.expenses.owed_to)}</span>
 						{/if}
 					</span>
 				</li>
@@ -123,10 +187,13 @@
 	
 	<!-- Group Comparison -->
 	<div class="section">
-		<h4 class="section-title">GROUP COMPARISON</h4>
+		<h4 class="section-title">
+			<Icon icon={iconGroupWork} />
+			<span>GROUP COMPARISON</span>
+		</h4>
 		<div class="comparison-bar">
 			<span class="comparison-item">
-				<strong>You:</strong> {Math.round(userData.completion_rate * 100)}%
+				<strong>You:</strong> <span class="highlight">{Math.round(userData.completion_rate * 100)}%</span>
 			</span>
 			<span class="divider">|</span>
 			<span class="comparison-item">
@@ -137,46 +204,78 @@
 				<strong>Range:</strong> {Math.round(groupData.range.min * 100)}-{Math.round(groupData.range.max * 100)}%
 			</span>
 		</div>
-		<p class="comparison-note">
-			{#if userData.completion_rate >= groupData.avg_completion_rate}
-				You're {userData.completion_rate > groupData.avg_completion_rate ? 'above' : 'at'} average for the household.
-			{:else}
-				You're slightly below average, but no major issues.
-			{/if}
-		</p>
-	</div>
+			<p class="comparison-note">
+				{#if userData.completion_rate >= groupData.avg_completion_rate}
+					You're {userData.completion_rate > groupData.avg_completion_rate ? 'above' : 'at'} average for the household.
+				{:else}
+					You're slightly below average, but no major issues.
+				{/if}
+			</p>
+		</div>
+	</Card>
 </div>
 
 <style>
-	.analytics-detail-card {
-		background-color: #FFFFFF;
-		border: 1px solid #E5E7EB;
-		border-radius: 12px;
-		padding: 24px;
-		max-width: 450px;
+	.card-wrapper {
+		max-width: 480px;
 		width: 95%;
-		margin: var(--space-3) 0;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+		margin: var(--space-4) 0;
 		max-height: 80vh;
 		overflow-y: auto;
 	}
 	
-	:global(html[data-mode='dark']) .analytics-detail-card {
-		background-color: #1A1A1A;
-		border-color: #333333;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--space-5);
 	}
 	
 	.card-title {
-		font-size: 16px;
-		font-weight: 600;
-		color: #1F2937;
+		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-sans);
-		margin: 0 0 var(--space-5) 0;
+		margin: 0;
 	}
 	
-	:global(html[data-mode='dark']) .card-title {
-		color: #F8F9FA;
+	/* Chart sections */
+	.chart-section {
+		margin-bottom: var(--space-5);
+		padding: var(--space-4);
+		background-color: rgb(var(--m3-scheme-surface-container-low));
+		border-radius: var(--m3-util-rounding-large);
+	}
+	
+	.chart-section.primary {
+		background-color: rgba(var(--m3-scheme-primary), 0.05);
+	}
+	
+	.chart-container {
+		margin-top: var(--space-3);
+	}
+	
+	/* Stats grid */
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		gap: var(--space-3);
+	}
+	
+	.stat-card {
+		padding: var(--space-3);
+		background-color: rgb(var(--m3-scheme-surface-container));
+		border-radius: var(--m3-util-rounding-medium);
+		text-align: center;
+	}
+	
+	.stat-number {
+		color: rgb(var(--m3-scheme-on-surface));
+		font-family: var(--font-sans);
+		margin-bottom: 0.25rem;
+	}
+	
+	.stat-label {
+		color: rgb(var(--m3-scheme-on-surface-variant));
+		font-family: var(--font-sans);
 	}
 	
 	.section {
@@ -188,17 +287,20 @@
 	}
 	
 	.section-title {
-		font-size: 12px;
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: #6B7280;
+		color: rgb(var(--m3-scheme-on-surface-variant));
 		font-family: var(--font-sans);
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
 		margin: 0 0 var(--space-3) 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
 	
-	:global(html[data-mode='dark']) .section-title {
-		color: #9CA3AF;
+	.section-title :global(.icon) {
+		font-size: 1rem;
 	}
 	
 	.stat-list {
@@ -207,29 +309,22 @@
 		margin: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
+		gap: 0.875rem;
 	}
 	
 	.stat-item {
-		font-size: 14px;
-		color: #1F2937;
+		font-size: 0.875rem;
+		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-sans);
 		line-height: 1.5;
 		display: flex;
 		justify-content: space-between;
 		gap: var(--space-2);
-	}
-	
-	:global(html[data-mode='dark']) .stat-item {
-		color: #E5E7EB;
+		align-items: baseline;
 	}
 	
 	.stat-label {
-		color: #6B7280;
-	}
-	
-	:global(html[data-mode='dark']) .stat-label {
-		color: #9CA3AF;
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 	
 	.stat-value {
@@ -238,27 +333,25 @@
 		text-align: right;
 	}
 	
-	.percentage {
-		color: #6B7280;
+	.highlight {
+		font-size: 1.125rem;
+		font-weight: 600;
+		color: rgb(var(--m3-scheme-primary));
+	}
+	
+	.positive {
+		color: rgb(var(--m3-scheme-tertiary));
+	}
+	
+	.negative {
+		color: rgb(var(--m3-scheme-error));
+	}
+	
+	.muted-inline {
+		color: rgb(var(--m3-scheme-on-surface-variant));
+		font-size: 0.8125rem;
 		font-family: var(--font-sans);
-	}
-	
-	:global(html[data-mode='dark']) .percentage {
-		color: #9CA3AF;
-	}
-	
-	.muted {
-		color: #6B7280;
-		font-size: 13px;
-		font-family: var(--font-sans);
-	}
-	
-	:global(html[data-mode='dark']) .muted {
-		color: #9CA3AF;
-	}
-	
-	.chart-container {
-		padding: var(--space-2) 0;
+		font-weight: 400;
 	}
 	
 	.comparison-bar {
@@ -266,22 +359,18 @@
 		align-items: center;
 		gap: var(--space-3);
 		padding: var(--space-3);
-		background-color: #F9FAFB;
-		border-radius: 8px;
-		font-size: 14px;
+		background: linear-gradient(135deg, rgba(var(--m3-scheme-primary), 0.04) 0%, rgba(var(--m3-scheme-tertiary), 0.04) 100%);
+		border-radius: var(--m3-util-rounding-medium);
+		font-size: 0.875rem;
 		font-family: var(--font-mono);
-		color: #1F2937;
+		color: rgb(var(--m3-scheme-on-surface));
 		flex-wrap: wrap;
-	}
-	
-	:global(html[data-mode='dark']) .comparison-bar {
-		background-color: #0A0A0A;
-		color: #E5E7EB;
 	}
 	
 	.comparison-item {
 		display: flex;
-		gap: var(--space-1);
+		align-items: center;
+		gap: 0.375rem;
 	}
 	
 	.comparison-item strong {
@@ -290,67 +379,60 @@
 	}
 	
 	.divider {
-		color: #D1D5DB;
-	}
-	
-	:global(html[data-mode='dark']) .divider {
-		color: #4B5563;
+		color: rgb(var(--m3-scheme-outline));
 	}
 	
 	.comparison-note {
-		font-size: 13px;
-		color: #6B7280;
+		font-size: 0.8125rem;
+		color: rgb(var(--m3-scheme-on-surface-variant));
 		font-family: var(--font-sans);
 		margin: var(--space-2) 0 0 0;
 		line-height: 1.5;
 	}
 	
-	:global(html[data-mode='dark']) .comparison-note {
-		color: #9CA3AF;
-	}
-	
 	/* Scrollbar styling for card */
-	.analytics-detail-card::-webkit-scrollbar {
+	.card-wrapper::-webkit-scrollbar {
 		width: 6px;
 	}
 	
-	.analytics-detail-card::-webkit-scrollbar-track {
-		background: #F3F4F6;
+	.card-wrapper::-webkit-scrollbar-track {
+		background: rgb(var(--m3-scheme-surface-container));
 		border-radius: 3px;
 	}
 	
-	:global(html[data-mode='dark']) .analytics-detail-card::-webkit-scrollbar-track {
-		background: #1F2937;
-	}
-	
-	.analytics-detail-card::-webkit-scrollbar-thumb {
-		background: #D1D5DB;
+	.card-wrapper::-webkit-scrollbar-thumb {
+		background: rgb(var(--m3-scheme-outline));
 		border-radius: 3px;
-	}
-	
-	:global(html[data-mode='dark']) .analytics-detail-card::-webkit-scrollbar-thumb {
-		background: #4B5563;
 	}
 	
 	/* Mobile adjustments */
 	@media (max-width: 640px) {
-		.analytics-detail-card {
+		.card-wrapper {
 			width: 98%;
-			padding: 20px;
 			max-height: 75vh;
 		}
 		
+		.header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1rem;
+		}
+		
 		.card-title {
-			font-size: 15px;
+			font-size: 1rem;
 		}
 		
 		.section-title {
-			font-size: 11px;
+			font-size: 0.6875rem;
 		}
 		
 		.stat-item,
 		.comparison-bar {
-			font-size: 13px;
+			font-size: 0.8125rem;
+		}
+		
+		.highlight {
+			font-size: 1rem;
 		}
 		
 		.comparison-bar {
@@ -359,7 +441,7 @@
 		}
 		
 		.comparison-item {
-			font-size: 12px;
+			font-size: 0.75rem;
 		}
 	}
 </style>

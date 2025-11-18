@@ -1,9 +1,12 @@
 /**
- * Theme Store - Manages theme and mode (light/dark/system)
+ * Theme Store - Manages M3 theme and mode (light/dark/system)
  * Uses Svelte 5 runes for reactivity
+ * 
+ * With M3, we have a single theme with light/dark variants controlled by
+ * the @media (prefers-color-scheme) in m3-theme.css
  */
 
-export type ThemeName = 'midnight-coral' | 'purple-electric';
+export type ThemeName = 'm3-cyan-yellow' | 'm3-neutral-purple' | 'm3-blue' | 'm3-green' | 'm3-red'; // M3 themes
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 interface ThemeState {
@@ -13,7 +16,7 @@ interface ThemeState {
 
 // Create reactive state using Svelte 5 runes
 let themeState = $state<ThemeState>({
-	theme: 'midnight-coral',
+	theme: 'm3-cyan-yellow',
 	mode: 'system'
 });
 
@@ -76,17 +79,76 @@ export function toggleMode(): void {
 
 /**
  * Apply theme and mode to DOM
+ * For M3, we need to set the color-scheme property which triggers
+ * the @media (prefers-color-scheme) rules in m3-theme.css
  */
 function applyThemeToDOM(): void {
 	if (typeof document === 'undefined') return;
 	
 	const htmlElement = document.documentElement;
 	
-	// Set theme attribute
+	// Set theme attribute (for potential future multi-theme support)
 	htmlElement.setAttribute('data-theme', themeState.theme);
 	
-	// Set mode attribute
+	// Set mode attribute (for legacy CSS that uses data-mode)
 	htmlElement.setAttribute('data-mode', themeState.mode);
+	
+	// Get effective mode (resolve 'system' to 'light' or 'dark')
+	const effectiveMode = getEffectiveMode();
+	
+	// Set color-scheme CSS property - this is what M3 uses
+	// This triggers the @media (prefers-color-scheme) rules
+	htmlElement.style.colorScheme = effectiveMode;
+	
+	// Also set the meta theme-color for mobile browsers
+	updateMetaThemeColor(effectiveMode);
+}
+
+/**
+ * Get current effective mode (resolves 'system' to 'light' or 'dark')
+ */
+export function getEffectiveMode(): 'light' | 'dark' {
+	if (themeState.mode !== 'system') {
+		return themeState.mode;
+	}
+	
+	if (typeof window === 'undefined') return 'light';
+	
+	return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+/**
+ * Update meta theme-color for mobile browsers
+ */
+function updateMetaThemeColor(mode: 'light' | 'dark'): void {
+	if (typeof document === 'undefined') return;
+	
+	let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+	if (!metaThemeColor) {
+		metaThemeColor = document.createElement('meta');
+		metaThemeColor.setAttribute('name', 'theme-color');
+		document.head.appendChild(metaThemeColor);
+	}
+	
+	// Set theme color based on M3 scheme and current theme
+	const theme = themeState.theme;
+	let color: string;
+	
+	if (theme === 'm3-cyan-yellow') {
+		color = mode === 'light' ? '#EFFCFF' : '#001115';
+	} else if (theme === 'm3-neutral-purple') {
+		color = mode === 'light' ? '#FDF8F9' : '#0F0E0F';
+	} else if (theme === 'm3-blue') {
+		color = mode === 'light' ? '#FAF9FF' : '#1A1B20';
+	} else if (theme === 'm3-green') {
+		color = mode === 'light' ? '#F8FBF6' : '#191C19';
+	} else if (theme === 'm3-red') {
+		color = mode === 'light' ? '#FFF8F7' : '#201A19';
+	} else {
+		color = mode === 'light' ? '#EFFCFF' : '#001115';
+	}
+	
+	metaThemeColor.setAttribute('content', color);
 }
 
 /**
@@ -106,19 +168,6 @@ function watchSystemPreference(): void {
 }
 
 /**
- * Get current effective mode (resolves 'system' to 'light' or 'dark')
- */
-export function getEffectiveMode(): 'light' | 'dark' {
-	if (themeState.mode !== 'system') {
-		return themeState.mode;
-	}
-	
-	if (typeof window === 'undefined') return 'light';
-	
-	return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-/**
  * Export reactive state
  */
 export function getThemeState() {
@@ -130,6 +179,19 @@ export function getThemeState() {
  */
 export function getCurrentTheme(): ThemeName {
 	return themeState.theme;
+}
+
+/**
+ * Get all available themes
+ */
+export function getAvailableThemes(): Array<{ id: ThemeName; name: string; description: string }> {
+	return [
+		{ id: 'm3-cyan-yellow', name: 'Cyan & Yellow', description: 'Vibrant cyan and yellow accents' },
+		{ id: 'm3-neutral-purple', name: 'Neutral Purple', description: 'Subtle grayscale with purple hints' },
+		{ id: 'm3-blue', name: 'Blue (Tonal Spot)', description: 'Home Assistant default theme' },
+		{ id: 'm3-green', name: 'Green (Nature)', description: 'Nature-inspired green palette' },
+		{ id: 'm3-red', name: 'Red (Vibrant)', description: 'Energetic red theme' }
+	];
 }
 
 /**

@@ -22,6 +22,9 @@
 		"vite": "^7.1.10"
 	},
 	"dependencies": {
+		"@ktibow/iconset-material-symbols": "^0.0.1763101875",
+		"chart.js": "^4.5.1",
+		"m3-svelte": "^5.14.1",
 		"phosphor-svelte": "^3.0.1"
 	}
 }

@@ -43,14 +43,14 @@
 	.message-wrapper {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-1);
-		margin-bottom: var(--space-4);
+		gap: 0.25rem;
+		margin-bottom: 1rem;
 	}
 	
 	.message-content {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-1);
+		gap: 0.25rem;
 		max-width: 75%;
 	}
 	
@@ -61,8 +61,8 @@
 	.message-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
-		padding: 0 var(--space-2);
+		gap: 0.5rem;
+		padding: 0 0.5rem;
 	}
 	
 	.sender-avatar {
@@ -70,49 +70,43 @@
 	}
 	
 	.sender-name {
-		font-size: var(--text-sm);
-		font-weight: var(--weight-semibold);
-		color: var(--text-secondary);
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: rgb(var(--m3-scheme-on-surface-variant));
 		font-family: var(--font-sans);
 	}
 	
 	.message-bubble {
-		background-color: #F3F4F6;
-		padding: var(--space-3);
-		border-radius: var(--radius-lg);
-		border: 1px solid transparent;
+		background-color: rgb(var(--m3-scheme-surface-container-highest));
+		padding: 0.75rem;
+		border-radius: var(--m3-util-rounding-large);
 	}
 	
 	.message-bubble.user-bubble {
-		background-color: #E8FFD0;
+		background-color: rgb(var(--m3-scheme-secondary-container));
+		color: rgb(var(--m3-scheme-on-secondary-container));
 		align-self: flex-end;
-	}
-	
-	:global(html[data-mode='dark']) .message-bubble {
-		background-color: #2A2A2A;
-		border-color: #3A3A3A;
-	}
-	
-	:global(html[data-mode='dark']) .message-bubble.user-bubble {
-		background-color: #3A4A2A;
-		border-color: #4A5A3A;
 	}
 	
 	.message-text {
 		margin: 0;
-		font-size: var(--text-base);
-		color: var(--text-primary);
+		font-size: 0.9375rem;
+		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-sans);
 		line-height: 1.5;
 		word-wrap: break-word;
 	}
 	
+	.message-bubble.user-bubble .message-text {
+		color: rgb(var(--m3-scheme-on-secondary-container));
+	}
+	
 	.message-time {
-		font-size: var(--text-xs);
-		color: var(--text-tertiary);
+		font-size: 0.75rem;
+		color: rgb(var(--m3-scheme-outline));
 		font-family: var(--font-mono);
 		text-align: right;
-		padding: 0 var(--space-2);
+		padding: 0 0.5rem;
 	}
 	
 	.message-wrapper.current-user .message-time {

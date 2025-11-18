@@ -1,83 +1,136 @@
-/* Semantic Color Mappings */
+/* Color Utilities - Material Design 3
+ * 
+ * NOTE: These are legacy utilities. Prefer using M3 color tokens directly:
+ * - rgb(var(--m3-scheme-primary))
+ * - rgb(var(--m3-scheme-surface))
+ * - rgb(var(--m3-scheme-on-surface))
+ * etc.
+ * 
+ * See M3 theme files for available color tokens.
+ */
 
-/* Background Color Classes */
+/* ========================================
+ * M3 BACKGROUND COLOR UTILITIES
+ * ======================================== */
+
+.bg-surface {
+  background-color: rgb(var(--m3-scheme-surface));
+}
+
+.bg-surface-container {
+  background-color: rgb(var(--m3-scheme-surface-container));
+}
+
+.bg-surface-container-high {
+  background-color: rgb(var(--m3-scheme-surface-container-high));
+}
+
+.bg-surface-container-highest {
+  background-color: rgb(var(--m3-scheme-surface-container-highest));
+}
+
 .bg-primary {
-  background-color: var(--bg-primary);
+  background-color: rgb(var(--m3-scheme-primary));
+  color: rgb(var(--m3-scheme-on-primary));
 }
 
 .bg-secondary {
-  background-color: var(--bg-secondary);
+  background-color: rgb(var(--m3-scheme-secondary));
+  color: rgb(var(--m3-scheme-on-secondary));
 }
 
 .bg-tertiary {
-  background-color: var(--bg-tertiary);
+  background-color: rgb(var(--m3-scheme-tertiary));
+  color: rgb(var(--m3-scheme-on-tertiary));
 }
 
-.bg-elevated {
-  background-color: var(--bg-elevated);
+.bg-primary-container {
+  background-color: rgb(var(--m3-scheme-primary-container));
+  color: rgb(var(--m3-scheme-on-primary-container));
 }
 
-.bg-accent {
-  background-color: var(--accent);
+.bg-secondary-container {
+  background-color: rgb(var(--m3-scheme-secondary-container));
+  color: rgb(var(--m3-scheme-on-secondary-container));
 }
 
-.bg-gradient-primary {
-  background: var(--gradient-primary);
+.bg-tertiary-container {
+  background-color: rgb(var(--m3-scheme-tertiary-container));
+  color: rgb(var(--m3-scheme-on-tertiary-container));
 }
 
-.bg-gradient-mesh {
-  background: var(--gradient-mesh);
+/* ========================================
+ * M3 TEXT COLOR UTILITIES
+ * ======================================== */
+
+.text-primary {
+  color: rgb(var(--m3-scheme-primary));
 }
 
-/* Border Color Classes */
-.border-primary {
-  border-color: var(--border-primary);
+.text-secondary {
+  color: rgb(var(--m3-scheme-secondary));
 }
 
-.border-secondary {
-  border-color: var(--border-secondary);
+.text-tertiary {
+  color: rgb(var(--m3-scheme-tertiary));
 }
 
-.border-accent {
-  border-color: var(--border-accent);
+.text-on-surface {
+  color: rgb(var(--m3-scheme-on-surface));
 }
 
-/* Status Colors */
-.bg-success {
-  background-color: var(--color-success);
+.text-on-surface-variant {
+  color: rgb(var(--m3-scheme-on-surface-variant));
 }
 
-.bg-warning {
-  background-color: var(--color-warning);
+.text-outline {
+  color: rgb(var(--m3-scheme-outline));
 }
+
+/* ========================================
+ * M3 STATUS COLORS
+ * ======================================== */
 
 .bg-error {
-  background-color: var(--color-error);
+  background-color: rgb(var(--m3-scheme-error));
+  color: rgb(var(--m3-scheme-on-error));
 }
 
-.bg-info {
-  background-color: var(--color-info);
-}
-
-.text-success {
-  color: var(--color-success);
-}
-
-.text-warning {
-  color: var(--color-warning);
+.bg-error-container {
+  background-color: rgb(var(--m3-scheme-error-container));
+  color: rgb(var(--m3-scheme-on-error-container));
 }
 
 .text-error {
-  color: var(--color-error);
+  color: rgb(var(--m3-scheme-error));
 }
 
-.text-info {
-  color: var(--color-info);
+/* ========================================
+ * M3 BORDER COLOR UTILITIES
+ * ======================================== */
+
+.border-outline {
+  border-color: rgb(var(--m3-scheme-outline));
 }
 
-/* Opacity Utilities */
+.border-outline-variant {
+  border-color: rgb(var(--m3-scheme-outline-variant));
+}
+
+.border-primary {
+  border-color: rgb(var(--m3-scheme-primary));
+}
+
+/* ========================================
+ * OPACITY UTILITIES
+ * ======================================== */
+
 .opacity-0 {
   opacity: 0;
+}
+
+.opacity-25 {
+  opacity: 0.25;
 }
 
 .opacity-50 {
@@ -92,3 +145,14 @@
   opacity: 1;
 }
 
+/* ========================================
+ * REMOVED UTILITIES
+ * 
+ * Old semantic color classes removed:
+ * - .bg-accent, .bg-elevated (use M3 surface tokens)
+ * - .bg-gradient-* (not part of M3)
+ * - .bg-success, .bg-warning, .bg-info (M3 only has error)
+ * - .text-success, .text-warning, .text-info (use custom if needed)
+ * 
+ * For custom status colors, define them in custom-tokens.css
+ * ======================================== */

@@ -1,8 +1,20 @@
-/* Typography Styles */
+/* Typography Styles - Custom Font Utilities
+ * 
+ * NOTE: For text sizing and weights, use M3 typography utility classes:
+ * - m3-font-display-{large|medium|small}
+ * - m3-font-headline-{large|medium|small}
+ * - m3-font-title-{large|medium|small}
+ * - m3-font-body-{large|medium|small}
+ * - m3-font-label-{large|medium|small}
+ * 
+ * Google Fonts are loaded dynamically via fontLoader.ts
+ */
 
-/* Google Fonts are loaded dynamically via fontLoader.ts */
+/* ========================================
+ * CUSTOM FONT FAMILY UTILITIES
+ * Apply custom fonts to elements
+ * ======================================== */
 
-/* Font Family Classes */
 .font-sans {
   font-family: var(--font-sans);
 }
@@ -15,131 +27,50 @@
   font-family: var(--font-mono);
 }
 
-/* Font Size Classes */
-.text-xs {
-  font-size: var(--text-xs);
+.font-logo {
+  font-family: var(--font-logo);
 }
 
-.text-sm {
-  font-size: var(--text-sm);
-}
-
-.text-base {
-  font-size: var(--text-base);
-}
-
-.text-md {
-  font-size: var(--text-md);
-}
-
-.text-lg {
-  font-size: var(--text-lg);
-}
-
-.text-xl {
-  font-size: var(--text-xl);
-}
-
-.text-2xl {
-  font-size: var(--text-2xl);
-}
-
-/* Font Weight Classes */
-.font-regular {
-  font-weight: var(--weight-regular);
-}
-
-.font-medium {
-  font-weight: var(--weight-medium);
-}
-
-.font-semibold {
-  font-weight: var(--weight-semibold);
-}
-
-.font-bold {
-  font-weight: var(--weight-bold);
-}
-
-/* Text Color Classes */
-.text-primary {
-  color: var(--text-primary);
-}
-
-.text-secondary {
-  color: var(--text-secondary);
-}
-
-.text-tertiary {
-  color: var(--text-tertiary);
-}
-
-.text-inverse {
-  color: var(--text-inverse);
-}
-
-/* Letter Spacing */
-.tracking-tight {
-  letter-spacing: -0.01em;
-}
-
-.tracking-normal {
-  letter-spacing: 0;
-}
-
-.tracking-wide {
-  letter-spacing: 0.025em;
-}
-
-/* Line Height */
-.leading-tight {
-  line-height: 1.25;
-}
-
-.leading-normal {
-  line-height: 1.5;
-}
-
-.leading-relaxed {
-  line-height: 1.75;
-}
-
-/* Text Alignment */
-.text-left {
-  text-align: left;
-}
+/* ========================================
+ * TEXT STYLING UTILITIES
+ * ======================================== */
 
 .text-center {
   text-align: center;
+}
+
+.text-left {
+  text-align: left;
 }
 
 .text-right {
   text-align: right;
 }
 
-/* Text Transform */
+.text-justify {
+  text-align: justify;
+}
+
 .uppercase {
   text-transform: uppercase;
+}
+
+.lowercase {
+  text-transform: lowercase;
 }
 
 .capitalize {
   text-transform: capitalize;
 }
 
-/* Text Decoration */
-.no-underline {
-  text-decoration: none;
+.italic {
+  font-style: italic;
 }
 
-.underline {
-  text-decoration: underline;
+.not-italic {
+  font-style: normal;
 }
 
-.line-through {
-  text-decoration: line-through;
-}
-
-/* Text Truncation */
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -160,3 +91,57 @@
   overflow: hidden;
 }
 
+/* ========================================
+ * LEGACY SUPPORT
+ * Keep these for backward compatibility
+ * TODO: Migrate to M3 typography classes
+ * ======================================== */
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Body text */
+p {
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Code blocks */
+code, pre {
+  font-family: var(--font-mono);
+}
+
+/* Links */
+a {
+  color: rgb(var(--m3-scheme-primary));
+  text-decoration: none;
+  transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:hover {
+  color: rgb(var(--m3-scheme-primary));
+  text-decoration: underline;
+}
+
+/* ========================================
+ * REMOVED UTILITIES
+ * Now using M3 equivalents:
+ * 
+ * Font sizes (.text-xs, .text-sm, etc.)
+ *   → Use m3-font-* classes
+ * 
+ * Font weights (.font-regular, .font-bold, etc.)
+ *   → Use m3-font-* classes (they include proper weights)
+ * 
+ * Line heights
+ *   → M3 typography classes include proper line heights
+ * 
+ * Letter spacing
+ *   → M3 typography classes include proper letter spacing
+ * ======================================== */

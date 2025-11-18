@@ -1,9 +1,25 @@
 /* Global Styles - Collective Demo Prototype */
 
-/* Import all domain stylesheets */
-@import './themes/theme-base.css';
-@import './themes/midnight-coral.css';
-@import './themes/purple-electric.css';
+/* ========================================
+ * MATERIAL DESIGN 3 THEMES
+ * Color schemes and M3 design tokens
+ * ======================================== */
+@import './themes/m3-theme.css';
+@import './themes/m3-theme-neutral-purple.css';
+@import './themes/m3-theme-blue.css';
+@import './themes/m3-theme-green.css';
+@import './themes/m3-theme-red.css';
+
+/* ========================================
+ * CUSTOM TOKENS
+ * App-specific design tokens (fonts, spacing, z-index)
+ * ======================================== */
+@import './custom-tokens.css';
+
+/* ========================================
+ * COMPONENT STYLES
+ * Legacy/custom component styling
+ * ======================================== */
 @import './typography.css';
 @import './colors.css';
 @import './spacing.css';

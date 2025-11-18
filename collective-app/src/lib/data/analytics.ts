@@ -302,3 +302,65 @@ export function getGroupMonthAnalytics(): GroupMonthAnalytics {
 	};
 }
 
+// Get daily trend data for last 7 days (for line charts)
+export function getDailyTrendData(userId: string): { labels: string[]; data: number[] } {
+	const now = new Date();
+	const labels: string[] = [];
+	const data: number[] = [];
+	
+	// Generate last 7 days
+	for (let i = 6; i >= 0; i--) {
+		const date = new Date(now);
+		date.setDate(now.getDate() - i);
+		
+		// Format label (e.g., "Mon", "Tue")
+		const dayLabel = date.toLocaleDateString('en-US', { weekday: 'short' });
+		labels.push(dayLabel);
+		
+		// Generate realistic completion rate (with some variance)
+		// Base rate around 0.8 with ±0.15 variance
+		const baseRate = 0.8;
+		const variance = (Math.random() - 0.5) * 0.3;
+		const rate = Math.max(0.4, Math.min(1.0, baseRate + variance));
+		data.push(rate);
+	}
+	
+	return { labels, data };
+}
+
+// Get weekly trend data for last 4 weeks (for area charts)
+export function getWeeklyTrendData(userId: string): { labels: string[]; data: number[] } {
+	const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+	
+	// Generate realistic weekly completion rates
+	const data = [0.75, 0.82, 0.88, 0.85];
+	
+	return { labels, data };
+}
+
+// Get 30-day trend data (for detailed view)
+export function get30DayTrendData(userId: string): { labels: string[]; data: number[] } {
+	const now = new Date();
+	const labels: string[] = [];
+	const data: number[] = [];
+	
+	// Generate data for every 3rd day to keep chart readable
+	for (let i = 30; i >= 0; i -= 3) {
+		const date = new Date(now);
+		date.setDate(now.getDate() - i);
+		
+		// Format label (e.g., "Nov 12")
+		const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+		labels.push(dateLabel);
+		
+		// Generate realistic trend (gradually improving over time)
+		const progress = (30 - i) / 30; // 0 to 1
+		const baseRate = 0.65 + (progress * 0.25); // 0.65 to 0.90
+		const variance = (Math.random() - 0.5) * 0.15;
+		const rate = Math.max(0.5, Math.min(1.0, baseRate + variance));
+		data.push(rate);
+	}
+	
+	return { labels, data };
+}
+
