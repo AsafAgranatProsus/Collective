@@ -7,6 +7,7 @@ import type { Message } from '$lib/data/scenarios';
 import { members } from '$lib/data/household';
 
 export type UserId = 'sarah' | 'mike' | 'jessica' | 'bob';
+export type GroupId = string;
 
 interface Conversation {
 	userId: UserId;
@@ -20,21 +21,34 @@ interface DemoMenuState {
 
 interface AppState {
 	currentUser: UserId;
-	conversations: Record<UserId, Message[]>;
+	currentGroup: GroupId;
+	// Conversations scoped by group, then by user
+	conversations: Record<GroupId, Record<UserId, Message[]>>;
 	activeScenario: string | null;
 	demoMenu: DemoMenuState;
 	animationsEnabled: boolean;
 	typingIndicatorVisible: boolean;
+	navigationDirection: 'forward' | 'back' | null;
+}
+
+/**
+ * Initialize empty conversations for a group
+ */
+function initGroupConversations(): Record<UserId, Message[]> {
+	return {
+		sarah: [],
+		mike: [],
+		jessica: [],
+		bob: []
+	};
 }
 
 // Create reactive state using Svelte 5 runes
 let appState = $state<AppState>({
 	currentUser: 'sarah',
+	currentGroup: 'brooklyn-apt',
 	conversations: {
-		sarah: [],
-		mike: [],
-		jessica: [],
-		bob: []
+		'brooklyn-apt': initGroupConversations()
 	},
 	activeScenario: null,
 	demoMenu: {
@@ -42,7 +56,8 @@ let appState = $state<AppState>({
 		position: { x: 20, y: 20 }
 	},
 	animationsEnabled: true,
-	typingIndicatorVisible: false
+	typingIndicatorVisible: false,
+	navigationDirection: null
 });
 
 /**
@@ -50,6 +65,27 @@ let appState = $state<AppState>({
  */
 export function getCurrentUser(): UserId {
 	return appState.currentUser;
+}
+
+/**
+ * Get current group
+ */
+export function getCurrentGroup(): GroupId {
+	return appState.currentGroup;
+}
+
+/**
+ * Set current group
+ */
+export function setCurrentGroup(groupId: GroupId): void {
+	appState.currentGroup = groupId;
+	
+	// Initialize conversations for this group if they don't exist
+	if (!appState.conversations[groupId]) {
+		appState.conversations[groupId] = initGroupConversations();
+	}
+	
+	console.log(`Switched to group: ${groupId}`);
 }
 
 /**
@@ -61,49 +97,82 @@ export function switchUser(userId: UserId): void {
 }
 
 /**
- * Get current conversation
+ * Get current conversation (for current group and user)
  */
 export function getCurrentConversation(): Message[] {
-	return appState.conversations[appState.currentUser];
+	const groupId = appState.currentGroup;
+	const userId = appState.currentUser;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[groupId]) {
+		appState.conversations[groupId] = initGroupConversations();
+	}
+	
+	return appState.conversations[groupId][userId];
 }
 
 /**
- * Get conversation for specific user
+ * Get conversation for specific user in current group
  */
-export function getConversation(userId: UserId): Message[] {
-	return appState.conversations[userId];
+export function getConversation(userId: UserId, groupId?: GroupId): Message[] {
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	return appState.conversations[targetGroup][userId];
 }
 
 /**
- * Add message to current user's conversation
+ * Add message to current user's conversation in current group
  */
-export function addMessage(message: Message): void {
-	appState.conversations[appState.currentUser].push(message);
+export function addMessage(message: Message, groupId?: GroupId): void {
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	appState.conversations[targetGroup][appState.currentUser].push(message);
 }
 
 /**
- * Add message to specific user's conversation
+ * Add message to specific user's conversation in specific/current group
  */
-export function addMessageToUser(userId: UserId, message: Message): void {
-	appState.conversations[userId].push(message);
+export function addMessageToUser(userId: UserId, message: Message, groupId?: GroupId): void {
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	appState.conversations[targetGroup][userId].push(message);
 }
 
 /**
- * Clear conversation for current user
+ * Clear conversation for current user in current group
  */
-export function clearCurrentConversation(): void {
-	appState.conversations[appState.currentUser] = [];
+export function clearCurrentConversation(groupId?: GroupId): void {
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	appState.conversations[targetGroup][appState.currentUser] = [];
 }
 
 /**
- * Clear all conversations
+ * Clear all conversations for all groups
  */
 export function clearAllConversations(): void {
 	appState.conversations = {
-		sarah: [],
-		mike: [],
-		jessica: [],
-		bob: []
+		'brooklyn-apt': initGroupConversations()
 	};
 }
 
@@ -122,11 +191,18 @@ export function getActiveScenario(): string | null {
 }
 
 /**
- * Load scenario into conversation
+ * Load scenario into conversation for specific group
  */
-export function loadScenario(scenarioId: string, initialMessages: Message[], userId: UserId): void {
-	// Clear current conversation
-	appState.conversations[userId] = [];
+export function loadScenario(scenarioId: string, initialMessages: Message[], userId: UserId, groupId?: GroupId): void {
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	// Clear current conversation for this user in this group
+	appState.conversations[targetGroup][userId] = [];
 	
 	// Set active scenario
 	appState.activeScenario = scenarioId;
@@ -136,10 +212,10 @@ export function loadScenario(scenarioId: string, initialMessages: Message[], use
 	
 	// Add initial messages
 	initialMessages.forEach(msg => {
-		appState.conversations[userId].push(msg);
+		appState.conversations[targetGroup][userId].push(msg);
 	});
 	
-	console.log(`Loaded scenario: ${scenarioId} for user: ${userId}`);
+	console.log(`Loaded scenario: ${scenarioId} for user: ${userId} in group: ${targetGroup}`);
 }
 
 /**
@@ -210,11 +286,9 @@ export function getTypingIndicatorVisible(): boolean {
  */
 export function resetDemo(): void {
 	appState.currentUser = 'sarah';
+	appState.currentGroup = 'brooklyn-apt';
 	appState.conversations = {
-		sarah: [],
-		mike: [],
-		jessica: [],
-		bob: []
+		'brooklyn-apt': initGroupConversations()
 	};
 	appState.activeScenario = null;
 	appState.animationsEnabled = true;
@@ -232,8 +306,9 @@ export function getAppState() {
 /**
  * Send a message (helper that handles both user and AI responses)
  */
-export async function sendMessage(content: string, userId?: UserId): Promise<void> {
+export async function sendMessage(content: string, userId?: UserId, groupId?: GroupId): Promise<void> {
 	const targetUser = userId || appState.currentUser;
+	const targetGroup = groupId || appState.currentGroup;
 	
 	// Create user message
 	const userMessage: Message = {
@@ -244,7 +319,7 @@ export async function sendMessage(content: string, userId?: UserId): Promise<voi
 	};
 	
 	// Add to conversation
-	addMessageToUser(targetUser, userMessage);
+	addMessageToUser(targetUser, userMessage, targetGroup);
 	
 	// Note: AI response would be triggered by scenario logic or other handlers
 	// This is just a helper for manual message sending
@@ -256,9 +331,11 @@ export async function sendMessage(content: string, userId?: UserId): Promise<voi
 export async function sendAIResponse(
 	content: string, 
 	ui_elements?: Message['ui_elements'],
-	userId?: UserId
+	userId?: UserId,
+	groupId?: GroupId
 ): Promise<void> {
 	const targetUser = userId || appState.currentUser;
+	const targetGroup = groupId || appState.currentGroup;
 	
 	// Show typing indicator
 	showTypingIndicator();
@@ -279,7 +356,7 @@ export async function sendAIResponse(
 	};
 	
 	// Add to conversation
-	addMessageToUser(targetUser, aiMessage);
+	addMessageToUser(targetUser, aiMessage, targetGroup);
 }
 
 /**
@@ -294,5 +371,19 @@ export function getMemberInfo(userId: UserId) {
  */
 export function getAllMembers() {
 	return members;
+}
+
+/**
+ * Set navigation direction
+ */
+export function setNavigationDirection(direction: 'forward' | 'back' | null): void {
+	appState.navigationDirection = direction;
+}
+
+/**
+ * Get navigation direction
+ */
+export function getNavigationDirection(): 'forward' | 'back' | null {
+	return appState.navigationDirection;
 }
 

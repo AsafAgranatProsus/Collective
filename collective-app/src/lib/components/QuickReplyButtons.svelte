@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { QuickReply } from '$lib/data/scenarios';
-	import { fly } from 'svelte/transition';
+	import { fly, scale } from 'svelte/transition';
 	
 	let { 
 		buttons, 
@@ -15,12 +15,17 @@
 	}
 </script>
 
-<div class="quick-replies">
+<div 
+	class="quick-replies"
+	in:fly={{ y: 20, duration: 200 }}
+	out:scale={{ duration: 150, start: 0.95, opacity: 0 }}
+>
 	{#each buttons as button, index (button.value)}
 		<button
 			class="quick-reply-btn"
 			onclick={() => handleClick(button)}
 			in:fly={{ y: 20, duration: 200, delay: index * 50 }}
+			out:scale={{ duration: 150, start: 0.95, opacity: 0 }}
 		>
 			{button.label}
 		</button>

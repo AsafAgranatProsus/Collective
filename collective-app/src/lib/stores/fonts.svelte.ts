@@ -7,6 +7,7 @@ import {
 	SANS_SERIF_FONTS, 
 	SERIF_FONTS, 
 	MONO_FONT,
+	LOGO_FONTS,
 	applyFont,
 	type FontOption 
 } from '$lib/utils/fontLoader';
@@ -15,13 +16,15 @@ interface FontState {
 	sansSerif: FontOption;
 	serif: FontOption;
 	mono: FontOption;
+	logo: FontOption;
 }
 
 // Create reactive state using Svelte 5 runes
 let fontState = $state<FontState>({
 	sansSerif: SANS_SERIF_FONTS[0], // Inter (default)
 	serif: SERIF_FONTS[0], // Playfair Display (default)
-	mono: MONO_FONT // JetBrains Mono (fixed)
+	mono: MONO_FONT, // JetBrains Mono (fixed)
+	logo: LOGO_FONTS[0] // Beth Ellen (default)
 });
 
 /**
@@ -33,6 +36,7 @@ export function initFonts(): void {
 	// Load saved fonts from localStorage
 	const savedSans = localStorage.getItem('collective-font-sans');
 	const savedSerif = localStorage.getItem('collective-font-serif');
+	const savedLogo = localStorage.getItem('collective-font-logo');
 	
 	if (savedSans) {
 		const font = SANS_SERIF_FONTS.find(f => f.family === savedSans);
@@ -54,6 +58,17 @@ export function initFonts(): void {
 	} else {
 		// Apply default serif font
 		applyFont('serif', fontState.serif);
+	}
+	
+	if (savedLogo) {
+		const font = LOGO_FONTS.find(f => f.family === savedLogo);
+		if (font) {
+			fontState.logo = font;
+			applyFont('logo', font);
+		}
+	} else {
+		// Apply default logo font
+		applyFont('logo', fontState.logo);
 	}
 	
 	// Always apply mono font
@@ -79,6 +94,15 @@ export function setSerifFont(font: FontOption): void {
 }
 
 /**
+ * Set logo font
+ */
+export function setLogoFont(font: FontOption): void {
+	fontState.logo = font;
+	applyFont('logo', font);
+	localStorage.setItem('collective-font-logo', font.family);
+}
+
+/**
  * Get available sans-serif fonts
  */
 export function getSansSerifFonts(): FontOption[] {
@@ -90,6 +114,13 @@ export function getSansSerifFonts(): FontOption[] {
  */
 export function getSerifFonts(): FontOption[] {
 	return SERIF_FONTS;
+}
+
+/**
+ * Get available logo fonts
+ */
+export function getLogoFonts(): FontOption[] {
+	return LOGO_FONTS;
 }
 
 /**
@@ -111,6 +142,13 @@ export function getCurrentSansSerif(): FontOption {
  */
 export function getCurrentSerif(): FontOption {
 	return fontState.serif;
+}
+
+/**
+ * Get current logo font
+ */
+export function getCurrentLogo(): FontOption {
+	return fontState.logo;
 }
 
 /**

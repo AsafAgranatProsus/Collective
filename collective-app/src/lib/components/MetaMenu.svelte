@@ -14,11 +14,14 @@
 	} from '$lib/stores/app.svelte';
 	import { 
 		getSansSerifFonts, 
-		getSerifFonts, 
+		getSerifFonts,
+		getLogoFonts,
 		setSansSerifFont, 
 		setSerifFont,
+		setLogoFont,
 		getCurrentSansSerif,
-		getCurrentSerif
+		getCurrentSerif,
+		getCurrentLogo
 	} from '$lib/stores/fonts.svelte';
 	import { 
 		setTheme, 
@@ -33,11 +36,13 @@
 	let animationsEnabled = $derived(getAnimationsEnabled());
 	let currentSansSerif = $derived(getCurrentSansSerif());
 	let currentSerif = $derived(getCurrentSerif());
+	let currentLogo = $derived(getCurrentLogo());
 	let currentTheme = $derived(getCurrentTheme());
 	let currentMode = $derived(getCurrentMode());
 	
 	const sansSerifFonts = getSansSerifFonts();
 	const serifFonts = getSerifFonts();
+	const logoFonts = getLogoFonts();
 	const members = getAllMembers();
 	
 	let isDragging = $state(false);
@@ -165,6 +170,22 @@
 				</button>
 				{#if expandedSection === 'fonts'}
 					<div class="section-content" transition:fade={{ duration: 150 }}>
+						<div class="font-selector">
+							<label for="logo-font">Logo:</label>
+							<select 
+								id="logo-font" 
+								value={currentLogo.family}
+								onchange={(e) => {
+									const font = logoFonts.find(f => f.family === e.currentTarget.value);
+									if (font) setLogoFont(font);
+								}}
+							>
+								{#each logoFonts as font}
+									<option value={font.family}>{font.name}</option>
+								{/each}
+							</select>
+						</div>
+						
 						<div class="font-selector">
 							<label for="sans-font">Sans-Serif:</label>
 							<select 

@@ -41,6 +41,13 @@ export const MONO_FONT: FontOption = {
 	weights: '400,500'
 };
 
+export const LOGO_FONTS: FontOption[] = [
+	{ name: 'Beth Ellen', family: 'Beth Ellen', weights: '' }, // No weights
+	{ name: 'Miniver', family: 'Miniver', weights: '' }, // No weights
+	{ name: 'Playwrite South Africa', family: 'Playwrite ZA', weights: '100..400' },
+	{ name: 'Molle', family: 'Molle', weights: '' } // No weights
+];
+
 /**
  * Font loading is now handled by <svelte:head> in +layout.svelte
  * This function is kept for compatibility but does nothing
@@ -52,14 +59,11 @@ export function loadGoogleFont(font: FontOption): void {
 /**
  * Update CSS variable for font family
  */
-export function updateFontVariable(variable: '--font-sans' | '--font-serif' | '--font-mono', fontFamily: string): void {
+export function updateFontVariable(variable: '--font-sans' | '--font-serif' | '--font-mono' | '--font-logo', fontFamily: string): void {
 	// Quote font names that contain spaces
 	const quotedFamily = fontFamily.includes(' ') ? `"${fontFamily}"` : fontFamily;
 	const value = `${quotedFamily}, ${getFallbackStack(variable)}`;
 	document.documentElement.style.setProperty(variable, value);
-	
-	// Debug: log what was set
-	console.log(`Font: ${variable} = ${value}`);
 }
 
 /**
@@ -73,6 +77,8 @@ function getFallbackStack(variable: string): string {
 			return 'Georgia, serif';
 		case '--font-mono':
 			return 'monospace';
+		case '--font-logo':
+			return 'cursive, fantasy';
 		default:
 			return 'sans-serif';
 	}
@@ -82,16 +88,17 @@ function getFallbackStack(variable: string): string {
  * Load and apply a font in one step
  */
 export function applyFont(
-	type: 'sans' | 'serif' | 'mono',
+	type: 'sans' | 'serif' | 'mono' | 'logo',
 	font: FontOption
 ): void {
 	loadGoogleFont(font);
 	
 	const variable = type === 'sans' ? '--font-sans' 
-		: type === 'serif' ? '--font-serif' 
-		: '--font-mono';
+		: type === 'serif' ? '--font-serif'
+		: type === 'mono' ? '--font-mono'
+		: '--font-logo';
 	
-	updateFontVariable(variable, font.family);
+	updateFontVariable(variable as any, font.family);
 }
 
 /**
@@ -101,4 +108,3 @@ export function applyFont(
 export function preloadDefaultFonts(): void {
 	// No-op: Fonts are loaded via <svelte:head> reactively
 }
-
