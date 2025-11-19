@@ -1,8 +1,12 @@
 <script lang="ts">
 	import type { Message } from '$lib/data/scenarios';
-	import { fade, fly } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	
-	let { message } = $props<{ message: Message }>();
+	let { 
+		message
+	} = $props<{ 
+		message: Message;
+	}>();
 	
 	// Format timestamp
 	function formatTime(timestamp: string): string {

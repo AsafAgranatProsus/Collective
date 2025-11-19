@@ -117,8 +117,19 @@
 		font-family: var(--font-logo);
 		font-size: 2rem;
 		font-weight: 700;
-		color: rgb(var(--m3-scheme-on-surface));
 		letter-spacing: -0.02em;
+		
+		/* Gradient from left to right using theme colors */
+		background: linear-gradient(
+			to right,
+			rgb(var(--m3-scheme-primary)),
+			rgb(var(--m3-scheme-secondary)),
+			rgb(var(--m3-scheme-tertiary))
+		);
+		background-clip: text;
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		color: transparent;
 	}
 	
 	.groups-container {

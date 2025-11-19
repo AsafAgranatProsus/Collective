@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fly } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import MessageBubble from '$lib/components/MessageBubble.svelte';
-	import QuickReplyButtons from '$lib/components/QuickReplyButtons.svelte';
+	import UserMessage from '$lib/components/UserMessage.svelte';
 	import TypingIndicator from '$lib/components/TypingIndicator.svelte';
 	import ChatInput from '$lib/components/ChatInput.svelte';
 	import TaskCard from '$lib/components/TaskCard.svelte';
@@ -51,40 +52,6 @@
 	
 	let messagesContainer: HTMLDivElement;
 	let groupChatOpen = $state(false);
-	
-	// Track the last message with quick replies that should show buttons
-	let lastQuickReplyMessageId = $state<string | null>(null);
-	
-	// Effect to update which quick reply buttons should show
-	$effect(() => {
-		// Find the last message with quick replies
-		let foundMessageId: string | null = null;
-		let foundIndex = -1;
-		
-		for (let i = conversation.length - 1; i >= 0; i--) {
-			if (conversation[i].ui_elements?.quick_replies) {
-				foundMessageId = conversation[i].id;
-				foundIndex = i;
-				break;
-			}
-		}
-		
-		// Check if there are any user messages after this quick reply message
-		if (foundMessageId !== null && foundIndex !== -1) {
-			let hasUserMessageAfter = false;
-			for (let i = foundIndex + 1; i < conversation.length; i++) {
-				if (conversation[i].sender === 'user') {
-					hasUserMessageAfter = true;
-					break;
-				}
-			}
-			
-			// Only show buttons if no user message has come after them
-			lastQuickReplyMessageId = hasUserMessageAfter ? null : foundMessageId;
-		} else {
-			lastQuickReplyMessageId = foundMessageId;
-		}
-	});
 	
 	// Auto-scroll to bottom when new messages arrive
 	$effect(() => {
@@ -184,17 +151,10 @@
 	}
 	
 	// Handle quick reply selection
-	function handleQuickReply(value: string, label: string) {
-		// Only add user message if not already added (avoid duplicates from handleSendMessage)
-		if (conversation.length === 0 || conversation[conversation.length - 1].content !== label) {
-			const userMessage: Message = {
-				id: `msg-${Date.now()}`,
-				sender: 'user',
-				content: label,
-				timestamp: new Date().toISOString()
-			};
-			
-			addMessage(userMessage);
+	function handleQuickReply(value: string, label: string, messageToAdd?: Message) {
+		// If message is provided (after morph completes), add it
+		if (messageToAdd) {
+			addMessage(messageToAdd);
 		}
 		
 		// Handle based on value
@@ -378,13 +338,24 @@
 				rightSeam: navDirection !== 'back'
 			}}
 		>
-			{#each conversation as message (message.id)}
-				<MessageBubble {message} />
-				
-				{#if message.ui_elements?.quick_replies && message.id === lastQuickReplyMessageId}
-					<QuickReplyButtons 
-						buttons={message.ui_elements.quick_replies}
-						onSelect={handleQuickReply}
+			{#each conversation as message, index (message.id)}
+				{#if message.sender === 'ai'}
+					<MessageBubble {message} />
+					
+					{#if message.ui_elements?.quick_replies}
+						{@const hasUserMessageAfter = conversation.slice(index + 1).some(m => m.sender === 'user')}
+						{#if !hasUserMessageAfter}
+							<UserMessage 
+								mode="morphing"
+								buttons={message.ui_elements.quick_replies}
+								onSelect={handleQuickReply}
+							/>
+						{/if}
+					{/if}
+				{:else}
+					<UserMessage 
+						mode="bubble"
+						{message}
 					/>
 				{/if}
 				
@@ -483,6 +454,14 @@
 		flex: 1;
 		text-align: center;
 		min-width: 0;
+	}
+	
+	.transition-toggle-text {
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.5rem;
+		background-color: rgba(var(--m3-scheme-primary), 0.12);
+		color: rgb(var(--m3-scheme-primary));
+		font-weight: 600;
 	}
 	
 	.group-title {
