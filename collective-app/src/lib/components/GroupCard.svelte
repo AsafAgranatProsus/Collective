@@ -2,6 +2,8 @@
 	import type { Group } from "$lib/data/groups";
 	import { Icon, Card } from "m3-svelte";
 	import iconChevronRight from "@ktibow/iconset-material-symbols/chevron-right";
+	import Badge from "./Badge.svelte";
+	import GradientLineChart from "./Charts/GradientLineChart.svelte";
 
 	let { group, onClick } = $props<{
 		group: Group;
@@ -36,51 +38,52 @@
 		<div class="card-inner">
 			<!-- Header Section -->
 			<div class="header">
-				<div class="header-left">
+				<!-- <div class="header-left">
 					<div class="icon">{group.icon}</div>
-					<!-- Avatars Row -->
-					{#if group.avatars && group.avatars.length > 0}
-						<div class="avatars-row">
-							{#each group.avatars as avatar, index}
-								<img
-									src={avatar}
-									alt="Member {index + 1}"
-									class="avatar"
-									style="z-index: {group.avatars.length -
-										index}"
-								/>
-							{/each}
-						</div>
-					{/if}
-				</div>
+				</div> -->
 
 				<div class="title-section">
 					<h3 class="group-name m3-font-headline-small">
+						<span class="icon">{group.icon}</span>
 						{group.name}
 					</h3>
-					<p class="group-meta m3-font-body-medium">
-						{group.member_count}
-						{group.member_count === 1 ? "member" : "members"}
+					<div class="group-meta m3-font-body-medium">
+						<!-- {group.member_count} -->
+						<!-- Avatars Row -->
+						{#if group.avatars && group.avatars.length > 0}
+							<div class="avatars-row">
+								{#each group.avatars as avatar, index}
+									<img
+										src={avatar}
+										alt="Member {index + 1}"
+										class="avatar"
+										style="z-index: {group.avatars.length -
+											index}"
+									/>
+								{/each}
+							</div>
+						{/if}
+						<!-- {group.member_count === 1 ? "member" : "members"} -->
 						{#if group.is_active && group.pending_count}
-							<span class="separator">•</span>
+							<!-- <span class="separator">•</span>
 							<span class="pending"
 								>{group.pending_count} pending {group.pending_count ===
 								1
 									? "task"
 									: "tasks"}</span
-							>
+							> -->
 						{:else if !group.is_active}
 							<span class="separator">•</span>
 							<span class="coming-soon">Coming soon</span>
 						{/if}
-					</p>
+					</div>
 				</div>
 
-				{#if group.is_active}
+				<!-- {#if group.is_active}
 					<div class="chevron">
 						<Icon icon={iconChevronRight} />
 					</div>
-				{/if}
+				{/if} -->
 			</div>
 
 			<!-- Info Cards Section -->
@@ -93,11 +96,13 @@
 							class="info-card-wrapper next-action"
 						>
 							<div class="info-card-content">
-								<div class="info-label m3-font-label-small">
-									NEXT
+								<div class="info-label">
+									<span>Tasks</span>
+									<Badge count={group.pending_count} />
 								</div>
 								<div class="info-content m3-font-body-medium">
 									{group.next_action.text}
+
 									{#if group.next_action.amount}
 										<span class="amount"
 											>{group.next_action.amount}</span
@@ -108,6 +113,16 @@
 											>({group.next_action.due})</span
 										>
 									{/if}
+
+									<!-- {#if group.pending_count}
+										<span class="separator">•</span>
+										<span class="pending">
+											{group.pending_count} pending
+											{group.next_action.pending === 1
+												? "task"
+												: "tasks"}
+										</span>
+									{/if} -->
 								</div>
 							</div>
 						</Card>
@@ -117,11 +132,9 @@
 					{#if group.money_info}
 						<Card variant="filled" class="info-card-wrapper money">
 							<div class="info-card-content">
-								<div class="info-label m3-font-label-small">
-									MONEY
-								</div>
+								<div class="info-label">MONEY</div>
 								<div class="info-content m3-font-body-medium">
-									{group.money_info.text}
+									<span>{group.money_info.text}</span>
 									{#if group.money_info.amount}
 										<span class="amount"
 											>{group.money_info.amount}</span
@@ -136,15 +149,38 @@
 					{#if group.recent_activity}
 						<Card variant="filled" class="info-card-wrapper recent">
 							<div class="info-card-content">
-								<div class="info-label m3-font-label-small">
-									RECENT
-								</div>
+								<div class="info-label">RECENT</div>
 								<div class="info-content m3-font-body-medium">
-									{group.recent_activity.text}
+									<span>{group.recent_activity.text}</span>
 									<span class="time-ago"
 										>({group.recent_activity
 											.time_ago})</span
 									>
+								</div>
+							</div>
+						</Card>
+					{/if}
+
+					<!-- Group Activity Chart -->
+					{#if group.activity_data}
+						<Card
+							variant="filled"
+							class="info-card-wrapper activity-chart"
+						>
+							<div class="info-card-content chart-content">
+								<div class="info-label">ACTIVITY</div>
+								<div class="chart-wrapper">
+									<GradientLineChart
+										data={group.activity_data}
+										labels={group.activity_data.map(
+											() => "",
+										)}
+										height={40}
+										showPoints={false}
+										showGrid={false}
+										gradientColor="primary"
+										tension={0.5}
+									/>
 								</div>
 							</div>
 						</Card>
@@ -160,6 +196,7 @@
 		width: 100%;
 		transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 		cursor: pointer;
+		--m3-card-shape: 2rem;
 	}
 
 	.group-card-wrapper.inactive {
@@ -182,7 +219,7 @@
 	.card-inner {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 0.5rem;
 	}
 
 	/* Avatars Row */
@@ -190,19 +227,28 @@
 		display: flex;
 		align-items: center;
 		padding-bottom: 0.5rem;
+		position: absolute;
+		top: -0.75rem;
+		right: 0;
+		background-color: var(--m3-util-background);
+		border-radius: 1.5rem 1.5rem 0 0;
+		padding: 0.5rem;
 	}
 
 	.avatar {
-		width: 36px;
-		height: 36px;
+		width: 7vw;
+		height: 7vw;
 		border-radius: 50%;
-		border: 2px solid rgb(var(--m3-scheme-surface));
+		border: 3px solid var(--m3-util-background);
 		object-fit: cover;
 		flex-shrink: 0;
+		box-sizing: content-box;
+		max-width: 36px;
+		max-height: 36px;
 	}
 
 	.avatar:not(:first-child) {
-		margin-left: -10px;
+		margin-left: -17px;
 	}
 
 	/* Header Section */
@@ -213,13 +259,13 @@
 	}
 
 	.icon {
-		font-size: 40px;
-		width: 52px;
+		/* font-size: 24px; */
+		/* width: 52px;
 		height: 52px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		flex-shrink: 0;
+		flex-shrink: 0; */
 	}
 
 	.title-section {
@@ -278,13 +324,14 @@
 
 	/* Info Cards Grid */
 	.info-cards {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 0.25rem;
+		/* display: grid; */
+		/* Use auto-fit with minmax to ensure cards take ~50% of width and wrap */
+		/* grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); */
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		row-gap: 0.25rem;
 		padding-top: 0.5rem;
-		padding: 0.5rem 0.75rem;
-		border-radius: var(--m3-util-rounding-large);
-		/* background-color: rgb(var(--m3-scheme-surface-container-high)); */
 	}
 
 	.info-cards :global(.card) {
@@ -294,9 +341,10 @@
 
 	.info-card-content {
 		display: flex;
-		/* flex-direction: column; */
-		gap: 0.5rem;
-		align-items: center;
+		flex-direction: column;
+		gap: 0.25rem;
+		align-items: flex-start;
+		height: 100%;
 	}
 
 	.info-label {
@@ -305,15 +353,25 @@
 		font-weight: 600;
 		letter-spacing: 0.5px;
 		text-transform: uppercase;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		justify-content: center;
+		font-size: 0.9rem;
 	}
 
 	.info-content {
 		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-sans) !important;
 		line-height: 1.4;
-		display: flex;
+		/* display: flex;
+		flex-wrap: wrap; */
 		/* flex-direction: column; */
-		gap: 0.25rem;
+		/* gap: 0.25rem; */
+		/* height: 100%;
+		align-items: center;
+		width: 100%;
+		justify-content: space-between; */
 	}
 
 	.amount {
@@ -322,7 +380,7 @@
 	}
 
 	.due {
-		color: rgb(var(--m3-scheme-error));
+		color: rgb(var(--m3-scheme-primary));
 		font-weight: 500;
 		font-size: 0.9em;
 	}
@@ -332,7 +390,14 @@
 		font-size: 0.9em;
 	}
 
-	/* Specific info card styles - colored left borders */
+	.info-cards :global(.info-card-wrapper) {
+		/* background-color: rgb(var(--m3-scheme-surface-container-high)); */
+		padding: 0.75rem 1rem;
+		/* border-radius: var(--m3-util-rounding-large); */
+		border-radius: 1.5rem;
+		flex: 1 1 140px;
+	}
+
 	.info-cards :global(.info-card-wrapper.next-action .card) {
 		border-left: 3px solid rgb(var(--m3-scheme-primary));
 	}
@@ -345,6 +410,48 @@
 		border-left: 3px solid rgb(var(--m3-scheme-secondary));
 	}
 
+	/* Activity Chart Card Styles */
+	.info-cards :global(.info-card-wrapper.activity-chart) {
+		padding: 0 !important;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.info-cards :global(.info-card-wrapper.activity-chart .card) {
+		border-left: 3px solid rgb(var(--m3-scheme-primary));
+		padding: 0 !important;
+		height: 100%;
+	}
+
+	.chart-content {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		width: 100%;
+
+		.info-label {
+			padding: 0.75rem 1rem 0 1rem;
+			z-index: 1;
+		}
+
+		.chart {
+		}
+	}
+
+	.activity-chart .info-label {
+		padding: 0.75rem 1rem 0 1rem;
+		z-index: 1;
+	}
+
+	.chart-wrapper {
+		/* margin-top: auto; */
+		width: 100%;
+		/* height: 60px; */
+		/* Negative margin to pull chart down and remove potential canvas padding */
+		/* margin-bottom: -5px; */
+	}
+
 	/* Focus styles */
 	.group-card-wrapper:focus-visible {
 		outline: 2px solid rgb(var(--m3-scheme-primary));
@@ -353,9 +460,9 @@
 	}
 
 	/* Responsive: stack info cards on smaller screens */
-	@media (max-width: 768px) {
+	/* @media (max-width: 768px) {
 		.info-cards {
 			grid-template-columns: 1fr;
 		}
-	}
+	} */
 </style>

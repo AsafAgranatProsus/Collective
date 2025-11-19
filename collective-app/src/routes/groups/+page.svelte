@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import GroupCard from '$lib/components/GroupCard.svelte';
-	import MetaMenu from '$lib/components/MetaMenu.svelte';
 	import { getAllGroups } from '$lib/data/groups';
 	import { setDemoMenuOpen, setNavigationDirection } from '$lib/stores/app.svelte';
 	import { sharedAxisTransition } from 'm3-svelte';
@@ -79,9 +78,6 @@
 			<span>Create New Group</span>
 		</button>
 	</div>
-	
-	<!-- Meta Menu (Prototype Settings) -->
-	<MetaMenu />
 </div>
 
 <style>

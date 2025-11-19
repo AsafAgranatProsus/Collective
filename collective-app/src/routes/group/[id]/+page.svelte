@@ -6,7 +6,6 @@
 	import QuickReplyButtons from '$lib/components/QuickReplyButtons.svelte';
 	import TypingIndicator from '$lib/components/TypingIndicator.svelte';
 	import ChatInput from '$lib/components/ChatInput.svelte';
-	import MetaMenu from '$lib/components/MetaMenu.svelte';
 	import TaskCard from '$lib/components/TaskCard.svelte';
 	import ExpenseCard from '$lib/components/ExpenseCard.svelte';
 	import ShoppingCard from '$lib/components/ShoppingCard.svelte';
@@ -439,9 +438,6 @@
 	
 	<!-- Chat Input -->
 	<ChatInput onSend={handleSendMessage} />
-	
-	<!-- Meta Menu (Prototype Settings) -->
-	<MetaMenu />
 	
 	<!-- Group Chat Overlay -->
 	<GroupChat 

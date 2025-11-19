@@ -63,8 +63,8 @@
 		const rgbComma = rgb.replace(/\s+/g, ', ');
 		
 		gradient.addColorStop(0, `rgba(${rgbComma}, 0.8)`);
-		gradient.addColorStop(0.5, `rgba(${rgbComma}, 0.4)`);
-		gradient.addColorStop(1, `rgba(${rgbComma}, 0.05)`);
+		gradient.addColorStop(0.5, `rgba(${rgbComma}, 0.1)`); // Fade out quicker (at 30%)
+		gradient.addColorStop(1, `rgba(${rgbComma}, 0)`); // Fully transparent at bottom
 		
 		return gradient;
 	}
@@ -116,19 +116,7 @@
 						display: showLegend
 					},
 					tooltip: {
-						enabled: true,
-						backgroundColor: `rgba(${getM3Color('surface-container-highest')}, 0.95)`,
-						titleColor: `rgb(${getM3Color('on-surface')})`,
-						bodyColor: `rgb(${getM3Color('on-surface')})`,
-						borderColor: `rgba(${getM3Color('outline')}, 0.2)`,
-						borderWidth: 1,
-						padding: 12,
-						displayColors: false,
-						callbacks: {
-							label: function (context) {
-								return `${Math.round(context.parsed.y * 100)}%`;
-							}
-						}
+						enabled: false // Disable tooltip
 					}
 				},
 				scales: {
@@ -172,7 +160,9 @@
 				interaction: {
 					intersect: false,
 					mode: 'index'
-				}
+				},
+				// Disable hover interactions
+				events: [] 
 			}
 		});
 	}

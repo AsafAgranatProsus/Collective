@@ -2,6 +2,7 @@
 	import type { CoordinatedItem } from '$lib/data/items';
 	import { getMemberName } from '$lib/data/household';
 	import CurrencyDollar from 'phosphor-svelte/lib/CurrencyDollar';
+	import { Card } from 'm3-svelte';
 	
 	let { item } = $props<{ item: CoordinatedItem }>();
 	
@@ -20,70 +21,67 @@
 	}
 </script>
 
-<div class="expense-card">
-	<div class="card-header">
-		<div class="icon-title">
-			<div class="icon-circle">
-				<CurrencyDollar size={24} weight="duotone" />
+<div class="card-wrapper">
+	<Card variant="filled">
+		<div class="card-content">
+			<div class="card-header">
+				<div class="icon-title">
+					<div class="icon-circle">
+						<CurrencyDollar size={24} weight="duotone" />
+					</div>
+					<div class="title-info">
+						<h3 class="expense-title m3-font-title-medium">{item.title}</h3>
+						<span class="category m3-font-label-medium">{item.metadata.category || 'expense'}</span>
+					</div>
+				</div>
+				<div class="amount m3-font-title-large">
+					{formatCurrency(item.metadata.amount || 0, item.metadata.currency)}
+				</div>
 			</div>
-			<div class="title-info">
-				<h3 class="expense-title">{item.title}</h3>
-				<span class="category">{item.metadata.category || 'expense'}</span>
+			
+			<div class="card-details">
+				{#if item.metadata.paid_by}
+					<div class="detail-row">
+						<span class="detail-label m3-font-body-medium">Paid by:</span>
+						<span class="detail-value m3-font-body-medium">{getMemberName(item.metadata.paid_by)}</span>
+					</div>
+				{/if}
+				
+				{#if item.metadata.split_method === 'equal'}
+					<div class="detail-row">
+						<span class="detail-label m3-font-body-medium">Your share:</span>
+						<span class="detail-value highlight m3-font-body-medium">{getSplitAmount(item.metadata.amount || 0)}</span>
+					</div>
+				{/if}
+				
+				{#if item.metadata.date}
+					<div class="detail-row">
+						<span class="detail-label m3-font-body-medium">Date:</span>
+						<span class="detail-value m3-font-body-medium">{item.metadata.date}</span>
+					</div>
+				{/if}
 			</div>
+			
+			{#if item.status === 'completed'}
+				<div class="status-badge settled">
+					✓ Settled
+				</div>
+			{:else}
+				<div class="status-badge pending">
+					Pending Settlement
+				</div>
+			{/if}
 		</div>
-		<div class="amount">
-			{formatCurrency(item.metadata.amount || 0, item.metadata.currency)}
-		</div>
-	</div>
-	
-	<div class="card-details">
-		{#if item.metadata.paid_by}
-			<div class="detail-row">
-				<span class="detail-label">Paid by:</span>
-				<span class="detail-value">{getMemberName(item.metadata.paid_by)}</span>
-			</div>
-		{/if}
-		
-		{#if item.metadata.split_method === 'equal'}
-			<div class="detail-row">
-				<span class="detail-label">Your share:</span>
-				<span class="detail-value highlight">{getSplitAmount(item.metadata.amount || 0)}</span>
-			</div>
-		{/if}
-		
-		{#if item.metadata.date}
-			<div class="detail-row">
-				<span class="detail-label">Date:</span>
-				<span class="detail-value">{item.metadata.date}</span>
-			</div>
-		{/if}
-	</div>
-	
-	{#if item.status === 'completed'}
-		<div class="status-badge settled">
-			✓ Settled
-		</div>
-	{:else}
-		<div class="status-badge pending">
-			Pending Settlement
-		</div>
-	{/if}
+	</Card>
 </div>
 
 <style>
-	.expense-card {
-		background-color: var(--card-bg);
-		border: 1px solid var(--card-border);
-		border-radius: var(--radius-lg);
-		padding: var(--space-4);
-		box-shadow: var(--card-shadow);
-		transition: all var(--transition-base);
+	.card-wrapper {
 		margin-bottom: var(--space-3);
 	}
 	
-	.expense-card:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-md);
+	.card-content {
+		padding: var(--space-4);
 	}
 	
 	.card-header {
@@ -120,24 +118,18 @@
 	}
 	
 	.expense-title {
-		font-size: var(--text-md);
-		font-weight: var(--weight-semibold);
-		color: var(--text-primary);
+		color: rgb(var(--m3-scheme-on-surface));
 		margin: 0;
-		font-family: var(--font-sans);
 	}
 	
 	.category {
-		font-size: var(--text-xs);
-		color: var(--text-secondary);
+		color: rgb(var(--m3-scheme-on-surface-variant));
 		text-transform: uppercase;
 		font-family: var(--font-mono);
 	}
 	
 	.amount {
-		font-size: var(--text-xl);
-		font-weight: var(--weight-bold);
-		color: var(--text-primary);
+		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-mono);
 		white-space: nowrap;
 	}
@@ -153,43 +145,41 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-size: var(--text-sm);
 	}
 	
 	.detail-label {
-		color: var(--text-secondary);
-		font-family: var(--font-sans);
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 	
 	.detail-value {
-		color: var(--text-primary);
+		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-mono);
-		font-weight: var(--weight-medium);
+		font-weight: 500;
 	}
 	
 	.detail-value.highlight {
-		color: var(--accent);
-		font-weight: var(--weight-semibold);
+		color: rgb(var(--m3-scheme-primary));
+		font-weight: 700;
 	}
 	
 	.status-badge {
 		padding: var(--space-2) var(--space-3);
-		border-radius: var(--radius-md);
+		border-radius: var(--m3-util-rounding-medium);
 		font-size: var(--text-xs);
-		font-weight: var(--weight-medium);
+		font-weight: 500;
 		font-family: var(--font-mono);
 		text-align: center;
 		text-transform: uppercase;
 	}
 	
 	.status-badge.settled {
-		background-color: var(--status-complete-bg);
-		color: var(--status-complete-text);
+		background-color: rgb(var(--m3-scheme-primary-container));
+		color: rgb(var(--m3-scheme-on-primary-container));
 	}
 	
 	.status-badge.pending {
-		background-color: var(--status-pending-bg);
-		color: var(--status-pending-text);
+		background-color: rgb(var(--m3-scheme-surface-variant));
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 </style>
 

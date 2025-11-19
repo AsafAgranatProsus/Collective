@@ -26,6 +26,7 @@ export interface Group {
 		text: string;
 		time_ago: string;
 	};
+	activity_data?: number[]; // Mock data for chart
 }
 
 export const groups: Group[] = [
@@ -56,7 +57,8 @@ export const groups: Group[] = [
 		recent_activity: {
 			text: 'Jake completed trash duty',
 			time_ago: '15m ago'
-		}
+		},
+		activity_data: [0.3, 0.5, 0.4, 0.7, 0.6, 0.8, 0.9]
 	},
 	{
 		id: 'tokyo-trip',

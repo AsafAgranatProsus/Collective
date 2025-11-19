@@ -2,7 +2,8 @@
 	import type { CoordinatedItem } from '$lib/data/items';
 	import { getMemberName } from '$lib/data/household';
 	import Broom from 'phosphor-svelte/lib/Broom';
-	
+	import { Card, Button } from 'm3-svelte';
+
 	let { 
 		item,
 		onComplete
@@ -40,63 +41,61 @@
 	}
 </script>
 
-<div class="task-card">
-	<div class="card-header">
-		<div class="icon-title">
-			<div class="icon-circle">
-				<Broom size={24} weight="duotone" />
+<div class="card-wrapper">
+	<Card variant="filled">
+		<div class="card-content">
+			<div class="card-header">
+				<div class="icon-title">
+					<div class="icon-circle">
+						<Broom size={24} weight="duotone" />
+					</div>
+					<div class="title-info">
+						<h3 class="task-title m3-font-title-medium" class:completed={item.status === 'completed'}>
+							{item.title}
+						</h3>
+						{#if item.metadata.location}
+							<span class="location m3-font-body-small">📍 {item.metadata.location}</span>
+						{/if}
+					</div>
+				</div>
+				<span class="badge {getStatusBadgeClass(item.status)}">
+					{item.status}
+				</span>
 			</div>
-			<div class="title-info">
-				<h3 class="task-title" class:completed={item.status === 'completed'}>
-					{item.title}
-				</h3>
-				{#if item.metadata.location}
-					<span class="location">📍 {item.metadata.location}</span>
+			
+			<div class="card-details">
+				{#if item.due_date}
+					<span class="detail m3-font-body-medium">Due: {formatDueDate(item.due_date)}</span>
+				{/if}
+				{#if item.metadata.estimated_minutes}
+					<span class="detail m3-font-body-medium">⏱ {item.metadata.estimated_minutes} min</span>
+				{/if}
+				{#if item.assigned_to && item.assigned_to.length > 0}
+					<span class="detail m3-font-body-medium">👤 {getMemberName(item.assigned_to[0])}</span>
 				{/if}
 			</div>
+			
+			{#if item.status !== 'completed' && onComplete}
+				<div class="card-actions">
+					<Button variant="filled" onclick={handleComplete}>
+						Mark Complete
+					</Button>
+				</div>
+			{/if}
 		</div>
-		<span class="badge {getStatusBadgeClass(item.status)}">
-			{item.status}
-		</span>
-	</div>
-	
-	<div class="card-details">
-		{#if item.due_date}
-			<span class="detail">Due: {formatDueDate(item.due_date)}</span>
-		{/if}
-		{#if item.metadata.estimated_minutes}
-			<span class="detail">⏱ {item.metadata.estimated_minutes} min</span>
-		{/if}
-		{#if item.assigned_to && item.assigned_to.length > 0}
-			<span class="detail">👤 {getMemberName(item.assigned_to[0])}</span>
-		{/if}
-	</div>
-	
-	{#if item.status !== 'completed' && onComplete}
-		<div class="card-actions">
-			<button class="action-btn primary" onclick={handleComplete}>
-				Mark Complete
-			</button>
-		</div>
-	{/if}
+	</Card>
 </div>
 
 <style>
-	.task-card {
-		background-color: var(--card-bg);
-		border: 1px solid var(--card-border);
-		border-radius: var(--radius-lg);
-		padding: var(--space-4);
-		box-shadow: var(--card-shadow);
-		transition: all var(--transition-base);
+	.card-wrapper {
 		margin-bottom: var(--space-3);
 	}
-	
-	.task-card:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-md);
+
+	/* Override M3 Card padding issues by using a content wrapper */
+	.card-content {
+		padding: var(--space-4);
 	}
-	
+
 	.card-header {
 		display: flex;
 		justify-content: space-between;
@@ -116,11 +115,11 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+		background: linear-gradient(135deg, rgb(var(--m3-scheme-primary)), rgb(var(--m3-scheme-primary-container)));
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: white;
+		color: rgb(var(--m3-scheme-on-primary));
 		flex-shrink: 0;
 	}
 	
@@ -131,11 +130,8 @@
 	}
 	
 	.task-title {
-		font-size: var(--text-md);
-		font-weight: var(--weight-semibold);
-		color: var(--text-primary);
+		color: rgb(var(--m3-scheme-on-surface));
 		margin: 0;
-		font-family: var(--font-sans);
 	}
 	
 	.task-title.completed {
@@ -144,33 +140,32 @@
 	}
 	
 	.location {
-		font-size: var(--text-sm);
-		color: var(--text-secondary);
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 	
 	.badge {
 		padding: var(--space-1) var(--space-3);
-		border-radius: var(--radius-full);
-		font-size: var(--text-xs);
-		font-weight: var(--weight-medium);
+		border-radius: var(--m3-util-rounding-full);
+		font-size: var(--text-xs); /* Keep custom size as it's specific to badge */
+		font-weight: 500;
 		font-family: var(--font-mono);
 		text-transform: uppercase;
 		white-space: nowrap;
 	}
 	
 	.badge-pending {
-		background-color: var(--status-pending-bg);
-		color: var(--status-pending-text);
+		background-color: rgb(var(--m3-scheme-surface-variant));
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 	
 	.badge-complete {
-		background-color: var(--status-complete-bg);
-		color: var(--status-complete-text);
+		background-color: rgb(var(--m3-scheme-primary-container));
+		color: rgb(var(--m3-scheme-on-primary-container));
 	}
 	
 	.badge-overdue {
-		background-color: var(--status-overdue-bg);
-		color: var(--status-overdue-text);
+		background-color: rgb(var(--m3-scheme-error-container));
+		color: rgb(var(--m3-scheme-on-error-container));
 	}
 	
 	.card-details {
@@ -181,9 +176,7 @@
 	}
 	
 	.detail {
-		font-size: var(--text-sm);
-		color: var(--text-secondary);
-		font-family: var(--font-sans);
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 	
 	.card-actions {
@@ -191,33 +184,7 @@
 		gap: var(--space-2);
 		margin-top: var(--space-3);
 		padding-top: var(--space-3);
-		border-top: 1px solid var(--border-primary);
-	}
-	
-	.action-btn {
-		padding: var(--space-2) var(--space-4);
-		border-radius: var(--radius-md);
-		font-size: var(--text-sm);
-		font-weight: var(--weight-medium);
-		font-family: var(--font-sans);
-		border: 1px solid transparent;
-		cursor: pointer;
-		transition: all var(--transition-base);
-	}
-	
-	.action-btn.primary {
-		background-color: var(--accent);
-		color: var(--text-on-accent);
-		border-color: var(--accent);
-	}
-	
-	.action-btn:hover {
-		transform: translateY(-1px);
-		box-shadow: var(--shadow-sm);
-	}
-	
-	.action-btn:active {
-		transform: scale(0.95);
+		border-top: 1px solid rgb(var(--m3-scheme-outline-variant));
 	}
 </style>
 
