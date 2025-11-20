@@ -119,31 +119,11 @@
 		// Ensure menu starts closed to avoid blocking UI
 		setDemoMenuOpen(false);
 
-		// Keyboard shortcut listener
-		function handleKeyPress(e: KeyboardEvent) {
-			// Debug log for key press
-			if (e.altKey) console.log('Alt key pressed with:', e.key);
-			
-			// Support Alt+/ (original) and Ctrl+Space (alternative)
-			if ((e.altKey && e.key === '/') || (e.ctrlKey && e.key === ' ')) {
-				console.log('Toggling menu');
-				e.preventDefault();
-				setDemoMenuOpen(!demoMenuState.isOpen);
-			}
-			// User shortcuts
-			if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
-				e.preventDefault();
-				const userIds = ['sarah', 'mike', 'jessica', 'bob'];
-				handleUserSwitch(userIds[parseInt(e.key) - 1]);
-			}
-		}
-		
-		window.addEventListener('keydown', handleKeyPress);
+		// Dragging event listeners
 		window.addEventListener('mousemove', handleMouseMove);
 		window.addEventListener('mouseup', handleMouseUp);
 		
 		return () => {
-			window.removeEventListener('keydown', handleKeyPress);
 			window.removeEventListener('mousemove', handleMouseMove);
 			window.removeEventListener('mouseup', handleMouseUp);
 		};

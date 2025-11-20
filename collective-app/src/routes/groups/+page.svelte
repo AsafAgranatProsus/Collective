@@ -101,7 +101,7 @@
 		z-index: 200;
 		padding: 1rem 1.5rem;
 		background-color: rgba(var(--m3-scheme-surface), 0.8);
-		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant));
+		/* border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant)); */
 		backdrop-filter: blur(20px);
 		-webkit-backdrop-filter: blur(20px);
 	}

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { initTheme } from '$lib/stores/theme.svelte';
 	import { initFonts, getCurrentSansSerif, getCurrentSerif, getCurrentLogo, getMonoFont } from '$lib/stores/fonts.svelte';
+	import { getDemoMenuState, setDemoMenuOpen, switchUser } from '$lib/stores/app.svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import MetaMenu from '$lib/components/MetaMenu.svelte';
 
@@ -45,6 +46,28 @@
 	<link rel="stylesheet" href={logoFontUrl()} />
 	<link rel="stylesheet" href={monoFontUrl} />
 </svelte:head>
+
+<svelte:window onkeydown={(e) => {
+	// Don't trigger if user is typing in an input
+	const target = e.target as HTMLElement;
+	if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+		return;
+	}
+
+	// Support Alt+/ (original) and Ctrl+Space (alternative)
+	if ((e.altKey && e.key === '/') || (e.ctrlKey && e.key === ' ')) {
+		e.preventDefault();
+		const currentState = getDemoMenuState();
+		setDemoMenuOpen(!currentState.isOpen);
+	}
+
+	// User shortcuts
+	if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
+		e.preventDefault();
+		const userIds = ['sarah', 'mike', 'jessica', 'bob'];
+		switchUser(userIds[parseInt(e.key) - 1] as any);
+	}
+}} />
 
 {@render children()}
 <MetaMenu />

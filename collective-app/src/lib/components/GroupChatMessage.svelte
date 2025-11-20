@@ -1,21 +1,22 @@
 <script lang="ts">
 	import type { GroupChatMessage } from '$lib/data/groupChat';
+	import type { Message } from '$lib/data/scenarios';
 	import { getCurrentUser } from '$lib/stores/app.svelte';
+	import MessageBubble from './MessageBubble.svelte';
 	
 	let { message } = $props<{ message: GroupChatMessage }>();
 	
 	let currentUser = $derived(getCurrentUser());
 	let isCurrentUser = $derived(message.sender === currentUser);
 	
-	// Format timestamp to human-readable time
-	function formatTime(timestamp: string): string {
-		const date = new Date(timestamp);
-		return date.toLocaleTimeString('en-US', { 
-			hour: 'numeric', 
-			minute: '2-digit',
-			hour12: true 
-		});
-	}
+	// Convert GroupChatMessage to Message format for MessageBubble
+	// Use 'peer' for other users in group chat (not 'ai')
+	let bubbleMessage = $derived<Message>({
+		id: message.id,
+		sender: isCurrentUser ? 'user' : 'peer',
+		content: message.content,
+		timestamp: message.timestamp
+	});
 </script>
 
 <div class="message-wrapper" class:current-user={isCurrentUser}>
@@ -31,11 +32,7 @@
 			</div>
 		{/if}
 		
-		<div class="message-bubble" class:user-bubble={isCurrentUser}>
-			<p class="message-text">{message.content}</p>
-		</div>
-		
-		<span class="message-time">{formatTime(message.timestamp)}</span>
+		<MessageBubble message={bubbleMessage} />
 	</div>
 </div>
 
@@ -43,15 +40,15 @@
 	.message-wrapper {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
-		margin-bottom: 1rem;
+		gap: 0;
+		margin-bottom: 0.5rem;
 	}
 	
 	.message-content {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
-		max-width: 75%;
+		gap: 0.125rem;
+		max-width: 85%;
 	}
 	
 	.message-wrapper.current-user .message-content {
@@ -63,6 +60,7 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0 0.5rem;
+		margin-bottom: 0.125rem;
 	}
 	
 	.sender-avatar {
@@ -74,43 +72,6 @@
 		font-weight: 600;
 		color: rgb(var(--m3-scheme-on-surface-variant));
 		font-family: var(--font-sans);
-	}
-	
-	.message-bubble {
-		background-color: rgb(var(--m3-scheme-surface-container-highest));
-		padding: 0.75rem;
-		border-radius: var(--m3-util-rounding-large);
-	}
-	
-	.message-bubble.user-bubble {
-		background-color: rgb(var(--m3-scheme-secondary-container));
-		color: rgb(var(--m3-scheme-on-secondary-container));
-		align-self: flex-end;
-	}
-	
-	.message-text {
-		margin: 0;
-		font-size: 0.9375rem;
-		color: rgb(var(--m3-scheme-on-surface));
-		font-family: var(--font-sans);
-		line-height: 1.5;
-		word-wrap: break-word;
-	}
-	
-	.message-bubble.user-bubble .message-text {
-		color: rgb(var(--m3-scheme-on-secondary-container));
-	}
-	
-	.message-time {
-		font-size: 0.75rem;
-		color: rgb(var(--m3-scheme-outline));
-		font-family: var(--font-mono);
-		text-align: right;
-		padding: 0 0.5rem;
-	}
-	
-	.message-wrapper.current-user .message-time {
-		align-self: flex-end;
 	}
 </style>
 

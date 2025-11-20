@@ -24,6 +24,8 @@ interface AppState {
 	currentGroup: GroupId;
 	// Conversations scoped by group, then by user
 	conversations: Record<GroupId, Record<UserId, Message[]>>;
+	// Track selected reply IDs per group/user/message
+	selectedReplyIds: Record<GroupId, Record<UserId, Record<string, string>>>;
 	activeScenario: string | null;
 	demoMenu: DemoMenuState;
 	animationsEnabled: boolean;
@@ -50,6 +52,7 @@ let appState = $state<AppState>({
 	conversations: {
 		'brooklyn-apt': initGroupConversations()
 	},
+	selectedReplyIds: {},
 	activeScenario: null,
 	demoMenu: {
 		isOpen: false,
@@ -151,6 +154,27 @@ export function addMessageToUser(userId: UserId, message: Message, groupId?: Gro
 	}
 	
 	appState.conversations[targetGroup][userId].push(message);
+}
+
+/**
+ * Mark a message as fully rendered (used to prevent re-animation on reload)
+ */
+export function markMessageAsRendered(messageId: string, userId?: UserId, groupId?: GroupId): void {
+	const targetUser = userId || appState.currentUser;
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	// Find and update the message
+	const conversation = appState.conversations[targetGroup][targetUser];
+	const message = conversation.find(m => m.id === messageId);
+	
+	if (message) {
+		message.is_rendered = true;
+	}
 }
 
 /**
@@ -385,5 +409,34 @@ export function setNavigationDirection(direction: 'forward' | 'back' | null): vo
  */
 export function getNavigationDirection(): 'forward' | 'back' | null {
 	return appState.navigationDirection;
+}
+
+/**
+ * Get selected reply IDs for current group and user
+ */
+export function getSelectedReplyIds(): Record<string, string> {
+	const groupId = appState.currentGroup;
+	const userId = appState.currentUser;
+	
+	// Return existing or empty object (don't mutate during read)
+	return appState.selectedReplyIds[groupId]?.[userId] ?? {};
+}
+
+/**
+ * Set selected reply ID for a message
+ */
+export function setSelectedReplyId(messageId: string, replyId: string): void {
+	const groupId = appState.currentGroup;
+	const userId = appState.currentUser;
+	
+	// Initialize if doesn't exist
+	if (!appState.selectedReplyIds[groupId]) {
+		appState.selectedReplyIds[groupId] = {};
+	}
+	if (!appState.selectedReplyIds[groupId][userId]) {
+		appState.selectedReplyIds[groupId][userId] = {};
+	}
+	
+	appState.selectedReplyIds[groupId][userId][messageId] = replyId;
 }
 

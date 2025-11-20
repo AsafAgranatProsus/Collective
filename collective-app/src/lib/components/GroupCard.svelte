@@ -284,6 +284,7 @@
 		text-overflow: ellipsis;
 		font-family: var(--font-sans) !important;
 		font-weight: 500;
+		padding-top: .75rem;
 	}
 
 	.group-meta {

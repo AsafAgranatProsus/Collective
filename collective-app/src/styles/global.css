@@ -26,6 +26,7 @@
 @import './animations.css';
 @import './containers.css';
 @import './utilities.css';
+@import './card-sections.css';
 
 /* CSS Reset & Base Styles */
 *,

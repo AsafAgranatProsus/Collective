@@ -3,6 +3,7 @@
  */
 
 import type { CoordinatedItem } from './items';
+import type { CardSchema } from '$lib/types/card-schema';
 
 export interface QuickReply {
 	label: string;
@@ -11,13 +12,15 @@ export interface QuickReply {
 
 export interface Message {
 	id: string;
-	sender: 'user' | 'ai';
+	sender: 'user' | 'ai' | 'peer';
 	content: string;
 	timestamp: string;
+	is_rendered?: boolean; // Track if AI message has fully rendered (to prevent re-animation on reload)
 	ui_elements?: {
 		quick_replies?: QuickReply[];
 		cards?: CoordinatedItem[];
-		card_data?: any;
+		card_data?: any; // Legacy - kept for backwards compatibility
+		card_schema?: CardSchema; // New generative card system
 		animation?: string;
 		analytics_summary?: boolean;
 		analytics_detail?: boolean;
@@ -65,19 +68,21 @@ export const viewMyTasksScenario: Scenario = {
 			content: "Alright, here's your week:",
 			timestamp: new Date().toISOString(),
 			ui_elements: {
-				card_data: {
-					type: 'summary',
-					chores: [
-						{ title: 'Kitchen cleanup', due: 'Wed evening' },
-						{ title: 'Trash out', due: 'Saturday morning' }
-					],
-					money: [
-						{ title: 'You owe Mike $23.50 for groceries' },
-						{ title: 'Jessica paid utilities - your share is $42' }
-					],
-					shopping: [
-						{ title: 'Bob needs milk - you pass the bodega, mind grabbing it today?' }
-					]
+				card_schema: {
+					template: 'summary',
+					data: {
+						chores: [
+							{ title: 'Kitchen cleanup', due: 'Wed evening' },
+							{ title: 'Trash out', due: 'Saturday morning' }
+						],
+						money: [
+							{ title: 'You owe Mike $23.50 for groceries' },
+							{ title: 'Jessica paid utilities - your share is $42' }
+						],
+						shopping: [
+							{ title: 'Bob needs milk - you pass the bodega, mind grabbing it today?' }
+						]
+					}
 				},
 				quick_replies: [
 					{ label: 'Looks good', value: 'confirm' },
@@ -279,16 +284,18 @@ export const tradeChoreScenario: Scenario = {
 			content: "Bob's in! You've got trash Saturday, he's got kitchen Wednesday. Updated ✓",
 			timestamp: new Date().toISOString(),
 			ui_elements: {
-				card_data: {
-					type: 'trade',
-					before: [
-						{ task: 'Kitchen (Wed)', user: 'You' },
-						{ task: 'Trash (Sat)', user: 'Bob' }
-					],
-					after: [
-						{ task: 'Kitchen (Wed)', user: 'Bob' },
-						{ task: 'Trash (Sat)', user: 'You' }
-					]
+				card_schema: {
+					template: 'trade',
+					data: {
+						before: [
+							{ task: 'Kitchen (Wed)', user: 'You' },
+							{ task: 'Trash (Sat)', user: 'Bob' }
+						],
+						after: [
+							{ task: 'Kitchen (Wed)', user: 'Bob' },
+							{ task: 'Trash (Sat)', user: 'You' }
+						]
+					}
 				},
 				animation: 'celebration'
 			}
@@ -315,10 +322,13 @@ export const completeTaskScenario: Scenario = {
 			content: "Nice! Marked complete. You're 3/3 this week now 🎉",
 			timestamp: new Date().toISOString(),
 			ui_elements: {
-				card_data: {
-					type: 'completion',
-					task: 'Take out trash',
-					completed_at: 'Sat 9:42 AM'
+				card_schema: {
+					template: 'completion',
+					data: {
+						task: 'Take out trash',
+						completed_at: 'Sat 9:42 AM',
+						completionRate: 100
+					}
 				},
 				animation: 'confetti'
 			}
@@ -329,14 +339,16 @@ export const completeTaskScenario: Scenario = {
 			content: "By the way, you're officially the most reliable this month. Just saying. 😎",
 			timestamp: new Date().toISOString(),
 			ui_elements: {
-				card_data: {
-					type: 'leaderboard',
-					rankings: [
-						{ name: 'Sarah', rate: 95, icon: '🥇' },
-						{ name: 'Jessica', rate: 92, icon: '🥈' },
-						{ name: 'Bob', rate: 92, icon: '🥈' },
-						{ name: 'Mike', rate: 78, icon: '🥉' }
-					]
+				card_schema: {
+					template: 'leaderboard',
+					data: {
+						rankings: [
+							{ name: 'Sarah', rate: 95, icon: '🥇' },
+							{ name: 'Jessica', rate: 92, icon: '🥈' },
+							{ name: 'Bob', rate: 92, icon: '🥈' },
+							{ name: 'Mike', rate: 78, icon: '🥉' }
+						]
+					}
 				}
 			}
 		}
@@ -395,13 +407,270 @@ export const minimalAnalyticsScenario: Scenario = {
 	]
 };
 
+// ============================================================================
+// CUSTOM SECTION EXAMPLES - Demonstrating flexible card composition
+// ============================================================================
+
+// Example 1: Weekly Review with mixed sections
+export const weeklyReviewScenario: Scenario = {
+	id: 'scenario-7',
+	title: 'Weekly Review (Custom Sections)',
+	description: 'Demonstrates mixing header, progress, chart, comparison, and text sections',
+	initial_user: 'sarah',
+	messages: [
+		{
+			id: 'msg-7-1',
+			sender: 'user',
+			content: 'Give me my weekly review',
+			timestamp: new Date().toISOString()
+		},
+		{
+			id: 'msg-7-2',
+			sender: 'ai',
+			content: "Here's your complete weekly performance breakdown:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: 'Weekly Performance',
+							subtitle: 'Nov 14 - Nov 20',
+							icon: 'trending'
+						},
+						{
+							type: 'progress',
+							value: 85,
+							label: 'Overall completion rate',
+							size: 'large',
+							variant: 'circular'
+						},
+						{
+							type: 'divider',
+							spacing: 'medium'
+						},
+						{
+							type: 'stat_row',
+							label: 'Tasks Completed',
+							value: '11 of 13',
+							icon: 'checklist',
+							highlight: true
+						},
+						{
+							type: 'stat_row',
+							label: 'Average Response Time',
+							value: '2.3 hours',
+							icon: 'info'
+						},
+						{
+							type: 'chart',
+							chartType: 'line',
+							title: '7-Day Trend',
+							data: [60, 75, 85, 80, 90, 85, 85],
+							labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+							height: 140,
+							color: 'primary',
+							showGrid: true,
+							showPoints: true
+						},
+						{
+							type: 'comparison',
+							title: 'Group Comparison',
+							items: [
+								{ label: 'You', value: '85%', highlight: true },
+								{ label: 'Group Avg', value: '78%' },
+								{ label: 'Top', value: '92%' }
+							],
+							note: "You're above average this week! Keep it up 🎉"
+						}
+					],
+					maxWidth: 480,
+					scrollable: true
+				}
+			}
+		}
+	]
+};
+
+// Example 2: Shopping Request with list and actions
+export const shoppingRequestScenario: Scenario = {
+	id: 'scenario-8',
+	title: 'Shopping Request (Custom Sections)',
+	description: 'Demonstrates list items with checkboxes and action buttons',
+	initial_user: 'bob',
+	messages: [
+		{
+			id: 'msg-8-1',
+			sender: 'user',
+			content: 'What do we need from the store?',
+			timestamp: new Date().toISOString()
+		},
+		{
+			id: 'msg-8-2',
+			sender: 'ai',
+			content: "Here's our current shopping list:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: 'Shopping List',
+							subtitle: '7 items needed',
+							icon: 'shopping'
+						},
+						{
+							type: 'list',
+							title: 'Groceries',
+							items: [
+								{ id: '1', title: 'Milk (2%)', subtitle: 'Requested by Sarah', icon: 'shopping', checked: false },
+								{ id: '2', title: 'Bread', subtitle: 'Whole wheat preferred', icon: 'shopping', checked: false },
+								{ id: '3', title: 'Eggs (dozen)', icon: 'shopping', checked: false }
+							],
+							style: 'default',
+							showCheckboxes: true
+						},
+						{
+							type: 'list',
+							title: 'Household',
+							items: [
+								{ id: '4', title: 'Dish soap', subtitle: 'Running low', icon: 'shopping', checked: false },
+								{ id: '5', title: 'Paper towels', icon: 'shopping', checked: false },
+								{ id: '6', title: 'Laundry detergent', subtitle: 'Unscented', icon: 'shopping', checked: false },
+								{ id: '7', title: 'Light bulbs (60W)', icon: 'shopping', checked: false }
+							],
+							style: 'compact',
+							showCheckboxes: true
+						},
+						{
+							type: 'text',
+							content: 'Estimated total: $45-60',
+							color: 'muted',
+							align: 'center',
+							size: 'small'
+						},
+						{
+							type: 'actions',
+							buttons: [
+								{ label: "I'll go", value: 'accept', variant: 'filled', primary: true },
+								{ label: 'Add item', value: 'add', variant: 'outlined' },
+								{ label: 'Remind me later', value: 'remind', variant: 'text' }
+							],
+							layout: 'row'
+						}
+					],
+					maxWidth: 420
+				}
+			}
+		}
+	]
+};
+
+// Example 3: Payment Summary with stats and comparison
+export const paymentSummaryScenario: Scenario = {
+	id: 'scenario-9',
+	title: 'Payment Summary (Custom Sections)',
+	description: 'Demonstrates stat rows, comparison bars, and mixed content',
+	initial_user: 'jessica',
+	messages: [
+		{
+			id: 'msg-9-1',
+			sender: 'user',
+			content: 'Show me money owed',
+			timestamp: new Date().toISOString()
+		},
+		{
+			id: 'msg-9-2',
+			sender: 'ai',
+			content: "Here's the current money situation:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: 'Payment Summary',
+							subtitle: 'November 2024',
+							icon: 'money'
+						},
+						{
+							type: 'stat_row',
+							label: 'You paid',
+							value: '$156.00',
+							metadata: '3 expenses',
+							highlight: true,
+							icon: 'money'
+						},
+						{
+							type: 'stat_row',
+							label: 'You owe',
+							value: '$42.00',
+							metadata: 'to Mike (utilities)',
+							icon: 'money'
+						},
+						{
+							type: 'stat_row',
+							label: 'Others owe you',
+							value: '$0',
+							icon: 'money'
+						},
+						{
+							type: 'divider',
+							spacing: 'medium'
+						},
+						{
+							type: 'text',
+							content: 'Group Spending Breakdown',
+							size: 'small',
+							color: 'muted'
+						},
+						{
+							type: 'comparison',
+							items: [
+								{ label: 'Jessica', value: '$156', highlight: true },
+								{ label: 'Sarah', value: '$142' },
+								{ label: 'Mike', value: '$178' },
+								{ label: 'Bob', value: '$124' }
+							],
+							note: 'Total household spending: $600 this month'
+						},
+						{
+							type: 'chart',
+							chartType: 'bar',
+							title: 'Monthly Trend',
+							data: [520, 580, 600],
+							labels: ['Sep', 'Oct', 'Nov'],
+							height: 160,
+							color: 'tertiary',
+							showGrid: true
+						},
+						{
+							type: 'actions',
+							buttons: [
+								{ label: 'Settle up', value: 'settle', variant: 'filled', primary: true },
+								{ label: 'View details', value: 'details', variant: 'outlined' }
+							],
+							layout: 'row'
+						}
+					],
+					maxWidth: 480,
+					scrollable: true
+				}
+			}
+		}
+	]
+};
+
 // Export all scenarios
 export const scenarios: Scenario[] = [
 	viewMyTasksScenario,
 	fairnessScenario,
 	tradeChoreScenario,
 	completeTaskScenario,
-	minimalAnalyticsScenario
+	minimalAnalyticsScenario,
+	weeklyReviewScenario,
+	shoppingRequestScenario,
+	paymentSummaryScenario
 ];
 
 // Helper to get scenario by ID

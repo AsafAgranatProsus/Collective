@@ -2,8 +2,10 @@
 	import { onMount } from 'svelte';
 	import { slide, fade } from 'svelte/transition';
 	import GroupChatMessage from './GroupChatMessage.svelte';
+	import GlassHeader from './GlassHeader.svelte';
 	import { getGroupChatMessages, addGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from '$lib/data/groupChat';
 	import { getCurrentUser, getMemberInfo } from '$lib/stores/app.svelte';
+	import { getGroupById } from '$lib/data/groups';
 	import { Icon, Button, TextField } from 'm3-svelte';
 	import iconArrowBack from '@ktibow/iconset-material-symbols/arrow-back';
 	import iconSend from '@ktibow/iconset-material-symbols/send';
@@ -24,18 +26,37 @@
 	
 	let currentUser = $derived(getCurrentUser());
 	let currentMember = $derived(getMemberInfo(currentUser));
+	let group = $derived(getGroupById(groupId));
 	
 	// Load messages when component mounts or groupId changes
 	$effect(() => {
 		if (isOpen && groupId) {
 			messages = getGroupChatMessages(groupId);
 			
-			// Scroll to bottom after messages load
-			setTimeout(() => {
-				if (messagesContainer) {
-					messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			// Immediately scroll to bottom without animation
+			if (messagesContainer) {
+				messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			}
+		}
+	});
+
+	// Poll for new messages while chat is open
+	$effect(() => {
+		if (isOpen && groupId) {
+			const interval = setInterval(() => {
+				const latestMessages = getGroupChatMessages(groupId);
+				if (latestMessages.length !== messages.length) {
+					messages = latestMessages;
+					// Scroll to bottom when new message arrives
+					setTimeout(() => {
+						if (messagesContainer) {
+							messagesContainer.scrollTop = messagesContainer.scrollHeight;
+						}
+					}, 10);
 				}
-			}, 100);
+			}, 500); // Check every 500ms for new messages
+
+			return () => clearInterval(interval);
 		}
 	});
 	
@@ -59,15 +80,13 @@
 			// Also add to global data store
 			addGroupChatMessage(groupId, newMessage);
 			
-			// Clear input
-			inputValue = '';
-			
-			// Scroll to bottom
-			setTimeout(() => {
-				if (messagesContainer) {
-					messagesContainer.scrollTop = messagesContainer.scrollHeight;
-				}
-			}, 10);
+		// Clear input
+		inputValue = '';
+		
+		// Scroll to bottom
+		if (messagesContainer) {
+			messagesContainer.scrollTop = messagesContainer.scrollHeight;
+		}
 		}
 	}
 	
@@ -102,12 +121,23 @@
 		aria-label="Group chat"
 	>
 		<!-- Header -->
-		<header class="chat-header">
-			<Button variant="text" iconType="full" onclick={onClose} aria-label="Close group chat">
-				<Icon icon={iconArrowBack} />
-			</Button>
-			<h2 class="chat-title m3-font-title-medium">Group Chat</h2>
-		</header>
+		<GlassHeader
+			sticky={false}
+			absolute={true}
+		>
+			{#snippet leading()}
+				<Button variant="text" iconType="full" onclick={onClose} aria-label="Close group chat">
+					<Icon icon={iconArrowBack} />
+				</Button>
+			{/snippet}
+			
+			{#snippet titleContent()}
+				<div class="chat-header-title">
+					<h2 class="group-name m3-font-title-medium">{group?.name || 'Group'}</h2>
+					<p class="chat-subtitle m3-font-body-small">Group Chat</p>
+				</div>
+			{/snippet}
+		</GlassHeader>
 		
 		<!-- Messages Area -->
 		<div class="messages-area" bind:this={messagesContainer}>
@@ -120,7 +150,7 @@
 		
 		<!-- Input Area -->
 		<form class="chat-input-form" onsubmit={handleSend}>
-			<div class="text-field-wrapper">
+			<!-- <div class="text-field-wrapper">
 				<TextField
 					bind:value={inputValue}
 					label="Type a message..."
@@ -136,7 +166,7 @@
 				aria-label="Send message"
 			>
 				<Icon icon={iconSend} />
-			</Button>
+			</Button> -->
 		</form>
 	</div>
 {/if}
@@ -146,7 +176,7 @@
 		position: fixed;
 		inset: 0;
 		background-color: rgba(0, 0, 0, 0.4);
-		z-index: 999;
+		z-index: var(--z-modal-backdrop);
 		cursor: pointer;
 		border: none;
 	}
@@ -158,52 +188,59 @@
 		height: 100vh;
 		width: 400px;
 		max-width: 100vw;
-		background-color: rgb(var(--m3-scheme-surface));
+		background-color: rgb(var(--m3-scheme-surface-container-low));
 		box-shadow: var(--m3-util-elevation-3);
-		z-index: 1000;
+		z-index: var(--z-drawer);
 		display: flex;
 		flex-direction: column;
 	}
-	
-	.chat-header {
-		padding: 1rem 1.5rem;
-		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant));
+
+	.chat-header-title {
 		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		flex-shrink: 0;
+		flex-direction: column;
+		align-items: flex-star;
+		gap: 0.125rem;
+		text-align: flex-start;
 	}
-	
-	.chat-title {
+
+	.group-name {
 		color: rgb(var(--m3-scheme-on-surface));
 		margin: 0;
 		font-family: var(--font-sans) !important;
+		line-height: 1.2;
+	}
+
+	.chat-subtitle {
+		color: rgb(var(--m3-scheme-on-surface-variant));
+		margin: 0;
+		font-family: var(--font-sans) !important;
+		line-height: 1.2;
+		/* opacity: 0.7; */
 	}
 	
 	.messages-area {
 		flex: 1;
 		overflow-y: auto;
 		padding: 1.5rem;
-		scroll-behavior: smooth;
+		overflow-x: hidden;
+		padding-top: 4rem;
 	}
 	
 	.messages-container {
 		display: flex;
 		flex-direction: column;
+		width: calc(100vw - 2.5rem);
 	}
 	
 	.chat-input-form {
-		display: flex;
+		/* display: flex;
 		align-items: flex-end;
 		gap: 0.75rem;
 		padding: 1rem 1.5rem;
 		border-top: 1px solid rgb(var(--m3-scheme-outline-variant));
-		background-color: rgb(var(--m3-scheme-surface-container-low));
+		background-color: rgb(var(--m3-scheme-surface-container-low)); */
 		flex-shrink: 0;
-	}
-	
-	.text-field-wrapper {
-		flex: 1;
+		min-height: 5rem;
 	}
 	
 	/* Mobile: full screen overlay */
@@ -212,12 +249,9 @@
 			width: 100vw;
 		}
 		
-		.chat-header {
-			padding: 0.75rem 1rem;
-		}
-		
 		.messages-area {
 			padding: 1rem;
+			padding-top: 5rem;
 		}
 		
 		.chat-input-form {

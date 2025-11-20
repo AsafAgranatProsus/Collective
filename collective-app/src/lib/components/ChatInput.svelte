@@ -60,7 +60,7 @@
 		justify-content: flex-end;
 		padding: 1rem;
 		background-color: rgba(var(--m3-scheme-surface), 0.8);
-		border-top: 1px solid rgb(var(--m3-scheme-outline-variant));
+		/* border-top: 1px solid rgb(var(--m3-scheme-outline-variant)); */
 		position: sticky;
 		bottom: 0;
 		z-index: 200;

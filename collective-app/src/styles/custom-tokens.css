@@ -57,11 +57,15 @@
   --z-base: 1;
   --z-dropdown: 100;
   --z-sticky: 200;
+  --z-absolute: 250;
   --z-fixed: 300;
   --z-modal-backdrop: 400;
+  --z-drawer: 450;
+  --z-chat-input: 490;
   --z-modal: 500;
   --z-popover: 600;
   --z-tooltip: 700;
+  --z-meta: 800;
 }
 
 /* ========================================
