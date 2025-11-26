@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd collective-app && npm run build",
+  "devCommand": "cd collective-app && npm run dev",
+  "installCommand": "cd collective-app && npm install",
+  "outputDirectory": "collective-app/.svelte-kit"
+}
+
