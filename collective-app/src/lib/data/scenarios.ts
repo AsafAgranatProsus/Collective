@@ -20,7 +20,8 @@ export interface Message {
 		quick_replies?: QuickReply[];
 		cards?: CoordinatedItem[];
 		card_data?: any; // Legacy - kept for backwards compatibility
-		card_schema?: CardSchema; // New generative card system
+		card_schema?: CardSchema; // Single card
+		card_schemas?: CardSchema[]; // Multiple cards
 		animation?: string;
 		analytics_summary?: boolean;
 		analytics_detail?: boolean;
@@ -65,25 +66,78 @@ export const viewMyTasksScenario: Scenario = {
 		{
 			id: 'msg-1-3',
 			sender: 'ai',
-			content: "Alright, here's your week:",
+			content: "Here's what's on your plate:",
 			timestamp: new Date().toISOString(),
 			ui_elements: {
-				card_schema: {
-					template: 'summary',
-					data: {
-						chores: [
-							{ title: 'Kitchen cleanup', due: 'Wed evening' },
-							{ title: 'Trash out', due: 'Saturday morning' }
+				card_schemas: [
+					{
+						sections: [
+							{
+								type: 'header',
+								title: 'Chores'
+							},
+							{
+								type: 'list',
+								items: [
+									{
+										title: 'Kitchen cleanup',
+										subtitle: 'Wed evening',
+										icon: 'checklist'
+									},
+									{
+										title: 'Trash out',
+										subtitle: 'Saturday morning',
+										icon: 'checklist'
+									}
+								],
+								style: 'default'
+							}
 						],
-						money: [
-							{ title: 'You owe Mike $23.50 for groceries' },
-							{ title: 'Jessica paid utilities - your share is $42' }
+						maxWidth: 420
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: 'Money'
+							},
+							{
+								type: 'list',
+								items: [
+									{
+										title: 'You owe Mike $23.50 for groceries',
+										icon: 'money'
+									},
+									{
+										title: 'Jessica paid utilities - your share is $42',
+										icon: 'money'
+									}
+								],
+								style: 'default'
+							}
 						],
-						shopping: [
-							{ title: 'Bob needs milk - you pass the bodega, mind grabbing it today?' }
-						]
+						maxWidth: 420
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: 'Shopping'
+							},
+							{
+								type: 'list',
+								items: [
+									{
+										title: 'Bob needs milk - you pass the bodega, mind grabbing it today?',
+										icon: 'shopping'
+									}
+								],
+								style: 'default'
+							}
+						],
+						maxWidth: 420
 					}
-				},
+				],
 				quick_replies: [
 					{ label: 'Looks good', value: 'confirm' },
 					{ label: 'Can I trade anything?', value: 'trade' },
@@ -661,6 +715,273 @@ export const paymentSummaryScenario: Scenario = {
 	]
 };
 
+// ============================================================================
+// ONBOARDING SCENARIO - Cold boot new user experience
+// ============================================================================
+
+export const onboardingScenario: Scenario = {
+	id: 'onboarding',
+	title: 'New User Onboarding',
+	description: 'Cold boot - first time user creates a group and logs first expense',
+	initial_user: 'sarah',
+	messages: [
+		// Step 1: Welcome message
+		{
+			id: 'onboard-1',
+			sender: 'ai',
+			content: "# Welcome to Collective! 👋\n\nWhether you're roommates sharing chores, a family managing life, or friends organizing trips—I help you see who's doing what, and get things done, so no one carries everything.",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Create a group', value: 'create_group' },
+					{ label: 'Join a group', value: 'join_group' },
+					{ label: 'See examples', value: 'see_examples' }
+				]
+			}
+		},
+		// Step 2: User chooses to create a group
+		{
+			id: 'onboard-2',
+			sender: 'user',
+			content: 'Create a group',
+			timestamp: new Date().toISOString()
+		},
+		// Step 3: Group type selection
+		{
+			id: 'onboard-3',
+			sender: 'ai',
+			content: "Let's get you set up! What type of group is this?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: '🏠 Shared apartment', value: 'type_apartment' },
+					{ label: '👨‍👩‍👧 Family', value: 'type_family' },
+					{ label: '⚽ Sports team', value: 'type_sports' },
+					{ label: '✈️ Trip/event', value: 'type_trip' },
+					{ label: '👥 Friends', value: 'type_friends' }
+				]
+			}
+		},
+		// Step 4: User selects apartment
+		{
+			id: 'onboard-4',
+			sender: 'user',
+			content: '🏠 Shared apartment',
+			timestamp: new Date().toISOString()
+		},
+		// Step 5: Ask for group name
+		{
+			id: 'onboard-5',
+			sender: 'ai',
+			content: "Great choice! What would you like to call your group?\n\nJust type a name below.",
+			timestamp: new Date().toISOString()
+		},
+		// Step 6: User types group name
+		{
+			id: 'onboard-6',
+			sender: 'user',
+			content: 'Brooklyn Apartment',
+			timestamp: new Date().toISOString()
+		},
+		// Step 7: Ask for member count
+		{
+			id: 'onboard-7',
+			sender: 'ai',
+			content: "Brooklyn Apartment—I like it! 🏠\n\nHow many people will be in this group?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: '2', value: 'count_2' },
+					{ label: '3', value: 'count_3' },
+					{ label: '4', value: 'count_4' },
+					{ label: '5+', value: 'count_5plus' },
+					{ label: 'Not sure', value: 'count_unsure' }
+				]
+			}
+		},
+		// Step 8: User selects 3
+		{
+			id: 'onboard-8',
+			sender: 'user',
+			content: '3',
+			timestamp: new Date().toISOString()
+		},
+		// Step 9: Group created confirmation card
+		{
+			id: 'onboard-9',
+			sender: 'ai',
+			content: "You're all set!",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: '🎉 Brooklyn Apartment',
+							subtitle: 'Shared apartment • 3 people'
+						},
+						{
+							type: 'divider',
+							spacing: 'small'
+						},
+						{
+							type: 'text',
+							content: 'Share this link with your roommates:',
+							size: 'small',
+							color: 'muted'
+						},
+						{
+							type: 'text',
+							content: 'collective.app/join/xK7mP2',
+							size: 'large'
+						}
+					],
+					maxWidth: 380
+				},
+				quick_replies: [
+					{ label: 'Copy link', value: 'copy_link' },
+					{ label: 'Share via text', value: 'share_text' },
+					{ label: 'Skip for now', value: 'skip_invite' }
+				]
+			}
+		},
+		// Step 10: User skips invite
+		{
+			id: 'onboard-10',
+			sender: 'user',
+			content: 'Skip for now',
+			timestamp: new Date().toISOString()
+		},
+		// Step 11: Prompt for first expense
+		{
+			id: 'onboard-11',
+			sender: 'ai',
+			content: "No problem! You can share the link anytime from group settings.\n\nWant to log your first expense? Even before others join, you can start tracking what you pay.",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Log an expense', value: 'log_expense' },
+					{ label: "I'll explore first", value: 'explore' }
+				]
+			}
+		},
+		// Step 12: User chooses to log expense
+		{
+			id: 'onboard-12',
+			sender: 'user',
+			content: 'Log an expense',
+			timestamp: new Date().toISOString()
+		},
+		// Step 13: Ask for expense name
+		{
+			id: 'onboard-13',
+			sender: 'ai',
+			content: "What's the expense for?\n\nJust type it below—like \"Rent\", \"Groceries\", or \"Utilities\".",
+			timestamp: new Date().toISOString()
+		},
+		// Step 14: User types expense name
+		{
+			id: 'onboard-14',
+			sender: 'user',
+			content: 'Rent',
+			timestamp: new Date().toISOString()
+		},
+		// Step 15: Ask for amount
+		{
+			id: 'onboard-15',
+			sender: 'ai',
+			content: "Got it—Rent. How much was it?",
+			timestamp: new Date().toISOString()
+		},
+		// Step 16: User types amount
+		{
+			id: 'onboard-16',
+			sender: 'user',
+			content: '$2550',
+			timestamp: new Date().toISOString()
+		},
+		// Step 17: Ask how to split
+		{
+			id: 'onboard-17',
+			sender: 'ai',
+			content: "$2,550 for rent. How should we split it?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Between everyone (3 people)', value: 'split_everyone' },
+					{ label: 'Just me', value: 'split_just_me' }
+				]
+			}
+		},
+		// Step 18: User chooses to split
+		{
+			id: 'onboard-18',
+			sender: 'user',
+			content: 'Between everyone (3 people)',
+			timestamp: new Date().toISOString()
+		},
+		// Step 19: Expense confirmation card
+		{
+			id: 'onboard-19',
+			sender: 'ai',
+			content: "Done!",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: '✓ Rent logged!'
+						},
+						{
+							type: 'stat_row',
+							label: 'Amount',
+							value: '$2,550',
+							icon: 'money',
+							highlight: true
+						},
+						{
+							type: 'stat_row',
+							label: 'Split 3 ways',
+							value: '$850 each',
+							icon: 'group'
+						},
+						{
+							type: 'divider',
+							spacing: 'small'
+						},
+						{
+							type: 'text',
+							content: "When your roommates join, they'll see they each owe you $850.",
+							color: 'muted',
+							size: 'small'
+						}
+					],
+					maxWidth: 380
+				},
+				quick_replies: [
+					{ label: 'Share invite link', value: 'share_after_expense' },
+					{ label: 'Done', value: 'onboarding_complete' }
+				]
+			}
+		},
+		// Step 20: User completes onboarding
+		{
+			id: 'onboard-20',
+			sender: 'user',
+			content: 'Done',
+			timestamp: new Date().toISOString()
+		},
+		// Step 21: Final message
+		{
+			id: 'onboard-21',
+			sender: 'ai',
+			content: "You're all set! 🎉\n\nI'll be here to help you coordinate with your roommates—tracking expenses, sharing shopping lists, and making sure everyone does their fair share.\n\nJust message me anytime!",
+			timestamp: new Date().toISOString()
+		}
+	]
+};
+
 // Export all scenarios
 export const scenarios: Scenario[] = [
 	viewMyTasksScenario,
@@ -670,7 +991,8 @@ export const scenarios: Scenario[] = [
 	minimalAnalyticsScenario,
 	weeklyReviewScenario,
 	shoppingRequestScenario,
-	paymentSummaryScenario
+	paymentSummaryScenario,
+	onboardingScenario
 ];
 
 // Helper to get scenario by ID

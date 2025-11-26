@@ -44,6 +44,7 @@
 	} from "$lib/data/analytics";
 	import { getGroupById } from "$lib/data/groups";
 	import { addGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from "$lib/data/groupChat";
+	import { getPrimaryView, getModeLabel } from "$lib/utils/modeHelpers";
 
 	// Get group ID from route params
 	let groupId = $derived($page.params.id || "brooklyn-apt");
@@ -57,20 +58,40 @@
 	let selectedReplyIds = $derived(getSelectedReplyIds());
 
 	let messagesContainer: HTMLDivElement;
-	let groupChatOpen = $state(false);
 	
-	// Track typing state for each message
+	// Initialize view based on prototype mode
+	// If mode's primary view is 'group-chat', start with group chat open
+	let groupChatOpen = $state(getPrimaryView() === 'group-chat');
+	
+	// Track typing and card rendering states per message
 	let messageTypingStates = $state<Record<string, boolean>>({});
+	let messageCardStates = $state<Record<string, boolean>>({});
 
 	// Auto-scroll to bottom when new messages arrive
 	$effect(() => {
 		if (conversation && messagesContainer) {
-			setTimeout(() => {
+			scrollToBottom();
+		}
+	});
+	
+	// Scroll to bottom helper
+	function scrollToBottom() {
+		if (messagesContainer) {
+			requestAnimationFrame(() => {
 				messagesContainer.scrollTo({
 					top: messagesContainer.scrollHeight,
 					behavior: "smooth",
 				});
-			}, 100);
+			});
+		}
+	}
+	
+	// Keep scrolling while AI is typing (content is growing)
+	$effect(() => {
+		const isAnyTyping = Object.values(messageTypingStates).some(v => v);
+		if (isAnyTyping && messagesContainer) {
+			const scrollInterval = setInterval(scrollToBottom, 200);
+			return () => clearInterval(scrollInterval);
 		}
 	});
 
@@ -214,23 +235,76 @@
 		// Handle based on value
 		if (value === "show_tasks" || value === "tasks") {
 			setTimeout(() => {
-				sendAIResponse("Alright, here's your week:", {
-					card_schema: {
-						template: 'summary',
-						data: {
-							chores: [
-								{ title: 'Kitchen cleanup', due: 'Wed evening' },
-								{ title: 'Trash out', due: 'Saturday morning' }
+				sendAIResponse("Here's what's on your plate:", {
+					card_schemas: [
+						{
+							sections: [
+								{
+									type: 'header',
+									title: 'Chores'
+								},
+								{
+									type: 'list',
+									items: [
+										{
+											title: 'Kitchen cleanup',
+											subtitle: 'Wed evening',
+											icon: 'checklist'
+										},
+										{
+											title: 'Trash out',
+											subtitle: 'Saturday morning',
+											icon: 'checklist'
+										}
+									],
+									style: 'default'
+								}
 							],
-							money: [
-								{ title: 'You owe Mike $23.50 for groceries' },
-								{ title: 'Jessica paid utilities - your share is $42' }
+							maxWidth: 420
+						},
+						{
+							sections: [
+								{
+									type: 'header',
+									title: 'Money'
+								},
+								{
+									type: 'list',
+									items: [
+										{
+											title: 'You owe Mike $23.50 for groceries',
+											icon: 'money'
+										},
+										{
+											title: 'Jessica paid utilities - your share is $42',
+											icon: 'money'
+										}
+									],
+									style: 'default'
+								}
 							],
-							shopping: [
-								{ title: 'Bob needs milk - you pass the bodega, mind grabbing it today?' }
-							]
+							maxWidth: 420
+						},
+						{
+							sections: [
+								{
+									type: 'header',
+									title: 'Shopping'
+								},
+								{
+									type: 'list',
+									items: [
+										{
+											title: 'Bob needs milk - you pass the bodega, mind grabbing it today?',
+											icon: 'shopping'
+										}
+									],
+									style: 'default'
+								}
+							],
+							maxWidth: 420
 						}
-					},
+					],
 					quick_replies: [
 						{ label: "Looks good", value: "confirm" },
 						{ label: "Send me reminders", value: "reminders" },
@@ -399,7 +473,7 @@
 					variant="text"
 					iconType="full"
 					onclick={handleGroupChatToggle}
-					aria-label="Open group chat"
+					aria-label={getModeLabel('secondaryToggleLabel')}
 				>
 					<Icon icon={iconChat} />
 				</Button>
@@ -418,10 +492,22 @@
 		>
 			{#each conversation as message, index (message.id)}
 				{#if message.sender === "ai"}
+					{@const nextMessage = conversation[index + 1]}
+					{@const isLastBeforeUser = nextMessage?.sender === "user" || !nextMessage}
+					{@const hasCard = 
+						message.ui_elements?.card_schema !== undefined || 
+						(message.ui_elements?.card_schemas !== undefined && message.ui_elements.card_schemas.length > 0)
+					}
+					{@const showTimestamp = isLastBeforeUser}
+					
 					<MessageBubble 
-						{message} 
+						{message}
+						{showTimestamp}
 						onTypingChange={(isTyping) => {
 							messageTypingStates[message.id] = isTyping;
+						}}
+						onCardRendered={() => {
+							messageCardStates[message.id] = true;
 						}}
 					/>
 
@@ -431,7 +517,13 @@
 							.some((m) => m.sender === "user")}
 						{@const savedSelection = selectedReplyIds[message.id]}
 						{@const isTyping = messageTypingStates[message.id] ?? false}
-						{#if !hasUserMessageAfter && !isTyping}
+						{@const hasCard = 
+							message.ui_elements?.card_schema !== undefined || 
+							(message.ui_elements?.card_schemas !== undefined && message.ui_elements.card_schemas.length > 0)
+						}
+						{@const cardRendered = messageCardStates[message.id] ?? false}
+						{@const canShowButtons = !isTyping && (!hasCard || cardRendered)}
+						{#if !hasUserMessageAfter && canShowButtons}
 							{#if savedSelection}
 								<!-- Show as bubble if already selected -->
 								{@const selectedOption =
@@ -463,7 +555,11 @@
 						{/if}
 					{/if}
 				{:else}
-					<UserMessage mode="bubble" {message} />
+					{@const nextMessage = conversation[index + 1]}
+					{@const isLastBeforeAI = nextMessage?.sender === "ai" || !nextMessage}
+					{@const showTimestamp = isLastBeforeAI}
+					
+					<UserMessage mode="bubble" {message} {showTimestamp} />
 				{/if}
 
 				{#if message.ui_elements?.cards}
@@ -584,6 +680,7 @@
 		padding: var(--space-5);
 		scroll-behavior: smooth;
 		padding-top: 5rem;
+		overflow-anchor: auto; /* Layout stability: anchor scroll position */
 	}
 
 	.messages-container {
@@ -603,7 +700,6 @@
 		.messages-area {
 			padding: var(--space-4);
 		padding-top: 5rem;
-
 		}
 	}
 

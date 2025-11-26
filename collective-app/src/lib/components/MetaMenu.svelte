@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
-	import { Button, Icon } from 'm3-svelte';
+	import { Button, Icon, Select, Card, ListItem } from 'm3-svelte';
 	import iconClose from '@ktibow/iconset-material-symbols/close';
 	import iconExpandMore from '@ktibow/iconset-material-symbols/expand-more';
 	import { 
@@ -13,8 +13,10 @@
 		getAnimationsEnabled, 
 		getCurrentUser,
 		getAllMembers,
-		loadScenario
+		loadScenario,
+		setOnboardingMode
 	} from '$lib/stores/app.svelte';
+	import { goto } from '$app/navigation';
 	import { 
 		getSansSerifFonts, 
 		getSerifFonts,
@@ -33,6 +35,14 @@
 		getCurrentMode,
 		getAvailableThemes 
 	} from '$lib/stores/theme.svelte';
+	import { 
+		getAppTabsPosition, 
+		setAppTabsPosition,
+		getCurrentPrototypeMode,
+		setPrototypeMode,
+		type AppTabsPosition 
+	} from '$lib/stores/features.svelte';
+	import { getAllPrototypeModes } from '$lib/config/prototypeModes';
 	import { scenarios } from '$lib/data/scenarios';
 	
 	let demoMenuState = $derived(getDemoMenuState());
@@ -43,12 +53,20 @@
 	let currentLogo = $derived(getCurrentLogo());
 	let currentTheme = $derived(getCurrentTheme());
 	let currentMode = $derived(getCurrentMode());
+	let currentAppTabsPosition = $derived(getAppTabsPosition());
+	let currentPrototypeMode = $derived(getCurrentPrototypeMode());
 	
 	const sansSerifFonts = getSansSerifFonts();
 	const serifFonts = getSerifFonts();
 	const logoFonts = getLogoFonts();
 	const members = getAllMembers();
 	const availableThemes = getAvailableThemes();
+	const prototypeModes = getAllPrototypeModes();
+	
+	// Convert fonts to M3 Select format
+	const logoFontOptions = logoFonts.map(f => ({ text: f.name, value: f.family }));
+	const sansFontOptions = sansSerifFonts.map(f => ({ text: f.name, value: f.family }));
+	const serifFontOptions = serifFonts.map(f => ({ text: f.name, value: f.family }));
 	
 	let isDragging = $state(false);
 	let dragOffset = $state({ x: 0, y: 0 });
@@ -77,6 +95,14 @@
 	function handleScenarioJump(scenarioId: string) {
 		const scenario = scenarios.find(s => s.id === scenarioId);
 		if (scenario) {
+			// Special handling for onboarding scenario
+			if (scenario.id === 'onboarding') {
+				setOnboardingMode(true);
+				setDemoMenuOpen(false);
+				goto('/groups');
+				return;
+			}
+			
 			// Switch to the scenario's initial user if needed
 			if (scenario.initial_user && scenario.initial_user !== currentUser) {
 				switchUser(scenario.initial_user as any);
@@ -140,7 +166,7 @@
 	
 	<div 
 		bind:this={menuElement}
-		class="meta-menu"
+		class="meta-menu-wrapper"
 		class:dragging={isDragging}
 		style="left: {demoMenuState.position.x}px; top: {demoMenuState.position.y}px;"
 		onmousedown={handleMouseDown}
@@ -149,6 +175,11 @@
 		aria-label="Prototype settings menu"
 		tabindex="-1"
 	>
+		<Card 
+			type="elevated"
+			class="meta-menu-card"
+		>
+		<div class="meta-menu">
 		<div class="menu-header">
 			<h2 class="menu-title m3-font-title-large">⚙️ Prototype Settings</h2>
 			<Button variant="text" iconType="full" onclick={handleClose}>
@@ -168,57 +199,39 @@
 				{#if expandedSection === 'fonts'}
 					<div class="section-content" transition:fade={{ duration: 150 }}>
 						<div class="font-selector">
-							<label for="logo-font" class="m3-font-label-medium">Logo:</label>
-							<div class="select-wrapper">
-								<select 
-									id="logo-font" 
-									value={currentLogo.family}
-									onchange={(e) => {
-										const font = logoFonts.find(f => f.family === e.currentTarget.value);
-										if (font) setLogoFont(font);
-									}}
-								>
-									{#each logoFonts as font}
-										<option value={font.family}>{font.name}</option>
-									{/each}
-								</select>
-							</div>
+							<Select
+								label="Logo Font"
+								options={logoFontOptions}
+								bind:value={currentLogo.family}
+								onchange={(e) => {
+									const font = logoFonts.find(f => f.family === e.currentTarget.value);
+									if (font) setLogoFont(font);
+								}}
+							/>
 						</div>
 						
 						<div class="font-selector">
-							<label for="sans-font" class="m3-font-label-medium">Sans-Serif:</label>
-							<div class="select-wrapper">
-								<select 
-									id="sans-font" 
-									value={currentSansSerif.family}
-									onchange={(e) => {
-										const font = sansSerifFonts.find(f => f.family === e.currentTarget.value);
-										if (font) setSansSerifFont(font);
-									}}
-								>
-									{#each sansSerifFonts as font}
-										<option value={font.family}>{font.name}</option>
-									{/each}
-								</select>
-							</div>
+							<Select
+								label="Sans-Serif Font"
+								options={sansFontOptions}
+								bind:value={currentSansSerif.family}
+								onchange={(e) => {
+									const font = sansSerifFonts.find(f => f.family === e.currentTarget.value);
+									if (font) setSansSerifFont(font);
+								}}
+							/>
 						</div>
 						
 						<div class="font-selector">
-							<label for="serif-font" class="m3-font-label-medium">Serif:</label>
-							<div class="select-wrapper">
-								<select 
-									id="serif-font"
-									value={currentSerif.family}
-									onchange={(e) => {
-										const font = serifFonts.find(f => f.family === e.currentTarget.value);
-										if (font) setSerifFont(font);
-									}}
-								>
-									{#each serifFonts as font}
-										<option value={font.family}>{font.name}</option>
-									{/each}
-								</select>
-							</div>
+							<Select
+								label="Serif Font"
+								options={serifFontOptions}
+								bind:value={currentSerif.family}
+								onchange={(e) => {
+									const font = serifFonts.find(f => f.family === e.currentTarget.value);
+									if (font) setSerifFont(font);
+								}}
+							/>
 						</div>
 					</div>
 				{/if}
@@ -328,6 +341,72 @@
 				{/if}
 			</div>
 			
+			<!-- Features Section -->
+			<div class="menu-section">
+				<button class="section-header" onclick={() => toggleSection('features')}>
+					<span class="m3-font-title-medium">✨ Features</span>
+					<span class="chevron" class:expanded={expandedSection === 'features'}>
+						<Icon icon={iconExpandMore} />
+					</span>
+				</button>
+				{#if expandedSection === 'features'}
+					<div class="section-content" transition:fade={{ duration: 150 }}>
+						<div class="feature-group">
+							<span class="selector-label m3-font-label-medium">App Tabs:</span>
+							<div class="button-group">
+								<Button 
+									variant={currentAppTabsPosition === 'off' ? 'filled' : 'outlined'}
+									onclick={() => setAppTabsPosition('off')}
+								>
+									Off
+								</Button>
+								<Button 
+									variant={currentAppTabsPosition === 'top' ? 'filled' : 'outlined'}
+									onclick={() => setAppTabsPosition('top')}
+								>
+									Top
+								</Button>
+								<Button 
+									variant={currentAppTabsPosition === 'bottom' ? 'filled' : 'outlined'}
+									onclick={() => setAppTabsPosition('bottom')}
+								>
+									Bottom
+								</Button>
+							</div>
+						</div>
+					</div>
+				{/if}
+			</div>
+			
+			<!-- Prototype Mode Section -->
+			<div class="menu-section">
+				<button class="section-header" onclick={() => toggleSection('prototype-mode')}>
+					<span class="m3-font-title-medium">🎭 Prototype Mode</span>
+					<span class="chevron" class:expanded={expandedSection === 'prototype-mode'}>
+						<Icon icon={iconExpandMore} />
+					</span>
+				</button>
+				{#if expandedSection === 'prototype-mode'}
+					<div class="section-content" transition:fade={{ duration: 150 }}>
+						<div class="mode-selector">
+							<span class="selector-label m3-font-label-medium">UX Flow:</span>
+							<div class="mode-grid">
+								{#each prototypeModes as mode}
+									<button 
+										class="custom-option-btn" 
+										class:active={currentPrototypeMode === mode.id}
+										onclick={() => setPrototypeMode(mode.id)}
+									>
+										<span class="mode-name m3-font-title-small">{mode.name}</span>
+										<span class="mode-desc m3-font-body-small">{mode.description}</span>
+									</button>
+								{/each}
+							</div>
+						</div>
+					</div>
+				{/if}
+			</div>
+			
 			<!-- Demo Controls Section -->
 			<div class="menu-section">
 				<button class="section-header" onclick={() => toggleSection('controls')}>
@@ -361,6 +440,8 @@
 		<div class="menu-footer">
 			<small class="m3-font-body-small">Alt + / to toggle | Alt + 1-4 for users</small>
 		</div>
+		</div>
+		</Card>
 	</div>
 {/if}
 
@@ -375,16 +456,31 @@
 		cursor: pointer;
 	}
 	
-	.meta-menu {
+	.meta-menu-wrapper {
 		position: fixed;
-		width: min(400px, calc(100vw - 40px));
+		width: min(420px, calc(100vw - 40px));
 		max-height: calc(100vh - 40px);
-		background: rgb(var(--m3-scheme-surface));
-		border-radius: var(--m3-util-rounding-extra-large);
-		box-shadow: var(--m3-util-elevation-3);
 		z-index: var(--z-modal);
 		display: flex;
 		flex-direction: column;
+	}
+	
+	.meta-menu-wrapper.dragging {
+		cursor: move;
+	}
+	
+	:global(.meta-menu-card) {
+		width: 100%;
+		max-height: 100%;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.meta-menu {
+		display: flex;
+		flex-direction: column;
+		max-height: calc(100vh - 80px);
 		overflow: hidden;
 	}
 	
@@ -393,14 +489,15 @@
 	}
 	
 	.menu-header {
-		padding: 1rem 1.5rem;
-		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant));
+		padding: 1.5rem;
+		padding-bottom: 1rem;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		cursor: move;
 		user-select: none;
-		background: rgb(var(--m3-scheme-surface));
+		background: rgb(var(--m3-scheme-surface-container-low));
+		flex-shrink: 0;
 	}
 	
 	.menu-title {
@@ -411,18 +508,21 @@
 	.menu-content {
 		flex: 1;
 		overflow-y: auto;
-		padding: 1rem;
+		padding: 0.5rem 1rem 1rem;
 		background: rgb(var(--m3-scheme-surface-container-low));
+		min-height: 0; /* Required for flex overflow to work */
 	}
 	
 	.menu-section {
-		margin-bottom: 0.75rem;
+		margin-bottom: 0.5rem;
 		border-radius: var(--m3-util-rounding-large);
 		overflow: hidden;
 		background: rgb(var(--m3-scheme-surface-container));
+		box-shadow: var(--m3-util-elevation-1);
 	}
 	
 	.section-header {
+		position: relative;
 		width: 100%;
 		padding: 1rem;
 		display: flex;
@@ -434,13 +534,34 @@
 		cursor: pointer;
 		border: none;
 		text-align: left;
+		overflow: hidden;
 	}
 	
-	.section-header:hover {
-		background-color: rgb(var(--m3-scheme-surface-container-highest));
+	.section-header::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: rgb(var(--m3-scheme-on-surface));
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+	
+	.section-header:hover::before {
+		opacity: 0.08;
+	}
+	
+	.section-header:active::before {
+		opacity: 0.12;
+	}
+	
+	.section-header > span {
+		position: relative;
+		z-index: 1;
 	}
 	
 	.chevron {
+		position: relative;
+		z-index: 1;
 		transition: transform 0.2s;
 		color: rgb(var(--m3-scheme-on-surface-variant));
 		display: flex;
@@ -461,75 +582,78 @@
 		margin-bottom: 1rem;
 	}
 	
-	.font-selector label {
-		display: block;
-		color: rgb(var(--m3-scheme-on-surface-variant));
-		margin-bottom: 0.5rem;
-	}
-	
-	.select-wrapper {
-		position: relative;
-	}
-	
-	.font-selector select {
-		width: 100%;
-		padding: 0.75rem 1rem;
-		border-radius: var(--m3-util-rounding-small);
-		border: 1px solid rgb(var(--m3-scheme-outline));
-		background-color: rgb(var(--m3-scheme-surface));
-		color: rgb(var(--m3-scheme-on-surface));
-		font-size: 0.875rem;
-		cursor: pointer;
-		appearance: none;
-	}
-	
-	.font-selector select:focus {
-		outline: 2px solid rgb(var(--m3-scheme-primary));
-		border-color: transparent;
+	.font-selector:last-child {
+		margin-bottom: 0;
 	}
 	
 	/* Custom Option Buttons (Theme, User, Scenario) */
 	.custom-option-btn {
+		position: relative;
 		padding: 1rem;
 		border-radius: var(--m3-util-rounding-medium);
 		border: 1px solid rgb(var(--m3-scheme-outline-variant));
-		background-color: rgb(var(--m3-scheme-surface));
+		background-color: rgb(var(--m3-scheme-surface-container-highest));
 		color: rgb(var(--m3-scheme-on-surface));
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.25rem;
-		transition: all 0.2s;
+		transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
 		cursor: pointer;
 		text-align: left;
 		width: 100%;
+		overflow: hidden;
 	}
 	
-	.custom-option-btn:hover {
-		background-color: rgb(var(--m3-scheme-surface-container-high));
-		border-color: rgb(var(--m3-scheme-outline));
+	.custom-option-btn::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: rgb(var(--m3-scheme-on-surface));
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+	
+	.custom-option-btn:hover::before {
+		opacity: 0.08;
+	}
+	
+	.custom-option-btn:active::before {
+		opacity: 0.12;
 	}
 	
 	.custom-option-btn.active {
-		background-color: rgb(var(--m3-scheme-primary-container));
-		color: rgb(var(--m3-scheme-on-primary-container));
-		border-color: rgb(var(--m3-scheme-primary));
+		background-color: rgb(var(--m3-scheme-secondary-container));
+		color: rgb(var(--m3-scheme-on-secondary-container));
+		border-color: rgb(var(--m3-scheme-secondary));
+		box-shadow: var(--m3-util-elevation-1);
+	}
+	
+	.custom-option-btn.active::before {
+		background: rgb(var(--m3-scheme-on-secondary-container));
 	}
 	
 	.custom-option-btn .theme-name,
-	.custom-option-btn .scenario-title {
+	.custom-option-btn .scenario-title,
+	.custom-option-btn .mode-name {
 		font-weight: 500;
+		position: relative;
+		z-index: 1;
 	}
 	
 	.custom-option-btn .theme-desc,
-	.custom-option-btn .scenario-desc {
+	.custom-option-btn .scenario-desc,
+	.custom-option-btn .mode-desc {
 		color: rgb(var(--m3-scheme-on-surface-variant));
+		position: relative;
+		z-index: 1;
 	}
 	
 	.custom-option-btn.active .theme-desc,
-	.custom-option-btn.active .scenario-desc {
-		color: rgb(var(--m3-scheme-on-primary-container));
-		opacity: 0.8;
+	.custom-option-btn.active .scenario-desc,
+	.custom-option-btn.active .mode-desc {
+		color: rgb(var(--m3-scheme-on-secondary-container));
+		opacity: 0.9;
 	}
 	
 	/* Grids */
@@ -542,11 +666,19 @@
 	.user-option {
 		align-items: center;
 		text-align: center;
+		padding: 0.75rem;
 	}
 	
 	.user-avatar {
-		font-size: 2rem;
+		font-size: 2.5rem;
 		margin-bottom: 0.25rem;
+		position: relative;
+		z-index: 1;
+	}
+	
+	.user-name {
+		position: relative;
+		z-index: 1;
 	}
 	
 	.scenario-list {
@@ -568,11 +700,17 @@
 		flex-wrap: wrap;
 	}
 	
+	.button-group :global(.m3-button) {
+		flex: 1;
+		min-width: fit-content;
+	}
+	
 	.menu-footer {
-		padding: 1rem;
-		border-top: 1px solid rgb(var(--m3-scheme-outline-variant));
+		padding: 0.75rem 1.5rem;
 		text-align: center;
-		background: rgb(var(--m3-scheme-surface));
+		background: rgb(var(--m3-scheme-surface-container-low));
+		border-top: 1px solid rgb(var(--m3-scheme-outline-variant) / 0.5);
+		flex-shrink: 0;
 	}
 	
 	.menu-footer small {
@@ -588,6 +726,25 @@
 	
 	.theme-selector {
 		margin-bottom: 1.5rem;
+	}
+	
+	.mode-selector {
+		margin-bottom: 1rem;
+	}
+	
+	.mode-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.5rem;
+	}
+	
+	
+	.feature-group {
+		margin-bottom: 1rem;
+	}
+	
+	.feature-group:last-child {
+		margin-bottom: 0;
 	}
 </style>
 

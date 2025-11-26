@@ -1,28 +1,51 @@
 <script lang="ts">
 	import type { Message } from '$lib/data/scenarios';
-	import { fly } from 'svelte/transition';
+	import { fly, fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { markMessageAsRendered } from '$lib/stores/app.svelte';
 	import CardRenderer from '$lib/components/Cards/CardRenderer.svelte';
 	
 	let { 
 		message,
-		onTypingChange = () => {}
+		showTimestamp = true,
+		onTypingChange = () => {},
+		onCardRendered = () => {}
 	} = $props<{ 
 		message: Message;
+		showTimestamp?: boolean;
 		onTypingChange?: (isTyping: boolean) => void;
+		onCardRendered?: () => void;
 	}>();
 	
 	// Check if message has a card to render
-	const hasCard = $derived(message.ui_elements?.card_schema !== undefined);
+	const hasCard = $derived(
+		message.ui_elements?.card_schema !== undefined || 
+		(message.ui_elements?.card_schemas !== undefined && message.ui_elements.card_schemas.length > 0)
+	);
+	const cardSchemas = $derived(
+		message.ui_elements?.card_schemas || 
+		(message.ui_elements?.card_schema ? [message.ui_elements.card_schema] : [])
+	);
 
-	// Typing effect for AI messages
+	// Progressive reveal states
 	let visibleText = $state('');
-	let isTyping = $state(false);
+	// Initialize isTyping to true for AI messages that need animation
+	let isTyping = $state(message.sender === 'ai' && !message.is_rendered);
+	let showCard = $state(false);
+	let cardRendered = $state(false);
+	// Track when timestamp should appear (after typing completes for AI messages)
+	let showTimestampAfterTyping = $state(message.sender !== 'ai' || message.is_rendered);
 	
 	// Expose isTyping state to parent
 	$effect(() => {
 		onTypingChange(isTyping);
+	});
+	
+	// Notify parent when card is rendered
+	$effect(() => {
+		if (cardRendered) {
+			onCardRendered();
+		}
 	});
 	
 	// Split text into word clusters (1-3 words each)
@@ -63,10 +86,12 @@
 			if (message.is_rendered) {
 				visibleText = message.content;
 				isTyping = false;
+				showCard = hasCard;
+				cardRendered = hasCard;
 				return;
 			}
 			
-			isTyping = true;
+			// isTyping is already true from initialization
 			const chunks = splitIntoChunks(message.content);
 			let currentIndex = 0;
 			
@@ -82,6 +107,22 @@
 					isTyping = false;
 					// Mark this message as fully rendered
 					markMessageAsRendered(message.id);
+					
+					// Show timestamp after typing completes (with small delay for fade-in)
+					setTimeout(() => {
+						showTimestampAfterTyping = true;
+					}, 150);
+					
+					// Show card after text is fully typed (with small delay)
+					if (hasCard) {
+						setTimeout(() => {
+							showCard = true;
+							// Mark card as rendered after animation completes
+							setTimeout(() => {
+								cardRendered = true;
+							}, 250); // Wait for scale animation
+						}, 200);
+					}
 				}
 			};
 			
@@ -90,6 +131,8 @@
 		} else {
 			// For user/peer messages, show immediately
 			visibleText = message.content;
+			showCard = hasCard;
+			cardRendered = hasCard;
 		}
 	});
 	
@@ -103,6 +146,56 @@
 		const formattedMinutes = minutes.toString().padStart(2, '0');
 		return `${formattedHours}:${formattedMinutes} ${ampm}`;
 	}
+	
+	// Parse text for markdown-style headings
+	// # Heading 1, ## Heading 2, ### Heading 3
+	type TextPart = { type: 'h1' | 'h2' | 'h3' | 'text'; content: string };
+	
+	function parseTextWithHeadings(text: string): TextPart[] {
+		const lines = text.split('\n');
+		const parts: TextPart[] = [];
+		let currentText = '';
+		
+		for (const line of lines) {
+			// Check for headings at the start of a line
+			if (line.startsWith('### ')) {
+				if (currentText) {
+					parts.push({ type: 'text', content: currentText });
+					currentText = '';
+				}
+				parts.push({ type: 'h3', content: line.slice(4) });
+			} else if (line.startsWith('## ')) {
+				if (currentText) {
+					parts.push({ type: 'text', content: currentText });
+					currentText = '';
+				}
+				parts.push({ type: 'h2', content: line.slice(3) });
+			} else if (line.startsWith('# ')) {
+				if (currentText) {
+					parts.push({ type: 'text', content: currentText });
+					currentText = '';
+				}
+				parts.push({ type: 'h1', content: line.slice(2) });
+			} else {
+				// Regular text - append with newline if needed
+				if (currentText) {
+					currentText += '\n' + line;
+				} else {
+					currentText = line;
+				}
+			}
+		}
+		
+		// Don't forget remaining text
+		if (currentText) {
+			parts.push({ type: 'text', content: currentText });
+		}
+		
+		return parts;
+	}
+	
+	// Derived parsed content
+	let parsedContent = $derived(parseTextWithHeadings(visibleText));
 </script>
 
 <div 
@@ -110,6 +203,7 @@
 	class:user={message.sender === 'user'}
 	class:ai={message.sender === 'ai'}
 	class:peer={message.sender === 'peer'}
+	class:typing-active={isTyping && message.sender === 'ai'}
 	in:fly={{ y: 20, duration: 200, delay: 50 }}
 >
 	<div 
@@ -117,21 +211,43 @@
 		class:user-bubble={message.sender === 'user'} 
 		class:ai-bubble={message.sender === 'ai'}
 		class:peer-bubble={message.sender === 'peer'}
+		class:typing={isTyping}
 	>
-		<p class="message-content">
-			{visibleText}
+		<div class="message-content">
+			{#each parsedContent as part, i}
+				{#if part.type === 'h1'}
+					<span class="heading-1">{part.content}</span>
+				{:else if part.type === 'h2'}
+					<span class="heading-2">{part.content}</span>
+				{:else if part.type === 'h3'}
+					<span class="heading-3">{part.content}</span>
+				{:else}
+					<span class="text-content">{part.content}</span>
+				{/if}
+			{/each}
 			{#if message.sender === 'ai' && isTyping}
 				<span class="typing-cursor">▋</span>
 			{/if}
-		</p>
-	</div>
-	<span class="message-timestamp m3-font-body-small">{formatTime(message.timestamp)}</span>
-	
-	<!-- Render card if present -->
-	{#if hasCard && message.ui_elements?.card_schema}
-		<div class="card-container">
-			<CardRenderer schema={message.ui_elements.card_schema} />
 		</div>
+	</div>
+	
+	<!-- Show timestamp after text only if there are no cards -->
+	{#if showTimestamp && !hasCard && showTimestampAfterTyping}
+		<span class="message-timestamp m3-font-body-small" in:fade={{ duration: 300 }}>{formatTime(message.timestamp)}</span>
+	{/if}
+	
+	<!-- Render cards progressively after text completes -->
+	{#if showCard && cardSchemas.length > 0}
+		<div class="cards-container">
+			{#each cardSchemas as schema, index (index)}
+				<CardRenderer {schema} />
+			{/each}
+		</div>
+	{/if}
+	
+	<!-- Show timestamp after cards if cards exist -->
+	{#if showTimestamp && hasCard && showCard && showTimestampAfterTyping}
+		<span class="message-timestamp m3-font-body-small" in:fade={{ duration: 300 }}>{formatTime(message.timestamp)}</span>
 	{/if}
 </div>
 
@@ -149,6 +265,12 @@
 	
 	.message-container.ai {
 		align-items: flex-start;
+	}
+	
+	/* Pre-allocate vertical space ONLY for the last AI message while typing */
+	/* Previous messages revert to auto when a new message appears - the scroll jump hides this transition */
+	.message-container.ai:last-child {
+		min-height: clamp(100px, 25vh, 350px);
 	}
 
 	.message-container.peer {
@@ -176,7 +298,12 @@
 		border-radius: var(--m3-util-rounding-large) var(--m3-util-rounding-large) var(--m3-util-rounding-large) var(--m3-util-rounding-extra-small);
 		padding-left: .5rem;
 		padding-bottom: .0;
-		font-weight: var(--m3-font-body-semibold, 600);
+		font-weight: var(--m3-font-body-semibold, 500);
+	}
+	
+	/* Pre-allocate space during typing - only for last message (via parent selector) */
+	.message-container.ai.typing-active:last-child .ai-bubble.typing {
+		min-height: clamp(80px, 20vh, 300px);
 	}
 
 	.peer-bubble {
@@ -188,7 +315,37 @@
 	.message-content {
 		margin: 0;
 		line-height: 1.5;
+	}
+	
+	.message-content .text-content {
 		white-space: pre-wrap;
+	}
+	
+	.message-content .heading-1 {
+		display: block;
+		font-size: 1.5rem;
+		font-weight: 700;
+		line-height: 1.3;
+		margin-bottom: 0.5rem;
+		color: rgb(var(--m3-scheme-on-surface));
+	}
+	
+	.message-content .heading-2 {
+		display: block;
+		font-size: 1.25rem;
+		font-weight: 600;
+		line-height: 1.3;
+		margin-bottom: 0.4rem;
+		color: rgb(var(--m3-scheme-on-surface));
+	}
+	
+	.message-content .heading-3 {
+		display: block;
+		font-size: 1.1rem;
+		font-weight: 600;
+		line-height: 1.3;
+		margin-bottom: 0.3rem;
+		color: rgb(var(--m3-scheme-on-surface-variant));
 	}
 
 	.typing-cursor {
@@ -227,15 +384,21 @@
 	}
 	
 	/* Card container styling */
-	.card-container {
+	.cards-container {
 		margin-top: var(--space-3);
 		width: 100%;
 		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
 		justify-content: flex-start;
 	}
 	
-	.message-container.user .card-container {
-		justify-content: flex-end;
+	.message-container.user .cards-container {
+		align-items: flex-end;
+	}
+	
+	.message-container.ai .cards-container {
+		align-items: flex-start;
 	}
 	
 	/* Mobile adjustments */

@@ -1,38 +1,38 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { slide, fade } from 'svelte/transition';
-	import GroupChatMessage from './GroupChatMessage.svelte';
-	import GlassHeader from './GlassHeader.svelte';
-	import { getGroupChatMessages, addGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from '$lib/data/groupChat';
-	import { getCurrentUser, getMemberInfo } from '$lib/stores/app.svelte';
-	import { getGroupById } from '$lib/data/groups';
-	import { Icon, Button, TextField } from 'm3-svelte';
-	import iconArrowBack from '@ktibow/iconset-material-symbols/arrow-back';
-	import iconSend from '@ktibow/iconset-material-symbols/send';
-	
-	let {
-		groupId,
-		isOpen,
-		onClose
-	} = $props<{
+	import { onMount } from "svelte";
+	import { slide, fade } from "svelte/transition";
+	import GroupChatMessage from "./GroupChatMessage.svelte";
+	import GlassHeader from "./GlassHeader.svelte";
+	import {
+		getGroupChatMessages,
+		addGroupChatMessage,
+		type GroupChatMessage as GroupChatMessageType,
+	} from "$lib/data/groupChat";
+	import { getCurrentUser, getMemberInfo } from "$lib/stores/app.svelte";
+	import { getGroupById } from "$lib/data/groups";
+	import { Icon, Button, TextField } from "m3-svelte";
+	import iconArrowBack from "@ktibow/iconset-material-symbols/arrow-back";
+	import iconSend from "@ktibow/iconset-material-symbols/send";
+
+	let { groupId, isOpen, onClose } = $props<{
 		groupId: string;
 		isOpen: boolean;
 		onClose: () => void;
 	}>();
-	
+
 	let messages = $state<GroupChatMessageType[]>([]);
-	let inputValue = $state('');
+	let inputValue = $state("");
 	let messagesContainer = $state<HTMLDivElement>();
-	
+
 	let currentUser = $derived(getCurrentUser());
 	let currentMember = $derived(getMemberInfo(currentUser));
 	let group = $derived(getGroupById(groupId));
-	
+
 	// Load messages when component mounts or groupId changes
 	$effect(() => {
 		if (isOpen && groupId) {
 			messages = getGroupChatMessages(groupId);
-			
+
 			// Immediately scroll to bottom without animation
 			if (messagesContainer) {
 				messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -50,7 +50,8 @@
 					// Scroll to bottom when new message arrives
 					setTimeout(() => {
 						if (messagesContainer) {
-							messagesContainer.scrollTop = messagesContainer.scrollHeight;
+							messagesContainer.scrollTop =
+								messagesContainer.scrollHeight;
 						}
 					}, 10);
 				}
@@ -59,10 +60,10 @@
 			return () => clearInterval(interval);
 		}
 	});
-	
+
 	function handleSend(e: Event) {
 		e.preventDefault();
-		
+
 		const trimmed = inputValue.trim();
 		if (trimmed && currentMember) {
 			const newMessage: GroupChatMessageType = {
@@ -71,32 +72,32 @@
 				sender_name: currentMember.name,
 				avatar: currentMember.avatar,
 				content: trimmed,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			};
-			
+
 			// Add to messages (local state for demo)
 			messages = [...messages, newMessage];
-			
+
 			// Also add to global data store
 			addGroupChatMessage(groupId, newMessage);
-			
-		// Clear input
-		inputValue = '';
-		
-		// Scroll to bottom
-		if (messagesContainer) {
-			messagesContainer.scrollTop = messagesContainer.scrollHeight;
-		}
+
+			// Clear input
+			inputValue = "";
+
+			// Scroll to bottom
+			if (messagesContainer) {
+				messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			}
 		}
 	}
-	
+
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && !e.shiftKey) {
+		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
 			handleSend(e);
 		}
 	}
-	
+
 	function handleOverlayClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) {
 			onClose();
@@ -106,39 +107,43 @@
 
 {#if isOpen}
 	<!-- Overlay backdrop -->
-	<button 
-		class="overlay-backdrop" 
+	<button
+		class="overlay-backdrop"
 		onclick={handleOverlayClick}
 		transition:fade={{ duration: 200 }}
 		aria-label="Close group chat"
 	></button>
-	
+
 	<!-- Group Chat Panel -->
-	<div 
+	<div
 		class="group-chat-panel"
-		transition:slide={{ duration: 300, axis: 'x' }}
+		transition:slide={{ duration: 300, axis: "x" }}
 		role="dialog"
 		aria-label="Group chat"
 	>
 		<!-- Header -->
-		<GlassHeader
-			sticky={false}
-			absolute={true}
-		>
+		<GlassHeader sticky={false} absolute={true}>
 			{#snippet leading()}
-				<Button variant="text" iconType="full" onclick={onClose} aria-label="Close group chat">
+				<Button
+					variant="text"
+					iconType="full"
+					onclick={onClose}
+					aria-label="Close group chat"
+				>
 					<Icon icon={iconArrowBack} />
 				</Button>
 			{/snippet}
-			
+
 			{#snippet titleContent()}
 				<div class="chat-header-title">
-					<h2 class="group-name m3-font-title-medium">{group?.name || 'Group'}</h2>
+					<h2 class="group-name m3-font-title-medium">
+						{group?.name || "Group"}
+					</h2>
 					<p class="chat-subtitle m3-font-body-small">Group Chat</p>
 				</div>
 			{/snippet}
 		</GlassHeader>
-		
+
 		<!-- Messages Area -->
 		<div class="messages-area" bind:this={messagesContainer}>
 			<div class="messages-container">
@@ -147,7 +152,7 @@
 				{/each}
 			</div>
 		</div>
-		
+
 		<!-- Input Area -->
 		<form class="chat-input-form" onsubmit={handleSend}>
 			<!-- <div class="text-field-wrapper">
@@ -180,13 +185,13 @@
 		cursor: pointer;
 		border: none;
 	}
-	
+
 	.group-chat-panel {
 		position: fixed;
 		top: 0;
 		right: 0;
 		height: 100vh;
-		width: 400px;
+		width: var(--group-chat-width, 400px);
 		max-width: 100vw;
 		background-color: rgb(var(--m3-scheme-surface-container-low));
 		box-shadow: var(--m3-util-elevation-3);
@@ -217,21 +222,22 @@
 		line-height: 1.2;
 		/* opacity: 0.7; */
 	}
-	
+
 	.messages-area {
 		flex: 1;
 		overflow-y: auto;
 		padding: 1.5rem;
 		overflow-x: hidden;
 		padding-top: 4rem;
+		/* width: 400px; */
+		width: var(--group-chat-width, 400px);
 	}
-	
+
 	.messages-container {
 		display: flex;
 		flex-direction: column;
-		width: calc(100vw - 2.5rem);
 	}
-	
+
 	.chat-input-form {
 		/* display: flex;
 		align-items: flex-end;
@@ -242,40 +248,42 @@
 		flex-shrink: 0;
 		min-height: 5rem;
 	}
-	
+
 	/* Mobile: full screen overlay */
 	@media (max-width: 640px) {
 		.group-chat-panel {
 			width: 100vw;
+
+			--group-chat-width: 100vw;
 		}
-		
+
 		.messages-area {
 			padding: 1rem;
 			padding-top: 5rem;
+			width: var(--group-chat-width, 100vw);
 		}
-		
+
 		.chat-input-form {
 			padding: 0.75rem 1rem;
 		}
 	}
-	
+
 	/* Scrollbar styling */
 	.messages-area::-webkit-scrollbar {
 		width: 8px;
 	}
-	
+
 	.messages-area::-webkit-scrollbar-track {
 		background: rgb(var(--m3-scheme-surface-container));
 		border-radius: var(--m3-util-rounding-full);
 	}
-	
+
 	.messages-area::-webkit-scrollbar-thumb {
 		background: rgb(var(--m3-scheme-outline));
 		border-radius: var(--m3-util-rounding-full);
 	}
-	
+
 	.messages-area::-webkit-scrollbar-thumb:hover {
 		background: rgb(var(--m3-scheme-on-surface-variant));
 	}
 </style>
-

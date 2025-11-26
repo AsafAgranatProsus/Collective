@@ -90,11 +90,12 @@ function applyThemeToDOM(): void {
 	// Set theme attribute (for potential future multi-theme support)
 	htmlElement.setAttribute('data-theme', themeState.theme);
 	
-	// Set mode attribute (for legacy CSS that uses data-mode)
-	htmlElement.setAttribute('data-mode', themeState.mode);
-	
 	// Get effective mode (resolve 'system' to 'light' or 'dark')
 	const effectiveMode = getEffectiveMode();
+	
+	// Set mode attribute to the EFFECTIVE mode (not 'system')
+	// This ensures CSS selectors like :root[data-mode='light'] work correctly
+	htmlElement.setAttribute('data-mode', effectiveMode);
 	
 	// Set color-scheme CSS property - this is what M3 uses
 	// This triggers the @media (prefers-color-scheme) rules

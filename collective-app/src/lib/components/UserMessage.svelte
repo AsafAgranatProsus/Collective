@@ -7,11 +7,13 @@
 		mode = 'bubble',
 		buttons = [],
 		message = undefined,
+		showTimestamp = true,
 		onSelect = undefined
 	} = $props<{ 
 		mode?: 'buttons' | 'morphing' | 'bubble';
 		buttons?: QuickReply[];
 		message?: Message;
+		showTimestamp?: boolean;
 		onSelect?: (value: string, label: string, messageToAdd?: Message) => void;
 	}>();
 	
@@ -72,7 +74,9 @@
 		<div class="message-bubble user-bubble">
 			<p class="message-content">{message.content}</p>
 		</div>
-		<span class="message-timestamp m3-font-body-small">{formatTime(message.timestamp)}</span>
+		{#if showTimestamp}
+			<span class="message-timestamp m3-font-body-small">{formatTime(message.timestamp)}</span>
+		{/if}
 	</div>
 {:else if mode === 'morphing' || mode === 'buttons'}
 	<!-- Reply buttons that can morph into bubble -->
@@ -87,7 +91,9 @@
 				<div class="message-bubble user-bubble">
 					<p class="message-content">{morphedBubble.content}</p>
 				</div>
-				<span class="message-timestamp m3-font-body-small">{formatTime(morphedBubble.timestamp)}</span>
+				{#if showTimestamp}
+					<span class="message-timestamp m3-font-body-small">{formatTime(morphedBubble.timestamp)}</span>
+				{/if}
 			</div>
 		{:else}
 			<!-- Buttons container -->

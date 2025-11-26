@@ -8,7 +8,7 @@
 
 <div class="card-section card-section-header">
 	<div class="header-content">
-		{#if section.icon}
+		{#if section.showIcon && section.icon}
 			<div class="header-icon">
 				<Icon icon={getIcon(section.icon)} />
 			</div>

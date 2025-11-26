@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { initTheme } from '$lib/stores/theme.svelte';
 	import { initFonts, getCurrentSansSerif, getCurrentSerif, getCurrentLogo, getMonoFont } from '$lib/stores/fonts.svelte';
+	import { initFeatures } from '$lib/stores/features.svelte';
 	import { getDemoMenuState, setDemoMenuOpen, switchUser } from '$lib/stores/app.svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import MetaMenu from '$lib/components/MetaMenu.svelte';
@@ -28,10 +29,11 @@
 	});
 	let monoFontUrl = $derived(`https://fonts.googleapis.com/css2?family=${monoFont.family.replace(/\s+/g, '+')}:wght@${monoFont.weights?.replace(/,/g, ';')}&display=swap`);
 
-	// Initialize theme and fonts on mount
+	// Initialize theme, fonts, and features on mount
 	onMount(() => {
 		initTheme();
 		initFonts();
+		initFeatures();
 	});
 </script>
 

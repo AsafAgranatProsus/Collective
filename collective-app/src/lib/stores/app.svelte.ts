@@ -19,6 +19,20 @@ interface DemoMenuState {
 	position: { x: number; y: number };
 }
 
+// Partial group data captured during onboarding
+export interface OnboardingGroup {
+	name: string;
+	type: string;
+	icon: string;
+	memberCount: number;
+	// First expense logged during onboarding
+	firstExpense?: {
+		name: string;
+		amount: string;
+		splitAmount: string;
+	};
+}
+
 interface AppState {
 	currentUser: UserId;
 	currentGroup: GroupId;
@@ -30,7 +44,16 @@ interface AppState {
 	demoMenu: DemoMenuState;
 	animationsEnabled: boolean;
 	typingIndicatorVisible: boolean;
+	typingIndicatorExiting: boolean;
 	navigationDirection: 'forward' | 'back' | null;
+	// Onboarding state - when true, Groups tab is hidden
+	isOnboarding: boolean;
+	// Tracks when onboarding group is created - triggers tabs to appear
+	onboardingGroupCreated: boolean;
+	// Partial group data created during onboarding
+	onboardingGroup: OnboardingGroup | null;
+	// Messages from the onboarding conversation (persisted across component remounts)
+	onboardingMessages: Message[];
 }
 
 /**
@@ -60,7 +83,12 @@ let appState = $state<AppState>({
 	},
 	animationsEnabled: true,
 	typingIndicatorVisible: false,
-	navigationDirection: null
+	typingIndicatorExiting: false,
+	navigationDirection: null,
+	isOnboarding: false,
+	onboardingGroupCreated: false,
+	onboardingGroup: null,
+	onboardingMessages: []
 });
 
 /**
@@ -129,6 +157,19 @@ export function getConversation(userId: UserId, groupId?: GroupId): Message[] {
 }
 
 /**
+ * Get conversation for specific user in specific group (read-only, safe for derived)
+ * Returns empty array if conversation doesn't exist
+ */
+export function getConversationReadOnly(userId: UserId, groupId: GroupId): Message[] {
+	// Don't initialize - just return what exists or empty array
+	if (!appState.conversations[groupId]) {
+		return [];
+	}
+	
+	return appState.conversations[groupId][userId] || [];
+}
+
+/**
  * Add message to current user's conversation in current group
  */
 export function addMessage(message: Message, groupId?: GroupId): void {
@@ -158,6 +199,7 @@ export function addMessageToUser(userId: UserId, message: Message, groupId?: Gro
 
 /**
  * Mark a message as fully rendered (used to prevent re-animation on reload)
+ * Checks both group conversations and onboarding messages
  */
 export function markMessageAsRendered(messageId: string, userId?: UserId, groupId?: GroupId): void {
 	const targetUser = userId || appState.currentUser;
@@ -168,12 +210,19 @@ export function markMessageAsRendered(messageId: string, userId?: UserId, groupI
 		appState.conversations[targetGroup] = initGroupConversations();
 	}
 	
-	// Find and update the message
+	// Find and update the message in group conversations
 	const conversation = appState.conversations[targetGroup][targetUser];
 	const message = conversation.find(m => m.id === messageId);
 	
 	if (message) {
 		message.is_rendered = true;
+		return;
+	}
+	
+	// Also check onboarding messages
+	const onboardingMessage = appState.onboardingMessages.find(m => m.id === messageId);
+	if (onboardingMessage) {
+		onboardingMessage.is_rendered = true;
 	}
 }
 
@@ -289,6 +338,14 @@ export function getAnimationsEnabled(): boolean {
  */
 export function showTypingIndicator(): void {
 	appState.typingIndicatorVisible = true;
+	appState.typingIndicatorExiting = false;
+}
+
+/**
+ * Start typing indicator exit animation
+ */
+export function startTypingIndicatorExit(): void {
+	appState.typingIndicatorExiting = true;
 }
 
 /**
@@ -296,6 +353,7 @@ export function showTypingIndicator(): void {
  */
 export function hideTypingIndicator(): void {
 	appState.typingIndicatorVisible = false;
+	appState.typingIndicatorExiting = false;
 }
 
 /**
@@ -303,6 +361,13 @@ export function hideTypingIndicator(): void {
  */
 export function getTypingIndicatorVisible(): boolean {
 	return appState.typingIndicatorVisible;
+}
+
+/**
+ * Get typing indicator exiting state
+ */
+export function getTypingIndicatorExiting(): boolean {
+	return appState.typingIndicatorExiting;
 }
 
 /**
@@ -317,6 +382,10 @@ export function resetDemo(): void {
 	appState.activeScenario = null;
 	appState.animationsEnabled = true;
 	appState.typingIndicatorVisible = false;
+	appState.isOnboarding = false;
+	appState.onboardingGroupCreated = false;
+	appState.onboardingGroup = null;
+	appState.onboardingMessages = [];
 	console.log('Demo reset');
 }
 
@@ -364,8 +433,15 @@ export async function sendAIResponse(
 	// Show typing indicator
 	showTypingIndicator();
 	
-	// Wait for typing animation (800-1500ms)
-	await new Promise(resolve => setTimeout(resolve, 1000));
+	// Wait for thinking animation (random 1000-3000ms)
+	const thinkingDuration = Math.floor(Math.random() * 2000) + 1000;
+	await new Promise(resolve => setTimeout(resolve, thinkingDuration));
+	
+	// Start exit animation
+	startTypingIndicatorExit();
+	
+	// Wait for exit animation to complete (~600ms)
+	await new Promise(resolve => setTimeout(resolve, 600));
 	
 	// Hide typing indicator
 	hideTypingIndicator();
@@ -409,6 +485,82 @@ export function setNavigationDirection(direction: 'forward' | 'back' | null): vo
  */
 export function getNavigationDirection(): 'forward' | 'back' | null {
 	return appState.navigationDirection;
+}
+
+/**
+ * Set onboarding mode (hides Groups tab when true)
+ */
+export function setOnboardingMode(active: boolean): void {
+	appState.isOnboarding = active;
+	console.log(`Onboarding mode: ${active ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Get onboarding mode state
+ */
+export function getOnboardingMode(): boolean {
+	return appState.isOnboarding;
+}
+
+/**
+ * Set onboarding group created flag (triggers tabs to appear)
+ */
+export function setOnboardingGroupCreated(created: boolean): void {
+	appState.onboardingGroupCreated = created;
+	console.log(`Onboarding group created: ${created}`);
+}
+
+/**
+ * Get onboarding group created state
+ */
+export function getOnboardingGroupCreated(): boolean {
+	return appState.onboardingGroupCreated;
+}
+
+/**
+ * Set onboarding group data
+ */
+export function setOnboardingGroup(group: OnboardingGroup | null): void {
+	appState.onboardingGroup = group;
+	console.log(`Onboarding group set:`, group);
+}
+
+/**
+ * Get onboarding group data
+ */
+export function getOnboardingGroup(): OnboardingGroup | null {
+	return appState.onboardingGroup;
+}
+
+/**
+ * Get onboarding messages
+ */
+export function getOnboardingMessages(): Message[] {
+	return appState.onboardingMessages;
+}
+
+/**
+ * Add a message to onboarding conversation
+ */
+export function addOnboardingMessage(message: Message): void {
+	appState.onboardingMessages = [...appState.onboardingMessages, message];
+}
+
+/**
+ * Clear onboarding messages
+ */
+export function clearOnboardingMessages(): void {
+	appState.onboardingMessages = [];
+}
+
+/**
+ * Mark an onboarding message as rendered (prevents re-animation)
+ */
+export function markOnboardingMessageAsRendered(messageId: string): void {
+	const message = appState.onboardingMessages.find(m => m.id === messageId);
+	if (message) {
+		message.is_rendered = true;
+	}
 }
 
 /**

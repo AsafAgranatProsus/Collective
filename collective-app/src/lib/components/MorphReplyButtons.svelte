@@ -29,7 +29,35 @@
 
     onMount(() => {
         gsap.registerPlugin(Flip);
+        
+        // Animate buttons in with GSAP
+        animateButtonsIn();
     });
+    
+    function animateButtonsIn() {
+        if (!containerRef) return;
+        
+        const chips = containerRef.querySelectorAll('.reply-chip');
+        if (chips.length === 0) return;
+        
+        // Set initial state
+        gsap.set(chips, { 
+            opacity: 0, 
+            scale: 0.92,
+            y: 8
+        });
+        
+        // Animate in with stagger
+        gsap.to(chips, {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.4,
+            ease: "power3.out",
+            stagger: 0.07,
+            delay: 0.05
+        });
+    }
 
     // Custom transition to avoid hero duplication during FLIP
     function smartFade(node: HTMLElement, { duration = 300 }) {
@@ -151,12 +179,11 @@
         </div>
     {:else}
         <div class="options-area">
-            {#each options as option (option.id)}
+            {#each options as option, index (option.id)}
                 <div
                     class="reply-chip"
                     data-id={option.id}
                     out:smartFade={{ duration: 200 }}
-                    in:fade={{ duration: 300, delay: 100 }}
                 >
                     <Button
                         variant="outlined"

@@ -12,6 +12,7 @@ export interface CardHeaderSection {
 	title: string;
 	subtitle?: string;
 	icon?: string;
+	showIcon?: boolean; // Default: false
 	action?: {
 		label: string;
 		value: string;

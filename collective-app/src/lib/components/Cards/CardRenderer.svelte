@@ -66,7 +66,7 @@
 <style>
 	.card-renderer-wrapper {
 		width: 95%;
-		margin: var(--space-4) 0;
+		/* margin: var(--space-4) 0; */
 	}
 	
 	.card-renderer-content {

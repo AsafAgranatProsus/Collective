@@ -5,9 +5,20 @@
 	import Badge from "./Badge.svelte";
 	import GradientLineChart from "./Charts/GradientLineChart.svelte";
 
-	let { group, onClick } = $props<{
+	interface OnboardingInfo {
+		firstExpense?: {
+			name: string;
+			amount: string;
+			splitAmount: string;
+		};
+		awaitingMembers?: number; // How many others to join
+	}
+
+	let { group, onClick, minimal = false, onboardingInfo } = $props<{
 		group: Group;
 		onClick?: () => void;
+		minimal?: boolean;
+		onboardingInfo?: OnboardingInfo;
 	}>();
 
 	function handleClick() {
@@ -48,33 +59,38 @@
 						{group.name}
 					</h3>
 					<div class="group-meta m3-font-body-medium">
-						<!-- {group.member_count} -->
-						<!-- Avatars Row -->
-						{#if group.avatars && group.avatars.length > 0}
-							<div class="avatars-row">
-								{#each group.avatars as avatar, index}
-									<img
-										src={avatar}
-										alt="Member {index + 1}"
-										class="avatar"
-										style="z-index: {group.avatars.length -
-											index}"
-									/>
-								{/each}
-							</div>
-						{/if}
-						<!-- {group.member_count === 1 ? "member" : "members"} -->
-						{#if group.is_active && group.pending_count}
-							<!-- <span class="separator">•</span>
-							<span class="pending"
-								>{group.pending_count} pending {group.pending_count ===
-								1
-									? "task"
-									: "tasks"}</span
-							> -->
-						{:else if !group.is_active}
-							<span class="separator">•</span>
-							<span class="coming-soon">Coming soon</span>
+						{#if minimal}
+							<!-- Minimal mode: show member status with awaiting info -->
+							{@const awaitingCount = onboardingInfo?.awaitingMembers ?? (group.member_count - 1)}
+							<span class="member-count">
+								{#if awaitingCount > 0}
+									1 member • Awaiting {awaitingCount} {awaitingCount === 1 ? 'other' : 'others'} to join
+								{:else}
+									{group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+								{/if}
+							</span>
+						{:else}
+							<!-- Full mode: show avatars and status -->
+							<!-- Avatars Row -->
+							{#if group.avatars && group.avatars.length > 0}
+								<div class="avatars-row">
+									{#each group.avatars as avatar, index}
+										<img
+											src={avatar}
+											alt="Member {index + 1}"
+											class="avatar"
+											style="z-index: {group.avatars.length -
+												index}"
+										/>
+									{/each}
+								</div>
+							{/if}
+							{#if group.is_active && group.pending_count}
+								<!-- Tasks pending -->
+							{:else if !group.is_active}
+								<span class="separator">•</span>
+								<span class="coming-soon">Coming soon</span>
+							{/if}
 						{/if}
 					</div>
 				</div>
@@ -86,8 +102,23 @@
 				{/if} -->
 			</div>
 
-			<!-- Info Cards Section -->
-			{#if group.is_active}
+			<!-- Minimal mode expense info -->
+			{#if minimal && onboardingInfo?.firstExpense}
+				<div class="minimal-expense-info">
+					<div class="expense-summary">
+						<span class="expense-label">First expense logged</span>
+						<span class="expense-detail">
+							{onboardingInfo.firstExpense.name}: {onboardingInfo.firstExpense.amount}
+							{#if onboardingInfo.firstExpense.splitAmount}
+								<span class="split-info">({onboardingInfo.firstExpense.splitAmount} each)</span>
+							{/if}
+						</span>
+					</div>
+				</div>
+			{/if}
+
+			<!-- Info Cards Section (hidden in minimal mode) -->
+			{#if group.is_active && !minimal}
 				<div class="info-cards">
 					<!-- Next Action -->
 					{#if group.next_action}
@@ -308,6 +339,41 @@
 	.coming-soon {
 		color: rgb(var(--m3-scheme-outline));
 		font-style: italic;
+	}
+
+	.member-count {
+		color: rgb(var(--m3-scheme-on-surface-variant));
+	}
+
+	/* Minimal mode expense info */
+	.minimal-expense-info {
+		padding-top: 0.75rem;
+		border-top: 1px solid rgb(var(--m3-scheme-outline-variant) / 0.3);
+		margin-top: 0.5rem;
+	}
+
+	.expense-summary {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.expense-label {
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: rgb(var(--m3-scheme-primary));
+	}
+
+	.expense-detail {
+		color: rgb(var(--m3-scheme-on-surface));
+		font-size: 0.9rem;
+	}
+
+	.split-info {
+		color: rgb(var(--m3-scheme-on-surface-variant));
+		font-size: 0.85rem;
 	}
 
 	.chevron {
