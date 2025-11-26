@@ -2,9 +2,12 @@
 	import { Button, TextField, TextFieldOutlined } from "m3-svelte";
 	import { Icon } from "m3-svelte";
 	import iconSend from "@ktibow/iconset-material-symbols/send";
+	import iconChecklist from "@ktibow/iconset-material-symbols/checklist";
 
-	let { onSend, placeholder = "Type a message..." } = $props<{
+	let { onSend, onChecklistToggle, isChecklistOpen = false, placeholder = "Type a message..." } = $props<{
 		onSend: (message: string) => void;
+		onChecklistToggle?: () => void;
+		isChecklistOpen?: boolean;
 		placeholder?: string;
 	}>();
 
@@ -29,6 +32,18 @@
 </script>
 
 <form class="chat-input-container" onsubmit={handleSubmit}>
+	{#if onChecklistToggle}
+		<div class="checklist-button" class:active={isChecklistOpen}>
+			<Button
+				variant="text"
+				iconType="full"
+				onclick={onChecklistToggle}
+				aria-label={isChecklistOpen ? "Close checklist" : "Open checklist"}
+			>
+				<Icon icon={iconChecklist} />
+			</Button>
+		</div>
+	{/if}
 	<div class="text-field-wrapper">
 		<TextFieldOutlined
 			bind:value={inputValue}
@@ -55,7 +70,7 @@
 <style>
 	.chat-input-container {
 		display: flex;
-		gap: 0.75rem;
+		gap: 0.5rem;
 		align-items: center;
 		justify-content: flex-end;
 		padding: 1rem;
@@ -67,6 +82,16 @@
 		backdrop-filter: blur(20px);
 		-webkit-backdrop-filter: blur(20px);
 		border-radius: var(--m3-util-rounding-extra-large) !important;
+	}
+
+	.checklist-button {
+		flex-shrink: 0;
+		color: rgb(var(--m3-scheme-on-surface-variant));
+		transition: color 150ms ease;
+	}
+	
+	.checklist-button.active {
+		color: rgb(var(--m3-scheme-primary));
 	}
 
 	.send-button-container {

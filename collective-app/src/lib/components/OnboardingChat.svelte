@@ -18,6 +18,10 @@
 		addOnboardingMessage,
 		type OnboardingGroup
 	} from '$lib/stores/app.svelte';
+	import ChecklistSheet from './ChecklistSheet.svelte';
+	
+	// Checklist bottom sheet state
+	let checklistOpen = $state(false);
 	
 	// Conversation state - now from store (persists across component remounts)
 	const messages = $derived(getOnboardingMessages());
@@ -358,9 +362,14 @@
 	<div class="chat-input-container">
 		<ChatInput 
 			onSend={handleSendMessage}
-			placeholder="Type your response..."
+			onChecklistToggle={() => checklistOpen = !checklistOpen}
+			isChecklistOpen={checklistOpen}
+			placeholder={checklistOpen ? "Add todos, tasks, schedules..." : "Type your response..."}
 		/>
 	</div>
+	
+	<!-- Checklist Bottom Sheet -->
+	<ChecklistSheet isOpen={checklistOpen} onClose={() => checklistOpen = false} />
 </div>
 
 <style>

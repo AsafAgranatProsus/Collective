@@ -14,7 +14,13 @@
 		getCurrentUser,
 		getAllMembers,
 		loadScenario,
-		setOnboardingMode
+		setOnboardingMode,
+		setOnboardingGroupCreated,
+		setOnboardingGroup,
+		setPostOnboardingChatStarted,
+		setGroupChatBadgeCount,
+		clearConversation,
+		type OnboardingGroup
 	} from '$lib/stores/app.svelte';
 	import { goto } from '$app/navigation';
 	import { 
@@ -44,6 +50,7 @@
 	} from '$lib/stores/features.svelte';
 	import { getAllPrototypeModes } from '$lib/config/prototypeModes';
 	import { scenarios } from '$lib/data/scenarios';
+	import { clearGroupChatMessages } from '$lib/data/groupChat';
 	
 	let demoMenuState = $derived(getDemoMenuState());
 	let currentUser = $derived(getCurrentUser());
@@ -98,6 +105,40 @@
 			// Special handling for onboarding scenario
 			if (scenario.id === 'onboarding') {
 				setOnboardingMode(true);
+				setDemoMenuOpen(false);
+				goto('/groups');
+				return;
+			}
+			
+			// Special handling for post-onboarding scenario
+			// Shows the groups list with the newly created minimal group card
+			if (scenario.id === 'post-onboarding-group') {
+				// Set up the onboarding completed state
+				setOnboardingMode(true);
+				setOnboardingGroupCreated(true);
+				setPostOnboardingChatStarted(false); // Reset so chat starts fresh
+				setGroupChatBadgeCount(0); // Reset badge count
+				
+				// Set up the onboarding group data
+				const onboardingGroup: OnboardingGroup = {
+					name: 'Home Sweet Home',
+					type: 'Shared apartment',
+					icon: '🏠',
+					memberCount: 3,
+					firstExpense: {
+						name: 'Rent',
+						amount: '$2,550',
+						splitAmount: '$850'
+					},
+					awaitingMembers: 2
+				};
+				setOnboardingGroup(onboardingGroup);
+				
+				// Clear any existing conversation for the onboarding group
+				clearConversation('onboarding-group');
+				// Also clear group chat messages
+				clearGroupChatMessages('onboarding-group');
+				
 				setDemoMenuOpen(false);
 				goto('/groups');
 				return;

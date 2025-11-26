@@ -102,22 +102,7 @@
 				{/if} -->
 			</div>
 
-			<!-- Minimal mode expense info -->
-			{#if minimal && onboardingInfo?.firstExpense}
-				<div class="minimal-expense-info">
-					<div class="expense-summary">
-						<span class="expense-label">First expense logged</span>
-						<span class="expense-detail">
-							{onboardingInfo.firstExpense.name}: {onboardingInfo.firstExpense.amount}
-							{#if onboardingInfo.firstExpense.splitAmount}
-								<span class="split-info">({onboardingInfo.firstExpense.splitAmount} each)</span>
-							{/if}
-						</span>
-					</div>
-				</div>
-			{/if}
-
-			<!-- Info Cards Section (hidden in minimal mode) -->
+			<!-- Info Cards Section -->
 			{#if group.is_active && !minimal}
 				<div class="info-cards">
 					<!-- Next Action -->
@@ -216,6 +201,27 @@
 							</div>
 						</Card>
 					{/if}
+				</div>
+			{/if}
+
+			<!-- Minimal/Onboarding mode info cards - same design as populated cards -->
+			{#if minimal && onboardingInfo?.firstExpense}
+				<div class="info-cards">
+					<Card
+						variant="filled"
+						class="info-card-wrapper money"
+					>
+						<div class="info-card-content">
+							<div class="info-label">MONEY</div>
+							<div class="info-content m3-font-body-medium">
+								<span>{onboardingInfo.firstExpense.name}</span>
+								<span class="amount">{onboardingInfo.firstExpense.amount}</span>
+								{#if onboardingInfo.firstExpense.splitAmount}
+									<span class="due">({onboardingInfo.firstExpense.splitAmount} each)</span>
+								{/if}
+							</div>
+						</div>
+					</Card>
 				</div>
 			{/if}
 		</div>
@@ -343,37 +349,6 @@
 
 	.member-count {
 		color: rgb(var(--m3-scheme-on-surface-variant));
-	}
-
-	/* Minimal mode expense info */
-	.minimal-expense-info {
-		padding-top: 0.75rem;
-		border-top: 1px solid rgb(var(--m3-scheme-outline-variant) / 0.3);
-		margin-top: 0.5rem;
-	}
-
-	.expense-summary {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.expense-label {
-		font-size: 0.75rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-		color: rgb(var(--m3-scheme-primary));
-	}
-
-	.expense-detail {
-		color: rgb(var(--m3-scheme-on-surface));
-		font-size: 0.9rem;
-	}
-
-	.split-info {
-		color: rgb(var(--m3-scheme-on-surface-variant));
-		font-size: 0.85rem;
 	}
 
 	.chevron {

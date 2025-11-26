@@ -8,6 +8,11 @@
 	import type { Message } from '$lib/data/scenarios';
 	import MessageBubble from './MessageBubble.svelte';
 	import UserMessage from './UserMessage.svelte';
+	import ChatInput from './ChatInput.svelte';
+	import ChecklistSheet from './ChecklistSheet.svelte';
+	
+	// Checklist bottom sheet state
+	let checklistOpen = $state(false);
 	
 	const groups = getAllGroups();
 	const members = getAllMembers();
@@ -139,26 +144,43 @@
 			{/each}
 		{/if}
 	</div>
+	
+	<!-- Chat Input -->
+	<div class="chat-input-container">
+		<ChatInput 
+			onSend={(msg) => console.log('Feed message:', msg)}
+			onChecklistToggle={() => checklistOpen = !checklistOpen}
+			isChecklistOpen={checklistOpen}
+			placeholder={checklistOpen ? "Add todos, tasks, schedules..." : "Type a message..."}
+		/>
+	</div>
+	
+	<!-- Checklist Bottom Sheet -->
+	<ChecklistSheet isOpen={checklistOpen} onClose={() => checklistOpen = false} />
 </div>
 
 <style>
 	.feed-view {
+		position: absolute;
+		inset: 0;
 		display: flex;
 		flex-direction: column;
-		height: 100%;
 		background: rgb(var(--m3-scheme-background));
+		overflow: hidden;
+	}
+	
+	.chat-input-container {
+		z-index: var(--z-chat-input);
 	}
 	
 	.filter-chips {
+		flex-shrink: 0;
 		display: flex;
 		gap: 0.5rem;
 		padding: 1rem 0; /* Remove horizontal padding for edge-to-edge scroll */
 		overflow-x: auto;
 		overflow-y: hidden;
-		/* border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant)); */
 		background: rgb(var(--m3-scheme-surface));
-		position: sticky;
-		top: 0;
 		z-index: 100;
 		
 		/* Hide scrollbar */
@@ -194,6 +216,7 @@
 	
 	.messages-feed {
 		flex: 1;
+		min-height: 0; /* Required for flex overflow to work */
 		overflow-y: auto;
 		padding: 1rem 1.5rem;
 		display: flex;

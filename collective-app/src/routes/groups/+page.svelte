@@ -150,7 +150,7 @@
 									firstExpense: onboardingGroup?.firstExpense,
 									awaitingMembers: onboardingGroup ? onboardingGroup.memberCount - 1 : 0
 								}}
-								onClick={() => {}}
+								onClick={() => handleGroupClick('onboarding-group')}
 							/>
 						</div>
 					{:else}

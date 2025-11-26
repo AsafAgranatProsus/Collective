@@ -31,6 +31,8 @@ export interface OnboardingGroup {
 		amount: string;
 		splitAmount: string;
 	};
+	// How many members are still awaited to join
+	awaitingMembers?: number;
 }
 
 interface AppState {
@@ -54,6 +56,10 @@ interface AppState {
 	onboardingGroup: OnboardingGroup | null;
 	// Messages from the onboarding conversation (persisted across component remounts)
 	onboardingMessages: Message[];
+	// Tracks if the post-onboarding group chat has been initiated
+	postOnboardingChatStarted: boolean;
+	// Badge count for group chat icon (new messages/events)
+	groupChatBadgeCount: number;
 }
 
 /**
@@ -88,7 +94,9 @@ let appState = $state<AppState>({
 	isOnboarding: false,
 	onboardingGroupCreated: false,
 	onboardingGroup: null,
-	onboardingMessages: []
+	onboardingMessages: [],
+	postOnboardingChatStarted: false,
+	groupChatBadgeCount: 0
 });
 
 /**
@@ -195,6 +203,20 @@ export function addMessageToUser(userId: UserId, message: Message, groupId?: Gro
 	}
 	
 	appState.conversations[targetGroup][userId].push(message);
+}
+
+/**
+ * Clear conversation for current user in specified/current group
+ */
+export function clearConversation(groupId?: GroupId): void {
+	const targetGroup = groupId || appState.currentGroup;
+	
+	// Initialize group if doesn't exist
+	if (!appState.conversations[targetGroup]) {
+		appState.conversations[targetGroup] = initGroupConversations();
+	}
+	
+	appState.conversations[targetGroup][appState.currentUser] = [];
 }
 
 /**
@@ -386,6 +408,8 @@ export function resetDemo(): void {
 	appState.onboardingGroupCreated = false;
 	appState.onboardingGroup = null;
 	appState.onboardingMessages = [];
+	appState.postOnboardingChatStarted = false;
+	appState.groupChatBadgeCount = 0;
 	console.log('Demo reset');
 }
 
@@ -561,6 +585,35 @@ export function markOnboardingMessageAsRendered(messageId: string): void {
 	if (message) {
 		message.is_rendered = true;
 	}
+}
+
+/**
+ * Set post-onboarding chat started state
+ */
+export function setPostOnboardingChatStarted(started: boolean): void {
+	appState.postOnboardingChatStarted = started;
+	console.log(`Post-onboarding chat started: ${started}`);
+}
+
+/**
+ * Get post-onboarding chat started state
+ */
+export function getPostOnboardingChatStarted(): boolean {
+	return appState.postOnboardingChatStarted;
+}
+
+/**
+ * Set group chat badge count
+ */
+export function setGroupChatBadgeCount(count: number): void {
+	appState.groupChatBadgeCount = count;
+}
+
+/**
+ * Get group chat badge count
+ */
+export function getGroupChatBadgeCount(): number {
+	return appState.groupChatBadgeCount;
 }
 
 /**

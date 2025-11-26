@@ -5,11 +5,12 @@
 
 export interface GroupChatMessage {
 	id: string;
-	sender: string; // member ID
+	sender: string; // member ID or 'system' for system messages
 	sender_name: string;
 	avatar: string; // emoji
 	content: string;
 	timestamp: string; // ISO date
+	type?: 'message' | 'system' | 'typing'; // default is 'message'
 }
 
 /**
@@ -37,7 +38,7 @@ export const groupChatMessages: Record<string, GroupChatMessage[]> = {
 		{
 			id: 'gc-003',
 			sender: 'sarah',
-			sender_name: 'Sarah Chen',
+			sender_name: 'You',
 			avatar: '👩🏻‍💼',
 			content: "I'm down for weekly instead of bi-weekly",
 			timestamp: '2024-11-17T14:26:00Z'
@@ -61,7 +62,7 @@ export const groupChatMessages: Record<string, GroupChatMessage[]> = {
 		{
 			id: 'gc-006',
 			sender: 'sarah',
-			sender_name: 'Sarah Chen',
+			sender_name: 'You',
 			avatar: '👩🏻‍💼',
 			content: 'No worries! Have fun',
 			timestamp: '2024-11-17T16:32:00Z'
@@ -100,5 +101,21 @@ export function addGroupChatMessage(groupId: string, message: GroupChatMessage):
 		groupChatMessages[groupId] = [];
 	}
 	groupChatMessages[groupId].push(message);
+}
+
+/**
+ * Clear all messages for a specific group chat
+ */
+export function clearGroupChatMessages(groupId: string): void {
+	groupChatMessages[groupId] = [];
+}
+
+/**
+ * Remove a specific message by ID
+ */
+export function removeGroupChatMessage(groupId: string, messageId: string): void {
+	if (groupChatMessages[groupId]) {
+		groupChatMessages[groupId] = groupChatMessages[groupId].filter(m => m.id !== messageId);
+	}
 }
 

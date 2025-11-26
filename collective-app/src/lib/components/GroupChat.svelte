@@ -45,9 +45,14 @@
 		if (isOpen && groupId) {
 			const interval = setInterval(() => {
 				const latestMessages = getGroupChatMessages(groupId);
-				if (latestMessages.length !== messages.length) {
-					messages = latestMessages;
-					// Scroll to bottom when new message arrives
+				// Check if messages changed (length or last message ID)
+				const hasChanged = latestMessages.length !== messages.length ||
+					(latestMessages.length > 0 && messages.length > 0 && 
+					 latestMessages[latestMessages.length - 1]?.id !== messages[messages.length - 1]?.id);
+				
+				if (hasChanged) {
+					messages = [...latestMessages]; // Create new array reference
+					// Scroll to bottom when messages change
 					setTimeout(() => {
 						if (messagesContainer) {
 							messagesContainer.scrollTop =
@@ -55,7 +60,7 @@
 						}
 					}, 10);
 				}
-			}, 500); // Check every 500ms for new messages
+			}, 300); // Check every 300ms for faster updates
 
 			return () => clearInterval(interval);
 		}

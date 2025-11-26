@@ -982,6 +982,93 @@ export const onboardingScenario: Scenario = {
 	]
 };
 
+// Post-Onboarding Group Chat - First interaction in the newly created group
+export const postOnboardingGroupScenario: Scenario = {
+	id: 'post-onboarding-group',
+	title: 'Post-Onboarding Group Setup',
+	description: 'First time entering the newly created group after onboarding',
+	initial_user: 'sarah',
+	messages: [
+		// Step 1: Welcome to group-level chat
+		{
+			id: 'post-onboard-1',
+			sender: 'ai',
+			content: "Nice! This is where you and I discuss this group specifically.\n\nI noticed you logged rent. I'd like to help track that payment going forward. When is it usually due?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: '1st of the month', value: 'rent_1st' },
+					{ label: '15th of the month', value: 'rent_15th' },
+					{ label: 'End of month', value: 'rent_end' },
+					{ label: 'Varies', value: 'rent_varies' }
+				]
+			}
+		},
+		// Step 2: User selects rent date
+		{
+			id: 'post-onboard-2',
+			sender: 'user',
+			content: '1st of the month',
+			timestamp: new Date().toISOString()
+		},
+		// Step 3: AI acknowledges and asks about reminders
+		{
+			id: 'post-onboard-3',
+			sender: 'ai',
+			content: "Got it—rent due on the 1st.\n\nWant me to remind you a few days before? I'll also ping your roommates once they join.",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Yes, remind me', value: 'remind_yes' },
+					{ label: 'No thanks', value: 'remind_no' }
+				]
+			}
+		},
+		// Step 4: User accepts reminders
+		{
+			id: 'post-onboard-4',
+			sender: 'user',
+			content: 'Yes, remind me',
+			timestamp: new Date().toISOString()
+		},
+		// Step 5: Confirmation and next prompt
+		{
+			id: 'post-onboard-5',
+			sender: 'ai',
+			content: "Perfect! I'll nudge everyone 3 days before rent is due. 📅\n\nAnything else you want to set up while we're at it?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Add recurring chores', value: 'add_chores' },
+					{ label: 'Set up utilities', value: 'add_utilities' },
+					{ label: "I'm good for now", value: 'done_setup' }
+				]
+			}
+		},
+		// Step 6: User says they're good
+		{
+			id: 'post-onboard-6',
+			sender: 'user',
+			content: "I'm good for now",
+			timestamp: new Date().toISOString()
+		},
+		// Step 7: Final wrap-up
+		{
+			id: 'post-onboard-7',
+			sender: 'ai',
+			content: "Sounds good! You can always come back here to:\n\n• Log expenses & settle up\n• Track who owes what\n• Assign chores & tasks\n• Ask me anything about the group\n\nI'm here whenever you need me. 🙌",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: "What's on my plate?", value: 'show_tasks' },
+					{ label: 'How does fairness work?', value: 'fairness_explain' },
+					{ label: 'Thanks!', value: 'thanks' }
+				]
+			}
+		}
+	]
+};
+
 // Export all scenarios
 export const scenarios: Scenario[] = [
 	viewMyTasksScenario,
@@ -992,7 +1079,8 @@ export const scenarios: Scenario[] = [
 	weeklyReviewScenario,
 	shoppingRequestScenario,
 	paymentSummaryScenario,
-	onboardingScenario
+	onboardingScenario,
+	postOnboardingGroupScenario
 ];
 
 // Helper to get scenario by ID

@@ -21,7 +21,7 @@ This document specifies a **non-functional, experience-focused prototype** desig
 
 **4 Roommates** with distinct personalities:
 
-**Sarah Chen** (27, Product Designer) - Organized, detail-oriented, pays attention to fairness - Usually completes her tasks on time - Asks good questions about how the system works - **Role in demo**: Primary protagonist, most scenarios from her POV
+**You** (27, Product Designer) - Organized, detail-oriented, pays attention to fairness - Usually completes her tasks on time - Asks good questions about how the system works - **Role in demo**: Primary protagonist, most scenarios from her POV
 
 **Mike Rodriguez** (29, Software Engineer) - Easygoing, sometimes forgets tasks - Responsive when reminded - Doesn't complain much - **Role in demo**: The one who needs reminders, drives "proactive AI" scenarios
 
@@ -397,7 +397,7 @@ const members = \[
 {  
 id: 'sarah',  
 group_id: 'group-001',  
-name: 'Sarah Chen',  
+name: 'You',  
 avatar: '👩🏻‍💼',  
 role: 'creator'  
 },  

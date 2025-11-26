@@ -15,9 +15,11 @@
 	import AnalyticsDetailCard from "$lib/components/Cards/AnalyticsDetailCard.svelte";
 	import GroupChat from "$lib/components/GroupChat.svelte";
 	import GlassHeader from "$lib/components/GlassHeader.svelte";
+	import ChecklistSheet from "$lib/components/ChecklistSheet.svelte";
 	import { Icon, Button } from "m3-svelte";
 	import iconArrowBack from "@ktibow/iconset-material-symbols/arrow-back";
 	import iconChat from "@ktibow/iconset-material-symbols/chat";
+	import iconPersonAdd from "@ktibow/iconset-material-symbols/person-add";
 	import { sharedAxisTransition } from "m3-svelte";
 	import {
 		getCurrentUser,
@@ -33,8 +35,14 @@
 		getNavigationDirection,
 		getSelectedReplyIds,
 		setSelectedReplyId,
+		getOnboardingGroup,
+		getOnboardingGroupCreated,
+		getPostOnboardingChatStarted,
+		setPostOnboardingChatStarted,
+		getGroupChatBadgeCount,
+		setGroupChatBadgeCount,
 	} from "$lib/stores/app.svelte";
-	import { viewMyTasksScenario } from "$lib/data/scenarios";
+	import { viewMyTasksScenario, postOnboardingGroupScenario } from "$lib/data/scenarios";
 	import type { Message, QuickReply } from "$lib/data/scenarios";
 	import { getItemsByUser, type CoordinatedItem } from "$lib/data/items";
 	import {
@@ -43,12 +51,33 @@
 		getGroupMonthAnalytics,
 	} from "$lib/data/analytics";
 	import { getGroupById } from "$lib/data/groups";
-	import { addGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from "$lib/data/groupChat";
+	import { addGroupChatMessage, removeGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from "$lib/data/groupChat";
 	import { getPrimaryView, getModeLabel } from "$lib/utils/modeHelpers";
 
 	// Get group ID from route params
 	let groupId = $derived($page.params.id || "brooklyn-apt");
-	let group = $derived(getGroupById(groupId));
+	
+	// Check if this is the onboarding group
+	let isOnboardingGroup = $derived(groupId === 'onboarding-group');
+	let onboardingGroupData = $derived(getOnboardingGroup());
+	let onboardingGroupCreated = $derived(getOnboardingGroupCreated());
+	let postOnboardingChatStarted = $derived(getPostOnboardingChatStarted());
+	
+	// Get group - either from real groups or construct from onboarding data
+	let group = $derived(
+		isOnboardingGroup && onboardingGroupData
+			? {
+				id: 'onboarding-group',
+				name: onboardingGroupData.name,
+				icon: onboardingGroupData.icon,
+				type: 'household' as const,
+				member_count: onboardingGroupData.memberCount,
+				is_active: true,
+				avatars: [],
+				pending_count: 0
+			}
+			: getGroupById(groupId)
+	);
 
 	let currentUser = $derived(getCurrentUser());
 	let conversation = $derived(getCurrentConversation());
@@ -56,12 +85,14 @@
 	let typingVisible = $derived(getTypingIndicatorVisible());
 	let navDirection = $derived(getNavigationDirection());
 	let selectedReplyIds = $derived(getSelectedReplyIds());
+	let groupChatBadgeCount = $derived(getGroupChatBadgeCount());
 
 	let messagesContainer: HTMLDivElement;
 	
 	// Initialize view based on prototype mode
 	// If mode's primary view is 'group-chat', start with group chat open
 	let groupChatOpen = $state(getPrimaryView() === 'group-chat');
+	let checklistOpen = $state(false);
 	
 	// Track typing and card rendering states per message
 	let messageTypingStates = $state<Record<string, boolean>>({});
@@ -413,6 +444,197 @@
 				sendAIResponse("Great! Let me know if you need anything else.");
 			}, 800);
 		}
+		// Post-onboarding scenario handlers
+		else if (value === "rent_1st" || value === "rent_15th" || value === "rent_end") {
+			const dateLabel = value === "rent_1st" ? "1st" : value === "rent_15th" ? "15th" : "end of the month";
+			setTimeout(() => {
+				sendAIResponse(
+					`Got it—rent due on the ${dateLabel}.\n\nWant me to remind you a few days before? I'll also ping your roommates once they join.`,
+					{
+						quick_replies: [
+							{ label: "Yes, remind me", value: "remind_yes" },
+							{ label: "No thanks", value: "remind_no" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "rent_varies") {
+			setTimeout(() => {
+				sendAIResponse(
+					"No problem—I'll let you log rent manually each month.\n\nAnything else you want to set up?",
+					{
+						quick_replies: [
+							{ label: "Add recurring chores", value: "add_chores" },
+							{ label: "Set up utilities", value: "add_utilities" },
+							{ label: "I'm good for now", value: "done_setup" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "remind_yes") {
+			setTimeout(() => {
+				sendAIResponse(
+					"Perfect! I'll nudge everyone 3 days before rent is due. 📅\n\nAnything else you want to set up while we're at it?",
+					{
+						quick_replies: [
+							{ label: "Add recurring chores", value: "add_chores" },
+							{ label: "Set up utilities", value: "add_utilities" },
+							{ label: "I'm good for now", value: "done_setup" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "remind_no") {
+			setTimeout(() => {
+				sendAIResponse(
+					"Got it, no reminders for now. You can always turn them on later.\n\nAnything else you want to set up?",
+					{
+						quick_replies: [
+							{ label: "Add recurring chores", value: "add_chores" },
+							{ label: "Set up utilities", value: "add_utilities" },
+							{ label: "I'm good for now", value: "done_setup" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "add_chores") {
+			setTimeout(() => {
+				sendAIResponse(
+					"What chores do you want to track? I can help rotate them fairly.",
+					{
+						quick_replies: [
+							{ label: "Kitchen cleanup", value: "chore_kitchen" },
+							{ label: "Trash duty", value: "chore_trash" },
+							{ label: "Bathroom cleaning", value: "chore_bathroom" },
+							{ label: "Something else", value: "chore_other" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "add_utilities") {
+			setTimeout(() => {
+				sendAIResponse(
+					"Which utilities do you want to split?",
+					{
+						quick_replies: [
+							{ label: "Electric", value: "utility_electric" },
+							{ label: "Internet", value: "utility_internet" },
+							{ label: "Gas", value: "utility_gas" },
+							{ label: "All of the above", value: "utility_all" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "chore_kitchen" || value === "chore_trash" || value === "chore_bathroom" || value === "chore_other" || value === "utility_electric" || value === "utility_internet" || value === "utility_gas" || value === "utility_all") {
+			setTimeout(() => {
+				sendAIResponse(
+					"Sounds good! You can always come back here to:\n\n• Log expenses & settle up\n• Track who owes what\n• Assign chores & tasks\n• Ask me anything about the group\n\nI'm here whenever you need me. 🙌",
+					{
+						quick_replies: [
+							{ label: "What's on my plate?", value: "show_tasks" },
+							{ label: "How does fairness work?", value: "fairness_explain" },
+							{ label: "Thanks!", value: "thanks" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "done_setup") {
+			// Special flow: Susan joins the group!
+			setTimeout(() => {
+				// First, show the "someone joined" notification
+				sendAIResponse(
+					"🎉 Susan just joined the group!",
+					{
+						quick_replies: [
+							{ label: "Say formal hello 👋", value: "greet_formal" },
+							{ label: "Say a warm hi", value: "greet_warm" }
+						]
+					}
+				);
+				// Set badge on chat icon
+				setGroupChatBadgeCount(1);
+			}, 2000); // Slight delay for dramatic effect
+		} else if (value === "fairness_explain") {
+			setTimeout(() => {
+				sendAIResponse(
+					"I track everything—chores done, money spent, tasks completed.\n\nOver time, I make sure everyone pulls their weight. If someone's slacking, I'll gently nudge them (or let you know).\n\nFair sharing without the awkward conversations. 🤝",
+					{
+						quick_replies: [
+							{ label: "That's smart!", value: "thanks" },
+							{ label: "Show me an example", value: "show_summary" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "greet_formal" || value === "greet_warm") {
+			// Clear the badge
+			setGroupChatBadgeCount(0);
+			
+			// Add system message and user greeting to group chat
+			const systemMessage: GroupChatMessageType = {
+				id: `gc-system-${Date.now()}`,
+				sender: 'system',
+				sender_name: 'System',
+				avatar: '',
+				content: 'Susan joined the group',
+				timestamp: new Date().toISOString(),
+				type: 'system'
+			};
+			
+			const greetingText = value === "greet_formal" 
+				? "Hey Susan! Welcome to the group. Looking forward to coordinating with you! 👋"
+				: "Hey Susan! We're both new to this space. Still exploring. Let's give it a run for its money!";
+			
+			const userGreeting: GroupChatMessageType = {
+				id: `gc-user-${Date.now()}`,
+				sender: currentUser,
+				sender_name: memberInfo?.name || 'You',
+				avatar: memberInfo?.avatar || '👤',
+				content: greetingText,
+				timestamp: new Date().toISOString()
+			};
+			
+			// Add messages to group chat
+			addGroupChatMessage(groupId, systemMessage);
+			
+			// Small delay before user message appears
+			setTimeout(() => {
+				addGroupChatMessage(groupId, userGreeting);
+				
+				// Show typing indicator after user message
+				const typingIndicatorId = `gc-typing-${Date.now()}`;
+				setTimeout(() => {
+					const typingMessage: GroupChatMessageType = {
+						id: typingIndicatorId,
+						sender: 'susan',
+						sender_name: 'Susan',
+						avatar: '👩🏼',
+						content: '',
+						timestamp: new Date().toISOString(),
+						type: 'typing'
+					};
+					addGroupChatMessage(groupId, typingMessage);
+					
+					// After a few seconds, remove typing indicator and add Susan's response
+					setTimeout(() => {
+						removeGroupChatMessage(groupId, typingIndicatorId);
+						
+						const susanResponse: GroupChatMessageType = {
+							id: `gc-susan-${Date.now()}`,
+							sender: 'susan',
+							sender_name: 'Susan',
+							avatar: '👩🏼',
+							content: "Right, so what do we do here?",
+							timestamp: new Date().toISOString()
+						};
+						addGroupChatMessage(groupId, susanResponse);
+					}, 2500); // Susan types for 2.5 seconds
+				}, 1000); // Start typing 1 second after user message
+			}, 300);
+			
+			// Open group chat view
+			groupChatOpen = true;
+		}
 	}
 
 	// Handle back button
@@ -437,10 +659,19 @@
 		// Set current group in app state
 		setCurrentGroup(groupId);
 
-		// Load the first scenario for Sarah
+		// Load the appropriate scenario based on context
 		if (conversation.length === 0) {
-			const initialMessages = viewMyTasksScenario.messages.slice(0, 1);
-			initialMessages.forEach((msg) => addMessage(msg));
+			// Check if this is the onboarding group and we haven't started post-onboarding chat
+			if (isOnboardingGroup && onboardingGroupCreated && !postOnboardingChatStarted) {
+				// Load post-onboarding scenario
+				const initialMessages = postOnboardingGroupScenario.messages.slice(0, 1);
+				initialMessages.forEach((msg) => addMessage(msg));
+				setPostOnboardingChatStarted(true);
+			} else {
+				// Load default scenario
+				const initialMessages = viewMyTasksScenario.messages.slice(0, 1);
+				initialMessages.forEach((msg) => addMessage(msg));
+			}
 		}
 	});
 </script>
@@ -469,14 +700,29 @@
 			{/snippet}
 
 			{#snippet trailing()}
-				<Button
-					variant="text"
-					iconType="full"
-					onclick={handleGroupChatToggle}
-					aria-label={getModeLabel('secondaryToggleLabel')}
-				>
-					<Icon icon={iconChat} />
-				</Button>
+				<div class="header-actions">
+					<Button
+						variant="text"
+						iconType="full"
+						onclick={() => {}}
+						aria-label="Invite user"
+					>
+						<Icon icon={iconPersonAdd} />
+					</Button>
+					<div class="chat-button-wrapper">
+						<Button
+							variant="text"
+							iconType="full"
+							onclick={handleGroupChatToggle}
+							aria-label={getModeLabel('secondaryToggleLabel')}
+						>
+							<Icon icon={iconChat} />
+						</Button>
+						{#if groupChatBadgeCount > 0}
+							<span class="chat-badge" in:fly={{ y: -5, duration: 200 }}>{groupChatBadgeCount}</span>
+						{/if}
+					</div>
+				</div>
 			{/snippet}
 		</GlassHeader>
 	<!-- </div> -->
@@ -614,9 +860,19 @@
 	<div class="chat-input-container">
 		<ChatInput 
 			onSend={handleSendMessage}
-			placeholder={groupChatOpen ? "Message group..." : "Type a message..."}
+			onChecklistToggle={() => checklistOpen = !checklistOpen}
+			isChecklistOpen={checklistOpen}
+			placeholder={checklistOpen ? "Add todos, tasks, schedules..." : (groupChatOpen ? "Message group..." : "Type a message...")}
 		/>
 	</div>
+
+	<!-- Checklist Bottom Sheet -->
+	<ChecklistSheet 
+		isOpen={checklistOpen}
+		onClose={() => checklistOpen = false}
+		groupId={groupId}
+		groupName={group?.name || 'Group'}
+	/>
 
 	<!-- Group Chat Overlay -->
 	<GroupChat
@@ -665,6 +921,38 @@
 		/* display: contents; */
 		
 		z-index: var(--z-chat-input);
+	}
+
+	/* Header action buttons */
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	/* Chat button with badge */
+	.chat-button-wrapper {
+		position: relative;
+		display: inline-flex;
+	}
+
+	.chat-badge {
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		font-size: 11px;
+		font-weight: 600;
+		font-family: var(--font-sans);
+		color: rgb(var(--m3-scheme-on-primary));
+		background-color: rgb(var(--m3-scheme-primary));
+		border-radius: 9px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
 	}
 
 	.background-gradient {

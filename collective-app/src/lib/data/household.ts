@@ -38,7 +38,7 @@ export const members: Member[] = [
 	{
 		id: 'sarah',
 		group_id: 'group-001',
-		name: 'Sarah Chen',
+		name: 'You',
 		avatar: '👩🏻‍💼',
 		role: 'creator',
 		joined_at: '2024-11-01T10:00:00Z',

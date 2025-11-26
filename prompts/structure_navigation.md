@@ -179,7 +179,7 @@ Group Chat Overlay (Secondary)
 │ Yeah agree │  
 │ 2:25 PM │  
 │ │  
-│ Sarah Chen 👩🏻‍💼 (You) │  
+│ You 👩🏻‍💼 (You) │  
 │ I'm down for weekly instead of │  
 │ bi-weekly │  
 │ 2:26 PM │  
@@ -288,7 +288,7 @@ timestamp: '2024-11-17T14:25:00Z'
 {  
 id: 'gc-003',  
 sender: 'sarah',  
-sender_name: 'Sarah Chen',  
+sender_name: 'You',  
 avatar: '👩🏻‍💼',  
 content: "I'm down for weekly instead of bi-weekly",  
 timestamp: '2024-11-17T14:26:00Z'  
@@ -312,7 +312,7 @@ timestamp: '2024-11-17T16:30:00Z'
 {  
 id: 'gc-006',  
 sender: 'sarah',  
-sender_name: 'Sarah Chen',  
+sender_name: 'You',  
 avatar: '👩🏻‍💼',  
 content: 'No worries! Have fun',  
 timestamp: '2024-11-17T16:32:00Z'  
