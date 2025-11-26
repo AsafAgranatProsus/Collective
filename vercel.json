@@ -1,4 +1,5 @@
 {
-  "buildCommand": "npm run build",
-  "framework": "sveltekit"
+  "buildCommand": "cd collective-app && npm ci && npm run build",
+  "installCommand": "echo 'Skipping root install'",
+  "outputDirectory": "collective-app/.vercel/output/static"
 }
