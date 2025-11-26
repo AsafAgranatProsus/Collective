@@ -391,3 +391,84 @@
   white-space: normal;
 }
 
+/* ============================================
+   BACKGROUND UTILITIES
+   ============================================ */
+
+/* Full-page background gradient - use on page containers */
+.bg-app-gradient {
+  position: fixed;
+  inset: 0;
+  background: rgb(var(--m3-scheme-background));
+  z-index: -1;
+}
+
+/* Surface background with glass effect */
+.bg-glass {
+  background-color: rgba(var(--m3-scheme-surface), 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.bg-glass-strong {
+  background-color: rgba(var(--m3-scheme-surface), 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-secondary) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: var(--radius-full);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Hidden scrollbar - still scrollable but invisible */
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   CHAT/MESSAGES AREA LAYOUT
+   ============================================ */
+
+.messages-area-layout {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5);
+  scroll-behavior: smooth;
+  min-height: 0; /* Required for flex overflow to work */
+  overflow-anchor: auto; /* Layout stability: anchor scroll position */
+}
+
+@media (max-width: 640px) {
+  .messages-area-layout {
+    padding: var(--space-4);
+  }
+}
+

@@ -1,6 +1,29 @@
 /**
- * Groups Data - Multi-group structure
- * Shows 1 active group (Brooklyn Apt) + 2 fake groups for demo
+ * Groups Data
+ * 
+ * Group definitions and metadata for the Collective prototype.
+ * This is the canonical source for Group type and group instances.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * @see lib/data/types.ts for unified type imports
+ * 
+ * ## Structure
+ * 
+ * - `Group` interface: Metadata for a group (name, members, display info)
+ * - `groups` array: All group instances
+ * - Helper functions: getGroupById, getAllGroups, getActiveGroups
+ * 
+ * ## How to Extend
+ * 
+ * 1. Add new group object to `groups` array
+ * 2. Set `is_active: false` for placeholder/coming-soon groups
+ * 3. Use consistent ID format: lowercase-with-dashes
+ * 
+ * ## Note on Types
+ * 
+ * `household.ts` has a separate interface also called Group (now HouseholdConfig).
+ * For group metadata, use THIS file's Group type.
+ * For member details, use household.ts.
  */
 
 export interface Group {

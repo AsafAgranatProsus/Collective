@@ -1,5 +1,32 @@
 /**
- * Mock Coordinated Items - Chores, Expenses, Shopping
+ * Coordinated Items
+ * 
+ * Chores, expenses, and shopping items for the Collective prototype.
+ * This data drives analytics calculations automatically.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * @see lib/data/analytics.ts (auto-calculates from this data)
+ * 
+ * ## Item Types
+ * 
+ * - `chore`: Household tasks with due dates and assignments
+ * - `expense`: Money paid by someone, split among group
+ * - `shopping_item`: Items needed from stores
+ * - `bill`: Recurring bills (utilities, rent)
+ * - `maintenance`: Home maintenance tasks
+ * 
+ * ## How to Extend
+ * 
+ * 1. Add new item to `items` array
+ * 2. Include all required fields (id, group_id, item_type, title, status)
+ * 3. Add relevant metadata based on item_type
+ * 4. Analytics will automatically recalculate
+ * 
+ * ## Important
+ * 
+ * - Changing items here affects analytics.ts output
+ * - Use consistent member IDs from household.ts (sarah, mike, jessica, bob)
+ * - Use ISO date strings for timestamps
  */
 
 export type ItemType = 

@@ -7,7 +7,6 @@
 	import { getNavigationPath } from '$lib/utils/modeHelpers';
 	import type { Message } from '$lib/data/scenarios';
 	import MessageBubble from './MessageBubble.svelte';
-	import UserMessage from './UserMessage.svelte';
 	import ChatInput from './ChatInput.svelte';
 	import ChecklistSheet from './ChecklistSheet.svelte';
 	
@@ -146,14 +145,12 @@
 	</div>
 	
 	<!-- Chat Input -->
-	<div class="chat-input-container">
-		<ChatInput 
-			onSend={(msg) => console.log('Feed message:', msg)}
-			onChecklistToggle={() => checklistOpen = !checklistOpen}
-			isChecklistOpen={checklistOpen}
-			placeholder={checklistOpen ? "Add todos, tasks, schedules..." : "Type a message..."}
-		/>
-	</div>
+	<ChatInput 
+		onSend={(msg) => console.log('Feed message:', msg)}
+		onChecklistToggle={() => checklistOpen = !checklistOpen}
+		isChecklistOpen={checklistOpen}
+		placeholder={checklistOpen ? "Add todos, tasks, schedules..." : "Type a message..."}
+	/>
 	
 	<!-- Checklist Bottom Sheet -->
 	<ChecklistSheet isOpen={checklistOpen} onClose={() => checklistOpen = false} />
@@ -169,9 +166,6 @@
 		overflow: hidden;
 	}
 	
-	.chat-input-container {
-		z-index: var(--z-chat-input);
-	}
 	
 	.filter-chips {
 		flex-shrink: 0;

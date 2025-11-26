@@ -1,6 +1,33 @@
 /**
- * Analytics Data Layer - Auto-calculated from items.ts
- * Provides week/month statistics and group analytics
+ * Analytics Data Layer (Auto-Calculated)
+ * 
+ * Performance statistics calculated from items.ts.
+ * DO NOT hardcode data here - modify items.ts to change analytics output.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * @see lib/data/items.ts (source data)
+ * 
+ * ## How It Works
+ * 
+ * - Reads chores/expenses from items.ts
+ * - Calculates completion rates, trends, expenses
+ * - Provides week and month views
+ * 
+ * ## Available Functions
+ * 
+ * - getUserWeekAnalytics(userId): Weekly stats for one user
+ * - getUserMonthAnalytics(userId): Monthly stats with breakdown
+ * - getAllUsersAnalytics(): Stats for all members
+ * - getGroupWeekAnalytics(): Group-level weekly metrics
+ * - getGroupMonthAnalytics(): Group-level monthly metrics
+ * - getDailyTrendData(userId): 7-day trend for charts
+ * - getWeeklyTrendData(userId): 4-week trend for charts
+ * 
+ * ## DO NOT
+ * 
+ * - Hardcode analytics values directly
+ * - Modify this file to "fix" analytics numbers
+ * - Instead, adjust the source data in items.ts
  */
 
 import { items, type CoordinatedItem } from './items';

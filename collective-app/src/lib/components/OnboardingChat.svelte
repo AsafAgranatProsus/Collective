@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import MessageBubble from './MessageBubble.svelte';
-	import UserMessage from './UserMessage.svelte';
 	import MorphReplyButtons from './MorphReplyButtons.svelte';
 	import TypingIndicator from './TypingIndicator.svelte';
 	import ChatInput from './ChatInput.svelte';
@@ -321,8 +320,7 @@
 								message.ui_elements.quick_replies.find(
 									(qr) => qr.value === savedSelection,
 								)}
-							<UserMessage
-								mode="bubble"
+							<MessageBubble
 								message={{
 									id: `reply-${message.id}`,
 									sender: 'user',
@@ -348,7 +346,7 @@
 					{@const isLastBeforeAI = nextMessage?.sender === 'ai' || !nextMessage}
 					{@const showTimestamp = isLastBeforeAI}
 					
-					<UserMessage mode="bubble" {message} {showTimestamp} />
+					<MessageBubble {message} {showTimestamp} />
 				{/if}
 			{/each}
 
@@ -359,14 +357,12 @@
 	</div>
 
 	<!-- Chat Input -->
-	<div class="chat-input-container">
-		<ChatInput 
-			onSend={handleSendMessage}
-			onChecklistToggle={() => checklistOpen = !checklistOpen}
-			isChecklistOpen={checklistOpen}
-			placeholder={checklistOpen ? "Add todos, tasks, schedules..." : "Type your response..."}
-		/>
-	</div>
+	<ChatInput 
+		onSend={handleSendMessage}
+		onChecklistToggle={() => checklistOpen = !checklistOpen}
+		isChecklistOpen={checklistOpen}
+		placeholder={checklistOpen ? "Add todos, tasks, schedules..." : "Type your response..."}
+	/>
 	
 	<!-- Checklist Bottom Sheet -->
 	<ChecklistSheet isOpen={checklistOpen} onClose={() => checklistOpen = false} />
@@ -397,10 +393,6 @@
 		padding-bottom: 1rem;
 	}
 	
-	.chat-input-container {
-		flex-shrink: 0;
-		z-index: var(--z-chat-input, 100);
-	}
 	
 	/* Scrollbar styling */
 	.custom-scrollbar::-webkit-scrollbar {

@@ -1,5 +1,34 @@
 /**
- * Mock Scenario Scripts - Word-for-word dialogue for demo
+ * Scenario Scripts
+ * 
+ * AI conversation scenarios for the Collective prototype.
+ * Each scenario is a scripted conversation flow with messages, quick replies, and cards.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * 
+ * ## How to Extend
+ * 
+ * 1. **Add messages to existing scenario**: Push new messages to the messages array
+ * 2. **Create variant**: Spread existing scenario and override specific messages
+ * 3. **New scenario**: Only for fundamentally different user journeys
+ * 
+ * ## Before Adding Content
+ * 
+ * Check `fragments.ts` for reusable:
+ * - Quick reply sets (QUICK_REPLIES)
+ * - Card section patterns (CARD_SECTIONS)
+ * - Message templates (MESSAGE_TEMPLATES)
+ * 
+ * ## Naming Convention
+ * 
+ * - Scenario IDs: `scenario-{number}` or descriptive like `onboarding`
+ * - Message IDs: `msg-{scenario}-{sequence}` e.g., `msg-1-1`, `msg-1-2`
+ * 
+ * ## DO NOT
+ * 
+ * - Duplicate entire scenarios for minor variations
+ * - Copy-paste quick replies that exist in fragments.ts
+ * - Create inline card schemas that could be reusable patterns
  */
 
 import type { CoordinatedItem } from './items';

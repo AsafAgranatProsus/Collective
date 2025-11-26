@@ -1,8 +1,39 @@
 /**
- * Mock Household Data - Brooklyn Apartment 4B
+ * Household Data
+ * 
+ * Member information and household configuration for the Brooklyn Apt demo.
+ * This is the canonical source for Member type and member instances.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * @see lib/data/types.ts for unified type imports
+ * @see lib/data/groups.ts for Group type (group metadata)
+ * 
+ * ## Structure
+ * 
+ * - `Member` interface: Person in a group (name, avatar, role)
+ * - `HouseholdConfig` interface: Household-specific settings
+ * - `members` array: All member instances
+ * - `brooklynApt`: The demo household config
+ * - `fairnessStats`: Pre-computed fairness data for demo
+ * 
+ * ## How to Extend
+ * 
+ * 1. Add member to `members` array
+ * 2. Use lowercase ID (e.g., 'sarah', 'mike')
+ * 3. Also update groups.ts if member belongs to a group
+ * 
+ * ## Note on Types
+ * 
+ * Use `Group` from groups.ts for group metadata.
+ * Use `Member` from this file for member details.
+ * `HouseholdConfig` is for household-specific settings only.
  */
 
-export interface Group {
+/**
+ * Household-specific configuration.
+ * For group metadata (name, icon, members list), use Group from groups.ts.
+ */
+export interface HouseholdConfig {
 	id: string;
 	name: string;
 	group_type: 'household' | 'trip' | 'project' | 'event' | 'team';
@@ -12,6 +43,12 @@ export interface Group {
 		enabled_domains: Array<'chores' | 'expenses' | 'shopping' | 'trips' | 'activities'>;
 	};
 }
+
+/**
+ * @deprecated Use Group from groups.ts for group metadata.
+ * This alias is kept for backward compatibility only.
+ */
+export type Group = HouseholdConfig;
 
 export interface Member {
 	id: string;
@@ -23,7 +60,7 @@ export interface Member {
 	bio?: string;
 }
 
-export const brooklynApt: Group = {
+export const brooklynApt: HouseholdConfig = {
 	id: 'group-001',
 	name: 'Brooklyn Apartment 4B',
 	group_type: 'household',

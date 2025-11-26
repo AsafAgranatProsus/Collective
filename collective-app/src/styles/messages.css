@@ -1,0 +1,189 @@
+/**
+ * Shared Message Styling
+ * Single source of truth for chat bubbles, timestamps, and message containers
+ * Used by: MessageBubble, GroupChatMessage, MorphReplyButtons
+ */
+
+/* ============================================
+   MESSAGE CONTAINER
+   ============================================ */
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  animation: message-slide-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.message-container.user {
+  align-items: flex-end;
+}
+
+.message-container.ai {
+  align-items: flex-start;
+}
+
+.message-container.peer {
+  align-items: flex-start;
+}
+
+@keyframes message-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   MESSAGE BUBBLES
+   ============================================ */
+
+.message-bubble {
+  max-width: 80%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--m3-util-rounding-large);
+  word-wrap: break-word;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* User bubble - right side, secondary container */
+.message-bubble.user-bubble {
+  background-color: rgb(var(--m3-scheme-secondary-container));
+  color: rgb(var(--m3-scheme-on-secondary-container));
+  border-radius: var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-extra-small) 
+                var(--m3-util-rounding-large);
+  font-weight: var(--m3-font-body-semibold, 500);
+}
+
+/* AI bubble - left side, no background */
+.message-bubble.ai-bubble {
+  color: rgb(var(--m3-scheme-on-surface));
+  border-radius: var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-extra-small);
+  padding-left: 0.5rem;
+  padding-bottom: 0;
+  font-weight: var(--m3-font-body-semibold, 500);
+}
+
+/* Peer bubble - left side, tertiary container */
+.message-bubble.peer-bubble {
+  background-color: rgb(var(--m3-scheme-tertiary-container));
+  color: rgb(var(--m3-scheme-on-surface));
+  border-radius: var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-large) 
+                var(--m3-util-rounding-extra-small);
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .message-bubble {
+    max-width: 85%;
+  }
+}
+
+/* ============================================
+   MESSAGE CONTENT
+   ============================================ */
+
+.message-content {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.message-content .text-content {
+  white-space: pre-wrap;
+}
+
+/* ============================================
+   MESSAGE TIMESTAMP
+   ============================================ */
+
+.message-timestamp {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: rgb(var(--m3-scheme-outline));
+  margin-top: 0.25rem;
+  padding: 0 0.5rem;
+}
+
+/* ============================================
+   TYPING CURSOR
+   ============================================ */
+
+.typing-cursor {
+  display: inline-block;
+  animation: cursor-blink 1s infinite;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
+@keyframes cursor-blink {
+  0%, 49% {
+    opacity: 0.7;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   CARDS CONTAINER (within messages)
+   ============================================ */
+
+.message-cards-container {
+  margin-top: var(--space-3);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  justify-content: flex-start;
+}
+
+.message-container.user .message-cards-container {
+  align-items: flex-end;
+}
+
+.message-container.ai .message-cards-container {
+  align-items: flex-start;
+}
+
+/* ============================================
+   MARKDOWN HEADINGS IN MESSAGES
+   ============================================ */
+
+.message-content .heading-1 {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+  color: rgb(var(--m3-scheme-on-surface));
+}
+
+.message-content .heading-2 {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.4rem;
+  color: rgb(var(--m3-scheme-on-surface));
+}
+
+.message-content .heading-3 {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.3rem;
+  color: rgb(var(--m3-scheme-on-surface-variant));
+}
+

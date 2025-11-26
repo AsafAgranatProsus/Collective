@@ -27,41 +27,21 @@ import iconTrending from '@ktibow/iconset-material-symbols/trending-up';
 import iconGroup from '@ktibow/iconset-material-symbols/group-work';
 
 // ============================================================================
-// FORMATTING UTILITIES
+// FORMATTING UTILITIES (re-exported from shared formatters)
 // ============================================================================
 
-export function formatCurrency(amount: number): string {
-	return new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 2
-	}).format(amount);
-}
+import { 
+	formatCurrency as _formatCurrency, 
+	formatPercentage as _formatPercentage, 
+	formatDate as _formatDate, 
+	formatTime as _formatTime 
+} from './formatters';
 
-export function formatPercentage(value: number, decimals: number = 0): string {
-	return `${value.toFixed(decimals)}%`;
-}
-
-export function formatDate(date: string | Date): string {
-	const d = typeof date === 'string' ? new Date(date) : date;
-	return d.toLocaleDateString('en-US', {
-		month: 'short',
-		day: 'numeric',
-		hour: 'numeric',
-		minute: '2-digit'
-	});
-}
-
-export function formatTime(timestamp: string): string {
-	const date = new Date(timestamp);
-	const hours = date.getHours();
-	const minutes = date.getMinutes();
-	const ampm = hours >= 12 ? 'PM' : 'AM';
-	const formattedHours = hours % 12 || 12;
-	const formattedMinutes = minutes.toString().padStart(2, '0');
-	return `${formattedHours}:${formattedMinutes} ${ampm}`;
-}
+// Re-export for external use
+export const formatCurrency = _formatCurrency;
+export const formatPercentage = _formatPercentage;
+export const formatDate = _formatDate;
+export const formatTime = _formatTime;
 
 // ============================================================================
 // COLOR & THEME UTILITIES

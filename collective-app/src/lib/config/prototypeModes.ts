@@ -1,6 +1,21 @@
 /**
  * Prototype Modes Configuration
- * Centralized configuration for different UX flows to demo to stakeholders
+ * 
+ * Centralized configuration for different UX flows to demo to stakeholders.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * 
+ * ## Prototype Modes
+ * 
+ * - `ai-first`: AI chat is primary view, group chat secondary
+ * - `group-chat-first`: Group chat is primary, AI is assistant
+ * 
+ * ## Presentation Mode
+ * 
+ * When demoing to users/stakeholders, use presentation scenarios.
+ * These are curated, tested flows that work reliably.
+ * 
+ * @see PRESENTATION_SCENARIOS below
  */
 
 export type PrototypeModeId = 'ai-first' | 'group-chat-first';
@@ -101,5 +116,40 @@ export function getAllPrototypeModes(): PrototypeMode[] {
  */
 export function getPrototypeModeById(id: PrototypeModeId): PrototypeMode {
 	return PROTOTYPE_MODES[id];
+}
+
+// =============================================================================
+// PRESENTATION MODE
+// =============================================================================
+
+/**
+ * Curated list of scenarios that are polished and demo-ready.
+ * Add scenarios here only after verification with the checklist in PROTOTYPING_GUIDE.md.
+ * 
+ * Checklist before adding:
+ * - [ ] All messages display correctly
+ * - [ ] Cards render without errors
+ * - [ ] Quick replies have working handlers
+ * - [ ] Flow has clear beginning and end
+ * - [ ] No console errors during flow
+ */
+export const PRESENTATION_SCENARIOS: string[] = [
+	'scenario-1',      // View My Tasks - core demo flow
+	'onboarding',      // New user onboarding - cold boot experience
+	// Add more as they are verified
+];
+
+/**
+ * Check if a scenario is marked as presentation-ready
+ */
+export function isPresentationReady(scenarioId: string): boolean {
+	return PRESENTATION_SCENARIOS.includes(scenarioId);
+}
+
+/**
+ * Get all presentation-ready scenario IDs
+ */
+export function getPresentationScenarios(): string[] {
+	return [...PRESENTATION_SCENARIOS];
 }
 

@@ -7,6 +7,7 @@
 	import GroupCard from '$lib/components/GroupCard.svelte';
 	import FeedView from '$lib/components/FeedView.svelte';
 	import OnboardingChat from '$lib/components/OnboardingChat.svelte';
+	import GlassHeader from '$lib/components/GlassHeader.svelte';
 	import { getAllGroups } from '$lib/data/groups';
 	import { setDemoMenuOpen, setNavigationDirection, getOnboardingMode, getOnboardingGroupCreated, getOnboardingGroup } from '$lib/stores/app.svelte';
 	import type { Group } from '$lib/data/groups';
@@ -107,26 +108,26 @@
 	<div class="background-gradient"></div>
 	
 	<!-- Header -->
-	<header 
-		class="page-header"
-		class:with-tabs={appTabsPosition === 'top' && showTabs}
-		in:sharedAxisTransition={{ direction: 'Y', rightSeam: true }}
-	>
-		<button class="logo" onclick={handleLogoTap} aria-label="Open menu">
-			<span class="logo-text">collective</span>
-		</button>
+	<GlassHeader class="groups-header">
+		{#snippet leading()}
+			<button class="logo" onclick={handleLogoTap} aria-label="Open menu">
+				<span class="logo-text">collective</span>
+			</button>
+		{/snippet}
 		
-		{#if appTabsPosition === 'top' && showTabs}
-			<div class="header-tabs" in:scale={{ start: 0.8, duration: 400, delay: 100 }}>
-				<div class="tabs-with-badge">
-			<Tabs bind:tab={activeTab} items={tabItems} />
-					{#if showGroupsBadge}
-						<span class="groups-badge" in:fly={{ y: -10, duration: 300, delay: 300 }}>1</span>
-					{/if}
+		{#snippet trailing()}
+			{#if appTabsPosition === 'top' && showTabs}
+				<div class="header-tabs" in:scale={{ start: 0.8, duration: 400, delay: 100 }}>
+					<div class="tabs-with-badge">
+						<Tabs bind:tab={activeTab} items={tabItems} />
+						{#if showGroupsBadge}
+							<span class="groups-badge" in:fly={{ y: -10, duration: 300, delay: 300 }}>1</span>
+						{/if}
+					</div>
 				</div>
-		</div>
-	{/if}
-	</header>
+			{/if}
+		{/snippet}
+	</GlassHeader>
 	
 	<!-- Main Content -->
 	<div class="page-content">
@@ -222,21 +223,9 @@
 		z-index: -1;
 	}
 	
-	.page-header {
-		position: sticky;
-		top: 0;
-		z-index: 200;
-		padding: 1rem 1.5rem;
-		background-color: rgba(var(--m3-scheme-surface), 0.8);
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
-	}
-	
-	.page-header.with-tabs {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
+	/* GlassHeader customization for groups page */
+	:global(.groups-header) {
+		z-index: 200 !important;
 	}
 	
 	.header-tabs {

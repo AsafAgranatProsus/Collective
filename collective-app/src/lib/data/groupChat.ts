@@ -1,6 +1,33 @@
 /**
- * Group Chat Messages - Peer-to-peer chat within groups
- * AI observes these messages passively
+ * Group Chat Messages
+ * 
+ * Peer-to-peer chat messages within groups.
+ * These are human-to-human messages, separate from AI conversations.
+ * 
+ * @see Cursor/PROTOTYPING_GUIDE.md for conventions
+ * 
+ * ## Structure
+ * 
+ * - `GroupChatMessage`: Single peer message
+ * - `groupChatMessages`: Record keyed by group ID
+ * - Functions: get, add, clear, remove messages
+ * 
+ * ## Message Types
+ * 
+ * - `message` (default): Normal chat message
+ * - `system`: System notification (e.g., "Sarah joined")
+ * - `typing`: Typing indicator (ephemeral)
+ * 
+ * ## How to Extend
+ * 
+ * 1. Add messages to existing group's array
+ * 2. Use member IDs and names from household.ts
+ * 3. Use staggered timestamps for realism (see fragments.ts TIMESTAMPS)
+ * 
+ * ## Runtime Mutations
+ * 
+ * This data is mutated at runtime during demo flows.
+ * Use clearGroupChatMessages() to reset between sessions.
  */
 
 export interface GroupChatMessage {

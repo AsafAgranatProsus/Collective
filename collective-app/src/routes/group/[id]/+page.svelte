@@ -4,7 +4,6 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import MessageBubble from "$lib/components/MessageBubble.svelte";
-	import UserMessage from "$lib/components/UserMessage.svelte";
 	import MorphReplyButtons from "$lib/components/MorphReplyButtons.svelte";
 	import TypingIndicator from "$lib/components/TypingIndicator.svelte";
 	import ChatInput from "$lib/components/ChatInput.svelte";
@@ -776,8 +775,7 @@
 									message.ui_elements.quick_replies.find(
 										(qr) => qr.value === savedSelection,
 									)}
-								<UserMessage
-									mode="bubble"
+								<MessageBubble
 									message={{
 										id: `reply-${message.id}`,
 										sender: "user",
@@ -805,7 +803,7 @@
 					{@const isLastBeforeAI = nextMessage?.sender === "ai" || !nextMessage}
 					{@const showTimestamp = isLastBeforeAI}
 					
-					<UserMessage mode="bubble" {message} {showTimestamp} />
+					<MessageBubble {message} {showTimestamp} />
 				{/if}
 
 				{#if message.ui_elements?.cards}
@@ -857,14 +855,12 @@
 	</div>
 
 	<!-- Chat Input -->
-	<div class="chat-input-container">
-		<ChatInput 
-			onSend={handleSendMessage}
-			onChecklistToggle={() => checklistOpen = !checklistOpen}
-			isChecklistOpen={checklistOpen}
-			placeholder={checklistOpen ? "Add todos, tasks, schedules..." : (groupChatOpen ? "Message group..." : "Type a message...")}
-		/>
-	</div>
+	<ChatInput 
+		onSend={handleSendMessage}
+		onChecklistToggle={() => checklistOpen = !checklistOpen}
+		isChecklistOpen={checklistOpen}
+		placeholder={checklistOpen ? "Add todos, tasks, schedules..." : (groupChatOpen ? "Message group..." : "Type a message...")}
+	/>
 
 	<!-- Checklist Bottom Sheet -->
 	<ChecklistSheet 
@@ -917,11 +913,6 @@
 	
 	} */
 
-	.chat-input-container {
-		/* display: contents; */
-		
-		z-index: var(--z-chat-input);
-	}
 
 	/* Header action buttons */
 	.header-actions {
