@@ -1,5 +1,4 @@
 {
-  "buildCommand": "cd collective-app && npm ci && npm run build",
-  "installCommand": "echo 'Skipping root install'",
-  "outputDirectory": "collective-app/.vercel/output/static"
+  "buildCommand": "cd collective-app && npm ci && npm run build && mv .vercel/output ../.vercel/output",
+  "installCommand": "echo 'Skipping root install'"
 }
