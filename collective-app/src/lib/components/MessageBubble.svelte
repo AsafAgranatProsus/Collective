@@ -289,7 +289,7 @@
 		background-color: rgb(var(--m3-scheme-secondary-container));
 		color: rgb(var(--m3-scheme-on-secondary-container));
 		border-radius: var(--m3-util-rounding-large) var(--m3-util-rounding-large) var(--m3-util-rounding-extra-small) var(--m3-util-rounding-large);
-		font-weight: var(--m3-font-body-semibold, 600);
+		font-weight: var(--m3-font-body-semibold, 500);
 	}
 	
 	.ai-bubble {

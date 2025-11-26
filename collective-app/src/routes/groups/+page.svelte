@@ -62,7 +62,7 @@
 	// Save active tab whenever it changes (only when not onboarding)
 	$effect(() => {
 		if (!isOnboarding) {
-			setLastActiveTab(activeTab as 'groups' | 'feed');
+		setLastActiveTab(activeTab as 'groups' | 'feed');
 		}
 	});
 	
@@ -119,13 +119,13 @@
 		{#if appTabsPosition === 'top' && showTabs}
 			<div class="header-tabs" in:scale={{ start: 0.8, duration: 400, delay: 100 }}>
 				<div class="tabs-with-badge">
-					<Tabs bind:tab={activeTab} items={tabItems} />
+			<Tabs bind:tab={activeTab} items={tabItems} />
 					{#if showGroupsBadge}
 						<span class="groups-badge" in:fly={{ y: -10, duration: 300, delay: 300 }}>1</span>
 					{/if}
 				</div>
-			</div>
-		{/if}
+		</div>
+	{/if}
 	</header>
 	
 	<!-- Main Content -->
@@ -155,20 +155,20 @@
 						</div>
 					{:else}
 						<!-- Normal mode: show all groups -->
-						{#each groups as group, index (group.id)}
-							<div
-								in:sharedAxisTransition={{ 
-									direction: 'Y', 
-									rightSeam: true 
-								}}
-								style="transition-delay: {index * 50}ms;"
-							>
-								<GroupCard 
-									{group}
-									onClick={() => handleGroupClick(group.id)}
-								/>
-							</div>
-						{/each}
+					{#each groups as group, index (group.id)}
+						<div
+							in:sharedAxisTransition={{ 
+								direction: 'Y', 
+								rightSeam: true 
+							}}
+							style="transition-delay: {index * 50}ms;"
+						>
+							<GroupCard 
+								{group}
+								onClick={() => handleGroupClick(group.id)}
+							/>
+						</div>
+					{/each}
 					{/if}
 				</div>
 			</div>
@@ -182,7 +182,7 @@
 	{#if appTabsPosition === 'bottom' && showTabs}
 		<div class="tabs-container bottom-tabs" in:fly={{ y: 50, duration: 400 }}>
 			<div class="tabs-with-badge">
-				<Tabs bind:tab={activeTab} items={tabItems} />
+			<Tabs bind:tab={activeTab} items={tabItems} />
 				{#if showGroupsBadge}
 					<span class="groups-badge bottom" in:fly={{ y: -10, duration: 300, delay: 300 }}>1</span>
 				{/if}
@@ -193,12 +193,12 @@
 	<!-- Floating Action Button (groups view only, hidden during onboarding) -->
 	{#if !isOnboarding && activeTab === 'groups'}
 		<div class="fab-container">
-			<FAB 
-				color="primary"
-				icon={iconAdd}
-				onclick={() => {}}
-				aria-label="Create new group"
-			/>
+	<FAB 
+		color="primary"
+		icon={iconAdd}
+		onclick={() => {}}
+		aria-label="Create new group"
+	/>
 		</div>
 	{/if}
 </div>

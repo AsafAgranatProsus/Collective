@@ -2,6 +2,7 @@
 	import { Button, TextField, TextFieldOutlined } from "m3-svelte";
 	import { Icon } from "m3-svelte";
 	import iconSend from "@ktibow/iconset-material-symbols/send";
+	import iconMic from "@ktibow/iconset-material-symbols/mic";
 	import iconChecklist from "@ktibow/iconset-material-symbols/checklist";
 
 	let { onSend, onChecklistToggle, isChecklistOpen = false, placeholder = "Type a message..." } = $props<{
@@ -12,6 +13,7 @@
 	}>();
 
 	let inputValue = $state("");
+	let hasContent = $derived(inputValue.trim().length > 0);
 
 	function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -55,15 +57,25 @@
 		/>
 	</div>
 	<div class="send-button-container">
-		<Button
-			variant="filled"
-			iconType="full"
-			disabled={!inputValue.trim()}
-			onclick={handleSubmit}
-			aria-label="Send message"
-		>
-			<Icon icon={iconSend} />
-		</Button>
+		{#if hasContent}
+			<Button
+				variant="filled"
+				iconType="full"
+				onclick={handleSubmit}
+				aria-label="Send message"
+			>
+				<Icon icon={iconSend} />
+			</Button>
+		{:else}
+			<Button
+				variant="text"
+				iconType="full"
+				onclick={() => {/* Voice input - placeholder */}}
+				aria-label="Voice input"
+			>
+				<Icon icon={iconMic} />
+			</Button>
+		{/if}
 	</div>
 </form>
 
