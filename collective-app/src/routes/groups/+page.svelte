@@ -8,9 +8,9 @@
 	import FeedView from '$lib/components/FeedView.svelte';
 	import OnboardingChat from '$lib/components/OnboardingChat.svelte';
 	import GlassHeader from '$lib/components/GlassHeader.svelte';
-	import { getAllGroups } from '$lib/data/groups';
-	import { setDemoMenuOpen, setNavigationDirection, getOnboardingMode, getOnboardingGroupCreated, getOnboardingGroup } from '$lib/stores/app.svelte';
-	import type { Group } from '$lib/data/groups';
+	import { getAllGroups } from '$lib/data/groups.svelte';
+	import { setDemoMenuOpen, setNavigationDirection, getOnboardingMode, getOnboardingGroupCreated, getOnboardingGroup, getActiveScenario, isTripPlanningActive } from '$lib/stores/app.svelte';
+	import type { Group } from '$lib/data/groups.svelte';
 	import { getAppTabsPosition, getLastActiveTab, setLastActiveTab } from '$lib/stores/features.svelte';
 	import { getNavigationPath } from '$lib/utils/modeHelpers';
 	import { sharedAxisTransition } from 'm3-svelte';
@@ -21,11 +21,15 @@
 	// Onboarding mode - hides Groups tab and shows only Feed
 	const isOnboarding = $derived(getOnboardingMode());
 	
+	// Trip planning mode - shows Feed with trip planning conversation
+	const isTripPlanning = $derived(isTripPlanningActive());
+	
 	// Track when onboarding group is created (triggers tabs to appear)
 	const onboardingGroupCreated = $derived(getOnboardingGroupCreated());
 	
 	// Show tabs when: not onboarding, OR onboarding but group is created
-	const showTabs = $derived(!isOnboarding || onboardingGroupCreated);
+	// Note: Trip planning mode shows tabs (unlike onboarding which hides them initially)
+	const showTabs = $derived(!isOnboarding || onboardingGroupCreated || isTripPlanning);
 	
 	// Show badge on groups tab during onboarding after group is created
 	const showGroupsBadge = $derived(isOnboarding && onboardingGroupCreated);
@@ -53,17 +57,29 @@
 		activeTab = getLastActiveTab();
 	});
 	
-	// Force feed tab when onboarding is active
+	// Track if we need to switch to feed for trip planning (only once on activation)
+	let tripPlanningTabSet = $state(false);
+	
+	// Force feed tab when onboarding is active or when trip planning first starts
 	$effect(() => {
-		if (isOnboarding) {
+		if (isOnboarding && !onboardingGroupCreated) {
 			activeTab = 'feed';
+		}
+		// Switch to feed tab when trip planning starts (but allow switching after)
+		if (isTripPlanning && !tripPlanningTabSet) {
+			tripPlanningTabSet = true;
+			activeTab = 'feed';
+		}
+		// Reset when trip planning ends
+		if (!isTripPlanning && tripPlanningTabSet) {
+			tripPlanningTabSet = false;
 		}
 	});
 	
-	// Save active tab whenever it changes (only when not onboarding)
+	// Save active tab whenever it changes (only when not in initial onboarding)
 	$effect(() => {
-		if (!isOnboarding) {
-		setLastActiveTab(activeTab as 'groups' | 'feed');
+		if (!isOnboarding || onboardingGroupCreated) {
+			setLastActiveTab(activeTab as 'groups' | 'feed');
 		}
 	});
 	

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
-	import { getTypingIndicatorExiting } from '$lib/stores/app.svelte';
+	import { getTypingIndicatorExiting, getTypingIndicatorContextTexts } from '$lib/stores/app.svelte';
 	
 	// Ghost trail frames with block characters cycling through positions
 	// Each frame has characters, colors, and opacity values for trailing effect
@@ -14,20 +14,34 @@
 	];
 	
 	let currentFrame = $state(0);
+	let currentTextIndex = $state(0);
 	let isExiting = $derived(getTypingIndicatorExiting());
+	let contextTexts = $derived(getTypingIndicatorContextTexts());
 	let blockOpacities = $state([1, 1, 1, 1, 1]); // Track individual block opacities for exit
 	let interval: ReturnType<typeof setInterval> | null = null;
+	let textInterval: ReturnType<typeof setInterval> | null = null;
 	let exitStarted = $state(false);
+	
+	// Current display text - rotates through contextTexts if provided, otherwise shows "thinking"
+	let displayText = $derived(
+		contextTexts && contextTexts.length > 0 
+			? contextTexts[currentTextIndex % contextTexts.length]
+			: 'thinking'
+	);
 	
 	// Watch for exit state change
 	$effect(() => {
 		if (isExiting && !exitStarted) {
 			exitStarted = true;
 			
-			// Stop the cycling animation
+			// Stop the cycling animations
 			if (interval) {
 				clearInterval(interval);
 				interval = null;
+			}
+			if (textInterval) {
+				clearInterval(textInterval);
+				textInterval = null;
 			}
 			
 			// Fade out blocks sequentially with random timing
@@ -57,10 +71,18 @@
 				currentFrame = (currentFrame + 1) % frames.length;
 			}
 		}, 150);
+		
+		// Cycle through context texts every 1.5s if provided
+		textInterval = setInterval(() => {
+			if (!isExiting && contextTexts && contextTexts.length > 1) {
+				currentTextIndex = (currentTextIndex + 1) % contextTexts.length;
+			}
+		}, 1500);
 	});
 	
 	onDestroy(() => {
 		if (interval) clearInterval(interval);
+		if (textInterval) clearInterval(textInterval);
 	});
 </script>
 
@@ -80,7 +102,7 @@
 				</span>
 			{/each}
 		</span>
-		<span class="thinking-text" style:opacity={isExiting ? 0 : 0.6}>thinking</span>
+		<span class="thinking-text" style:opacity={isExiting ? 0 : 0.6}>{displayText}</span>
 	</div>
 </div>
 

@@ -15,7 +15,7 @@
  * Group - A collection of people coordinating together
  * Use this for group metadata (name, members, display info)
  */
-export type { Group } from './groups';
+export type { Group } from './groups.svelte';
 
 /**
  * Member - A person in a group

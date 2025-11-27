@@ -20,6 +20,11 @@
 		setPostOnboardingChatStarted,
 		setGroupChatBadgeCount,
 		clearConversation,
+		setActiveScenario,
+		clearTripPlanningMessages,
+		setTripGroup,
+		setTripPlanningStep,
+		setTripGroupChatStarted,
 		type OnboardingGroup
 	} from '$lib/stores/app.svelte';
 	import { goto } from '$app/navigation';
@@ -49,8 +54,9 @@
 		type AppTabsPosition 
 	} from '$lib/stores/features.svelte';
 	import { getAllPrototypeModes } from '$lib/config/prototypeModes';
-	import { scenarios } from '$lib/data/scenarios';
+	import { scenarios, getVisibleScenarios } from '$lib/data/scenarios';
 	import { clearGroupChatMessages } from '$lib/data/groupChat';
+	import { clearDynamicGroups, addDynamicGroup } from '$lib/data/groups.svelte';
 	
 	let demoMenuState = $derived(getDemoMenuState());
 	let currentUser = $derived(getCurrentUser());
@@ -69,6 +75,7 @@
 	const members = getAllMembers();
 	const availableThemes = getAvailableThemes();
 	const prototypeModes = getAllPrototypeModes();
+	const visibleScenarios = getVisibleScenarios();
 	
 	// Convert fonts to M3 Select format
 	const logoFontOptions = logoFonts.map(f => ({ text: f.name, value: f.family }));
@@ -141,6 +148,67 @@
 				
 				setDemoMenuOpen(false);
 				goto('/groups');
+				return;
+			}
+			
+			// Special handling for trip planning scenario
+			if (scenario.id === 'trip-planning') {
+				// Reset trip planning state
+				clearTripPlanningMessages();
+				setTripGroup(null);
+				setTripPlanningStep('');
+				setTripGroupChatStarted(false);
+				clearDynamicGroups(); // Clear any previously created trip groups
+				
+				// Set active scenario to trip-planning
+				setActiveScenario('trip-planning');
+				
+				// Navigate to groups page (feed tab will show trip planning mode)
+				setDemoMenuOpen(false);
+				goto('/groups');
+				return;
+			}
+			
+			// Special handling for trip planning group scenario (for testing group-level)
+			// Pre-populates all state from "trip-planning" scenario completion
+			if (scenario.id === 'trip-planning-group') {
+				// Reset any existing trip state
+				clearTripPlanningMessages();
+				clearDynamicGroups();
+				
+				// Set up the trip group as if "trip-planning" was completed
+				const tripGroupData = {
+					id: 'barcelona-march-2025',
+					name: 'Barcelona March 2025',
+					icon: '✈️',
+					destination: 'Barcelona',
+					timing: 'Mid March',
+					duration: '4-5 nights',
+					memberCount: 4,
+					currentMembers: ['Nishi'],
+					status: 'planning' as const
+				};
+				setTripGroup(tripGroupData);
+				
+				// Add to groups list (appears at top)
+				addDynamicGroup({
+					id: tripGroupData.id,
+					name: tripGroupData.name,
+					icon: tripGroupData.icon,
+					type: 'trip',
+					member_count: tripGroupData.memberCount,
+					is_active: true,
+					members: tripGroupData.currentMembers,
+					next_action: {
+						text: 'Finding flights',
+						due: 'In progress'
+					}
+				});
+				
+				setActiveScenario('trip-planning-group');
+				setTripGroupChatStarted(false);
+				setDemoMenuOpen(false);
+				goto('/group/barcelona-march-2025');
 				return;
 			}
 			
@@ -368,7 +436,7 @@
 				{#if expandedSection === 'scenarios'}
 					<div class="section-content" transition:fade={{ duration: 150 }}>
 						<div class="scenario-list">
-							{#each scenarios as scenario}
+							{#each visibleScenarios as scenario}
 								<button 
 									class="custom-option-btn scenario-option"
 									onclick={() => handleScenarioJump(scenario.id)}

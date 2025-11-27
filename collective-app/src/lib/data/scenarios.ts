@@ -54,6 +54,7 @@ export interface Message {
 		animation?: string;
 		analytics_summary?: boolean;
 		analytics_detail?: boolean;
+		show_group_card?: boolean; // Show embedded group card (for trip planning)
 	};
 }
 
@@ -64,6 +65,8 @@ export interface Scenario {
 	initial_user: string;
 	requires_user_switch?: boolean;
 	messages: Message[];
+	/** If true, scenario won't appear in the meta menu but remains in codebase */
+	hidden?: boolean;
 }
 
 // Scenario 1: View My Tasks
@@ -72,6 +75,7 @@ export const viewMyTasksScenario: Scenario = {
 	title: 'View My Tasks',
 	description: "Sarah asks what's on her plate this week",
 	initial_user: 'sarah',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-1-1',
@@ -214,6 +218,7 @@ export const howAmIDoingScenario: Scenario = {
 	title: 'How Am I Doing?',
 	description: 'Jessica asks about her performance with progressive disclosure',
 	initial_user: 'jessica',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-2-1',
@@ -298,6 +303,7 @@ export const tradeChoreScenario: Scenario = {
 	title: 'Trade a Chore',
 	description: 'Sarah trades kitchen chore with Bob',
 	initial_user: 'sarah',
+	hidden: true,
 	requires_user_switch: true,
 	messages: [
 		{
@@ -392,6 +398,7 @@ export const completeTaskScenario: Scenario = {
 	title: 'Complete a Task',
 	description: 'Sarah marks trash as done',
 	initial_user: 'sarah',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-6-1',
@@ -444,6 +451,7 @@ export const minimalAnalyticsScenario: Scenario = {
 	title: "How's the House?",
 	description: "Sarah asks minimal question, gets minimal answer",
 	initial_user: 'sarah',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-4-1',
@@ -500,6 +508,7 @@ export const weeklyReviewScenario: Scenario = {
 	title: 'Weekly Review (Custom Sections)',
 	description: 'Demonstrates mixing header, progress, chart, comparison, and text sections',
 	initial_user: 'sarah',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-7-1',
@@ -581,6 +590,7 @@ export const shoppingRequestScenario: Scenario = {
 	title: 'Shopping Request (Custom Sections)',
 	description: 'Demonstrates list items with checkboxes and action buttons',
 	initial_user: 'bob',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-8-1',
@@ -655,6 +665,7 @@ export const paymentSummaryScenario: Scenario = {
 	title: 'Payment Summary (Custom Sections)',
 	description: 'Demonstrates stat rows, comparison bars, and mixed content',
 	initial_user: 'jessica',
+	hidden: true,
 	messages: [
 		{
 			id: 'msg-9-1',
@@ -1098,8 +1109,572 @@ export const postOnboardingGroupScenario: Scenario = {
 	]
 };
 
-// Export all scenarios
+// ============================================================================
+// TRIP PLANNING SCENARIO - Conversational trip group creation
+// ============================================================================
+
+export const tripPlanningScenario: Scenario = {
+	id: 'trip-planning',
+	title: 'Trip Planning',
+	description: 'Plan a Barcelona trip with friends - conversational group creation',
+	initial_user: 'sarah',
+	messages: [
+		// Step 1: Initial greeting in Feed view
+		{
+			id: 'trip-1',
+			sender: 'ai',
+			content: "# Good morning, Nishi ☀️\nFriday, November 29",
+			timestamp: new Date().toISOString()
+		},
+		// Step 2: User expresses trip intent (matched by fuzzy detection)
+		{
+			id: 'trip-2',
+			sender: 'user',
+			content: 'I want to plan a trip to Barcelona with my friends in March',
+			timestamp: new Date().toISOString()
+		},
+		// Step 3: AI suggests creating trip group
+		{
+			id: 'trip-3',
+			sender: 'ai',
+			content: "That sounds exciting! 🎉\n\nPlanning a trip with friends can get messy fast. Want me to create a dedicated group for this trip?\n\nI can help you:\n• Find flights & hotels\n• Track decisions & bookings\n• Split costs fairly\n• Keep everyone on the same page",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Yes, create trip group', value: 'create_trip_group' },
+					{ label: 'Just give me tips', value: 'just_tips' }
+				]
+			}
+		},
+		// Step 4: User confirms group creation
+		{
+			id: 'trip-4',
+			sender: 'user',
+			content: 'Yes, create trip group',
+			timestamp: new Date().toISOString()
+		},
+		// Step 5: Ask for group name
+		{
+			id: 'trip-5',
+			sender: 'ai',
+			content: "Perfect! Let's set this up.\n\nWhat should we call this group?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Barcelona March 2025', value: 'name_barcelona_march' },
+					{ label: 'Barcelona Trip', value: 'name_barcelona_trip' },
+					{ label: 'Friends Barcelona', value: 'name_friends_barcelona' }
+				]
+			}
+		},
+		// Step 6: User selects name
+		{
+			id: 'trip-6',
+			sender: 'user',
+			content: 'Barcelona March 2025',
+			timestamp: new Date().toISOString()
+		},
+		// Step 7: Ask for people count
+		{
+			id: 'trip-7',
+			sender: 'ai',
+			content: "Great! Barcelona March 2025\n\nHow many people are going?\n(Including you)",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: '2', value: 'count_2' },
+					{ label: '3', value: 'count_3' },
+					{ label: '4', value: 'count_4' },
+					{ label: '5', value: 'count_5' },
+					{ label: '6+', value: 'count_6plus' }
+				]
+			}
+		},
+		// Step 8: User selects 4
+		{
+			id: 'trip-8',
+			sender: 'user',
+			content: '4',
+			timestamp: new Date().toISOString()
+		},
+		// Step 9: Ask for timing
+		{
+			id: 'trip-9',
+			sender: 'ai',
+			content: "4 people - perfect group size!\n\nWhen are you thinking of going?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Early March', value: 'timing_early' },
+					{ label: 'Mid March', value: 'timing_mid' },
+					{ label: 'Late March', value: 'timing_late' },
+					{ label: 'Not sure yet', value: 'timing_unsure' }
+				]
+			}
+		},
+		// Step 10: User selects Mid March
+		{
+			id: 'trip-10',
+			sender: 'user',
+			content: 'Mid March',
+			timestamp: new Date().toISOString()
+		},
+		// Step 11: Ask for duration
+		{
+			id: 'trip-11',
+			sender: 'ai',
+			content: "Mid March in Barcelona - great timing! Weather should be nice.\n\nHow many nights?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Weekend (2-3 nights)', value: 'duration_weekend' },
+					{ label: 'Long weekend (4-5 nights)', value: 'duration_long' },
+					{ label: 'Full week (6-7 nights)', value: 'duration_week' },
+					{ label: 'Not sure yet', value: 'duration_unsure' }
+				]
+			}
+		},
+		// Step 12: User selects long weekend
+		{
+			id: 'trip-12',
+			sender: 'user',
+			content: 'Long weekend (4-5 nights)',
+			timestamp: new Date().toISOString()
+		},
+		// Step 13: AI thinking message (triggers rotating loader)
+		// This is handled specially in the UI - shows thinking with rotating trip-specific text
+		{
+			id: 'trip-13',
+			sender: 'ai',
+			content: "Got it! Let me set this up...",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				animation: 'trip-thinking' // Special animation type for rotating text
+			}
+		},
+		// Step 14: Group created with insights
+		{
+			id: 'trip-14',
+			sender: 'ai',
+			content: "✓ Barcelona March 2025 created!\n\nI've started working on this for you. Here's what I found:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: '💡 Quick Insights',
+							icon: 'info'
+						},
+						{
+							type: 'list',
+							items: [
+								{ title: 'Mid-March Barcelona: 18-22°C', icon: 'info' },
+								{ title: '4-5 nights needs planning by early January for best prices', icon: 'info' },
+								{ title: 'Budget estimate: €600-900/person for flights + hotel', icon: 'money' }
+							],
+							style: 'compact'
+						}
+					],
+					maxWidth: 420
+				}
+			}
+		},
+		// Step 15: Ready to dive in with group card display
+		{
+			id: 'trip-15',
+			sender: 'ai',
+			content: "Ready to dive in?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				// This triggers GroupCard display in the UI
+				show_group_card: true,
+				quick_replies: [
+					{ label: 'Start planning', value: 'start_planning' },
+					{ label: 'Invite friends first', value: 'invite_first' }
+				]
+			}
+		}
+	]
+};
+
+// Trip Planning Group-Level Scenario - Continues after entering the group
+export const tripPlanningGroupScenario: Scenario = {
+	id: 'trip-planning-group',
+	title: 'Trip Planning - Group Level',
+	description: 'Continues trip planning inside the group with flight options and coordination',
+	initial_user: 'sarah',
+	messages: [
+		// Step 1: AI shows planning breakdown
+		{
+			id: 'trip-group-1',
+			sender: 'ai',
+			content: "Let's break this down into steps:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schemas: [
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '1. ✈️ Find Flights',
+								subtitle: 'In progress...'
+							},
+							{
+								type: 'text',
+								content: "I'm searching for the best options now.",
+								size: 'small',
+								color: 'muted'
+							}
+						],
+						maxWidth: 380
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '2. 🏨 Pick Accommodation',
+								subtitle: 'Ready to start'
+							}
+						],
+						maxWidth: 380
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '3. 🎯 Plan Activities',
+								subtitle: 'Coming soon'
+							}
+						],
+						maxWidth: 380
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '4. 💰 Set Budget',
+								subtitle: 'Coming soon'
+							}
+						],
+						maxWidth: 380
+					}
+				]
+			}
+		},
+		// Step 2: Prompt while searching
+		{
+			id: 'trip-group-2',
+			sender: 'ai',
+			content: "While I search, want to invite your friends?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Invite friends', value: 'invite_friends' },
+					{ label: 'Keep planning', value: 'keep_planning' }
+				]
+			}
+		},
+		// Step 3: Flight options found
+		{
+			id: 'trip-group-3',
+			sender: 'ai',
+			content: "I found 3 great flight options!",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schemas: [
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '✈️ Flight Options'
+							},
+							{
+								type: 'text',
+								content: 'For: Mid-March (flexible dates)\n4 people, round-trip from NYC',
+								size: 'small',
+								color: 'muted'
+							}
+						],
+						maxWidth: 420
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '✈️ Option 1 - Best Price',
+								icon: 'flight'
+							},
+							{
+								type: 'stat_row',
+								label: 'Norwegian Air',
+								value: '$458/person',
+								highlight: true
+							},
+							{
+								type: 'text',
+								content: 'Mar 12-17 (Wed-Mon) • Direct',
+								size: 'small'
+							},
+							{
+								type: 'text',
+								content: 'Total: $1,832 for 4 people',
+								size: 'small',
+								color: 'muted'
+							},
+							{
+								type: 'list',
+								items: [
+									{ title: 'Good reviews (4.2★)', icon: 'checklist' },
+									{ title: 'Checked bag included', icon: 'checklist' }
+								],
+								style: 'compact'
+							},
+							{
+								type: 'actions',
+								buttons: [
+									{ label: 'Vote for this', value: 'vote_option1', variant: 'filled', primary: true },
+									{ label: 'Details', value: 'details_option1', variant: 'outlined' }
+								],
+								layout: 'row'
+							}
+						],
+						maxWidth: 420
+					},
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '✈️ Option 2 - Better Times',
+								icon: 'flight'
+							},
+							{
+								type: 'stat_row',
+								label: 'Delta',
+								value: '$542/person',
+								highlight: false
+							},
+							{
+								type: 'text',
+								content: 'Mar 13-18 (Thu-Tue) • 1 stop',
+								size: 'small'
+							},
+							{
+								type: 'text',
+								content: 'Total: $2,168 for 4 people',
+								size: 'small',
+								color: 'muted'
+							},
+							{
+								type: 'list',
+								items: [
+									{ title: 'More departure time options', icon: 'checklist' },
+									{ title: 'Better airline reviews (4.6★)', icon: 'checklist' }
+								],
+								style: 'compact'
+							},
+							{
+								type: 'actions',
+								buttons: [
+									{ label: 'Vote for this', value: 'vote_option2', variant: 'filled', primary: true },
+									{ label: 'Details', value: 'details_option2', variant: 'outlined' }
+								],
+								layout: 'row'
+							}
+						],
+						maxWidth: 420
+					}
+				],
+				quick_replies: [
+					{ label: 'See 3rd option', value: 'see_option3' }
+				]
+			}
+		},
+		// Step 4: AI recommendation
+		{
+			id: 'trip-group-4',
+			sender: 'ai',
+			content: "💡 My recommendation:\nOption 1 saves $336 total and Wed-Mon dates avoid weekend prices in Barcelona.\n\nShare with group to decide?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Share options', value: 'share_options' },
+					{ label: 'Keep researching', value: 'keep_researching' }
+				]
+			}
+		},
+		// Step 5: Share/Invite flow
+		{
+			id: 'trip-group-5',
+			sender: 'ai',
+			content: "Who should I share this with?\n\nThis group needs 3 more people:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: 'Invite Link'
+						},
+						{
+							type: 'text',
+							content: 'collective.app/join/bcn2025',
+							size: 'large'
+						},
+						{
+							type: 'actions',
+							buttons: [
+								{ label: 'Copy link', value: 'copy_link', variant: 'filled', primary: true },
+								{ label: 'Share via text', value: 'share_text', variant: 'outlined' },
+								{ label: 'Share via WhatsApp', value: 'share_whatsapp', variant: 'outlined' }
+							],
+							layout: 'column'
+						},
+						{
+							type: 'divider',
+							spacing: 'medium'
+						},
+						{
+							type: 'text',
+							content: 'Or I can send them:',
+							size: 'small',
+							color: 'muted'
+						},
+						{
+							type: 'text',
+							content: '"Hey! Nishi invited you to plan our Barcelona trip on Collective. I already found flight options - tap to review and vote!"',
+							size: 'small'
+						}
+					],
+					maxWidth: 420
+				},
+				quick_replies: [
+					{ label: 'Send invite message', value: 'send_invite' }
+				]
+			}
+		},
+		// Step 6: Invite sent confirmation
+		{
+			id: 'trip-group-6',
+			sender: 'ai',
+			content: "✓ Invite link copied!\n\nI'll let you know when people join.\n\nMeanwhile, want me to start on hotel options?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Yes, find hotels', value: 'find_hotels' },
+					{ label: "I'll wait for the group", value: 'wait_for_group' }
+				]
+			}
+		},
+		// Step 7: Jerone joins (simulated after delay) - pause for greeting
+		{
+			id: 'trip-group-7',
+			sender: 'ai',
+			content: "🎉 Jerone joined the group!\n(2 of 4 people now)",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Say hi 👋', value: 'greet_jerone_hi' },
+					{ label: 'Greet and share findings', value: 'greet_jerone_share' }
+				]
+			}
+		},
+		// Step 8: Jerone vote card (for group chat - AI notices the vote)
+		{
+			id: 'trip-group-vote-card',
+			sender: 'ai',
+			content: '',
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schemas: [
+					{
+						sections: [
+							{
+								type: 'header',
+								title: '✅ Vote Recorded',
+								subtitle: 'Jerone voted for Option 1'
+							},
+							{
+								type: 'stat_row',
+								label: 'Norwegian Air',
+								value: '$458/person',
+								highlight: true
+							},
+							{
+								type: 'text',
+								content: 'Votes: 1 of 4 • Waiting for more votes',
+								size: 'small',
+								color: 'muted'
+							}
+						],
+						maxWidth: 320
+					}
+				]
+			}
+		},
+		// Step 8b: Jerone votes notification (legacy - for AI chat)
+		{
+			id: 'trip-group-8',
+			sender: 'ai',
+			content: "Jerone voted for Norwegian Air (Option 1 - $458/person)\n\nCurrent votes: 1 of 2 members",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Vote for Option 1 too', value: 'vote_option1_confirm' },
+					{ label: 'Vote for Option 2', value: 'vote_option2_confirm' },
+					{ label: 'See options again', value: 'see_options_again' }
+				]
+			}
+		},
+		// Step 9: Both voted same
+		{
+			id: 'trip-group-9',
+			sender: 'ai',
+			content: "✓ You and Jerone both chose Norwegian Air (Option 1)\n\nOnce the other 2 members join and vote, we can lock this in.\n\nWant me to start finding hotels near your flight dates?\n(Mar 12-17)",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Yes, find hotels', value: 'find_hotels_after_vote' },
+					{ label: 'Wait for everyone', value: 'wait_for_everyone' }
+				]
+			}
+		},
+		// Step 10: Hotels search started
+		{
+			id: 'trip-group-10',
+			sender: 'ai',
+			content: "On it! Searching for hotels in Barcelona for Mar 12-17...\n\nWhile I work on this, here's what you and Jerone have accomplished:\n\n✓ Flight option selected\n✓ Dates confirmed (Mar 12-17)\n✓ 2 of 4 people onboard\n\nNEXT STEPS:\n• Wait for other 2 to join & vote\n• I'll find hotel options (5 min)\n• Then we can set a budget\n• And start planning activities\n\nI'll notify you when hotels are ready to review!",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Back to Feed', value: 'back_to_feed' },
+					{ label: 'View group', value: 'view_group' }
+				]
+			}
+		},
+		// Step 11: Hotels ready notification (proactive)
+		{
+			id: 'trip-group-11',
+			sender: 'ai',
+			content: "Hotel options ready! I found 4 great options in Gothic Quarter.",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Review hotels', value: 'review_hotels' }
+				]
+			}
+		}
+	]
+};
+
+// Export all scenarios (visible ones first, in display order)
 export const scenarios: Scenario[] = [
+	// Visible scenarios (in display order)
+	onboardingScenario,
+	postOnboardingGroupScenario,
+	tripPlanningScenario,
+	tripPlanningGroupScenario,
+	// Hidden scenarios
 	viewMyTasksScenario,
 	fairnessScenario,
 	tradeChoreScenario,
@@ -1107,10 +1682,13 @@ export const scenarios: Scenario[] = [
 	minimalAnalyticsScenario,
 	weeklyReviewScenario,
 	shoppingRequestScenario,
-	paymentSummaryScenario,
-	onboardingScenario,
-	postOnboardingGroupScenario
+	paymentSummaryScenario
 ];
+
+// Helper to get only visible scenarios (for meta menu)
+export function getVisibleScenarios(): Scenario[] {
+	return scenarios.filter(s => !s.hidden);
+}
 
 // Helper to get scenario by ID
 export function getScenarioById(id: string): Scenario | undefined {

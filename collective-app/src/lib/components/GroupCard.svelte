@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Group } from "$lib/data/groups";
+	import type { Group } from "$lib/data/groups.svelte";
 	import { Icon, Card } from "m3-svelte";
 	import iconChevronRight from "@ktibow/iconset-material-symbols/chevron-right";
 	import Badge from "./Badge.svelte";

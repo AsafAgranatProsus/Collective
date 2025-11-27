@@ -5,6 +5,7 @@
 
 import type { Message } from '$lib/data/scenarios';
 import { members } from '$lib/data/household';
+import { clearDynamicGroups } from '$lib/data/groups.svelte';
 
 export type UserId = 'sarah' | 'mike' | 'jessica' | 'bob';
 export type GroupId = string;
@@ -35,18 +36,45 @@ export interface OnboardingGroup {
 	awaitingMembers?: number;
 }
 
+// Trip group data for trip planning scenario
+export interface TripGroup {
+	id: string;
+	name: string;
+	icon: string;
+	destination: string;
+	timing: string; // e.g., "Mid March"
+	duration: string; // e.g., "4-5 nights"
+	memberCount: number;
+	currentMembers: string[]; // member names who have joined
+	// Flight options
+	flightOptions?: {
+		option: number;
+		airline: string;
+		price: number;
+		dates: string;
+		votes: string[]; // member names who voted
+	}[];
+	selectedFlight?: number;
+	// Hotel options
+	hotelSearching?: boolean;
+	hotelOptions?: any[];
+	// Status
+	status: 'setup' | 'planning' | 'flights' | 'hotels' | 'activities' | 'ready';
+}
+
 interface AppState {
 	currentUser: UserId;
 	currentGroup: GroupId;
 	// Conversations scoped by group, then by user
 	conversations: Record<GroupId, Record<UserId, Message[]>>;
 	// Track selected reply IDs per group/user/message
-	selectedReplyIds: Record<GroupId, Record<UserId, Record<string, string>>>;
+	selectedReplyIds: Record<GroupId, Partial<Record<UserId, Record<string, string>>>>;
 	activeScenario: string | null;
 	demoMenu: DemoMenuState;
 	animationsEnabled: boolean;
 	typingIndicatorVisible: boolean;
 	typingIndicatorExiting: boolean;
+	typingIndicatorContextTexts: string[] | null; // Rotating context texts for typing indicator
 	navigationDirection: 'forward' | 'back' | null;
 	// Onboarding state - when true, Groups tab is hidden
 	isOnboarding: boolean;
@@ -60,6 +88,11 @@ interface AppState {
 	postOnboardingChatStarted: boolean;
 	// Badge count for group chat icon (new messages/events)
 	groupChatBadgeCount: number;
+	// Trip planning state
+	tripPlanningMessages: Message[];
+	tripGroup: TripGroup | null;
+	tripPlanningStep: string; // Current step in the trip planning flow
+	tripGroupChatStarted: boolean; // Tracks if we've entered the trip group chat
 }
 
 /**
@@ -90,13 +123,18 @@ let appState = $state<AppState>({
 	animationsEnabled: true,
 	typingIndicatorVisible: false,
 	typingIndicatorExiting: false,
+	typingIndicatorContextTexts: null,
 	navigationDirection: null,
 	isOnboarding: false,
 	onboardingGroupCreated: false,
 	onboardingGroup: null,
 	onboardingMessages: [],
 	postOnboardingChatStarted: false,
-	groupChatBadgeCount: 0
+	groupChatBadgeCount: 0,
+	tripPlanningMessages: [],
+	tripGroup: null,
+	tripPlanningStep: '',
+	tripGroupChatStarted: false
 });
 
 /**
@@ -179,6 +217,7 @@ export function getConversationReadOnly(userId: UserId, groupId: GroupId): Messa
 
 /**
  * Add message to current user's conversation in current group
+ * Prevents duplicate message IDs
  */
 export function addMessage(message: Message, groupId?: GroupId): void {
 	const targetGroup = groupId || appState.currentGroup;
@@ -188,7 +227,13 @@ export function addMessage(message: Message, groupId?: GroupId): void {
 		appState.conversations[targetGroup] = initGroupConversations();
 	}
 	
-	appState.conversations[targetGroup][appState.currentUser].push(message);
+	// Prevent duplicate message IDs
+	const conversation = appState.conversations[targetGroup][appState.currentUser];
+	if (conversation.some(m => m.id === message.id)) {
+		return;
+	}
+	
+	conversation.push(message);
 }
 
 /**
@@ -376,6 +421,7 @@ export function startTypingIndicatorExit(): void {
 export function hideTypingIndicator(): void {
 	appState.typingIndicatorVisible = false;
 	appState.typingIndicatorExiting = false;
+	appState.typingIndicatorContextTexts = null;
 }
 
 /**
@@ -393,6 +439,29 @@ export function getTypingIndicatorExiting(): boolean {
 }
 
 /**
+ * Get typing indicator context texts (for rotating display)
+ */
+export function getTypingIndicatorContextTexts(): string[] | null {
+	return appState.typingIndicatorContextTexts;
+}
+
+/**
+ * Set typing indicator context texts
+ */
+export function setTypingIndicatorContextTexts(texts: string[] | null): void {
+	appState.typingIndicatorContextTexts = texts;
+}
+
+/**
+ * Show typing indicator with optional context texts
+ */
+export function showTypingIndicatorWithContext(contextTexts?: string[]): void {
+	appState.typingIndicatorContextTexts = contextTexts || null;
+	appState.typingIndicatorVisible = true;
+	appState.typingIndicatorExiting = false;
+}
+
+/**
  * Reset demo to initial state
  */
 export function resetDemo(): void {
@@ -404,12 +473,21 @@ export function resetDemo(): void {
 	appState.activeScenario = null;
 	appState.animationsEnabled = true;
 	appState.typingIndicatorVisible = false;
+	appState.typingIndicatorExiting = false;
+	appState.typingIndicatorContextTexts = null;
 	appState.isOnboarding = false;
 	appState.onboardingGroupCreated = false;
 	appState.onboardingGroup = null;
 	appState.onboardingMessages = [];
 	appState.postOnboardingChatStarted = false;
 	appState.groupChatBadgeCount = 0;
+	// Reset trip planning state
+	appState.tripPlanningMessages = [];
+	appState.tripGroup = null;
+	appState.tripPlanningStep = '';
+	appState.tripGroupChatStarted = false;
+	// Clear dynamic groups (trip groups, etc.)
+	clearDynamicGroups();
 	console.log('Demo reset');
 }
 
@@ -644,4 +722,111 @@ export function setSelectedReplyId(messageId: string, replyId: string): void {
 	
 	appState.selectedReplyIds[groupId][userId][messageId] = replyId;
 }
+
+// ============================================================================
+// TRIP PLANNING STATE MANAGEMENT
+// ============================================================================
+
+/**
+ * Get trip planning messages
+ */
+export function getTripPlanningMessages(): Message[] {
+	return appState.tripPlanningMessages;
+}
+
+/**
+ * Add a message to trip planning conversation
+ */
+export function addTripPlanningMessage(message: Message): void {
+	appState.tripPlanningMessages = [...appState.tripPlanningMessages, message];
+}
+
+/**
+ * Clear trip planning messages
+ */
+export function clearTripPlanningMessages(): void {
+	appState.tripPlanningMessages = [];
+}
+
+/**
+ * Mark a trip planning message as rendered (prevents re-animation)
+ */
+export function markTripPlanningMessageAsRendered(messageId: string): void {
+	const message = appState.tripPlanningMessages.find(m => m.id === messageId);
+	if (message) {
+		message.is_rendered = true;
+	}
+}
+
+/**
+ * Get trip group data
+ */
+export function getTripGroup(): TripGroup | null {
+	return appState.tripGroup;
+}
+
+/**
+ * Set trip group data
+ */
+export function setTripGroup(group: TripGroup | null): void {
+	appState.tripGroup = group;
+	console.log('Trip group set:', group);
+}
+
+/**
+ * Update trip group data (partial update)
+ */
+export function updateTripGroup(updates: Partial<TripGroup>): void {
+	if (appState.tripGroup) {
+		appState.tripGroup = { ...appState.tripGroup, ...updates };
+		console.log('Trip group updated:', appState.tripGroup);
+	}
+}
+
+/**
+ * Get trip planning step
+ */
+export function getTripPlanningStep(): string {
+	return appState.tripPlanningStep;
+}
+
+/**
+ * Set trip planning step
+ */
+export function setTripPlanningStep(step: string): void {
+	appState.tripPlanningStep = step;
+	console.log(`Trip planning step: ${step}`);
+}
+
+/**
+ * Get trip group chat started state
+ */
+export function getTripGroupChatStarted(): boolean {
+	return appState.tripGroupChatStarted;
+}
+
+/**
+ * Set trip group chat started state
+ */
+export function setTripGroupChatStarted(started: boolean): void {
+	appState.tripGroupChatStarted = started;
+	console.log(`Trip group chat started: ${started}`);
+}
+
+/**
+ * Check if trip planning scenario is active
+ */
+export function isTripPlanningActive(): boolean {
+	return appState.activeScenario === 'trip-planning' || appState.activeScenario === 'trip-planning-group';
+}
+
+/**
+ * Trip planning specific thinking texts
+ */
+export const TRIP_THINKING_TEXTS = [
+	'Searching flights...',
+	'Checking hotels...',
+	'Finding best deals...',
+	'Comparing options...'
+];
 

@@ -38,6 +38,10 @@ export interface GroupChatMessage {
 	content: string;
 	timestamp: string; // ISO date
 	type?: 'message' | 'system' | 'typing'; // default is 'message'
+	ui_elements?: {
+		card_schemas?: import('../types/card-schema').CardSchema[];
+		quick_replies?: import('./scenarios').QuickReply[];
+	};
 }
 
 /**

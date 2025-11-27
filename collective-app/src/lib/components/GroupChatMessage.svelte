@@ -17,7 +17,8 @@
 		id: message.id,
 		sender: isCurrentUser ? 'user' : 'peer',
 		content: message.content,
-		timestamp: message.timestamp
+		timestamp: message.timestamp,
+		ui_elements: message.ui_elements
 	});
 </script>
 

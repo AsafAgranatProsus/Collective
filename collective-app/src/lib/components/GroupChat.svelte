@@ -9,7 +9,7 @@
 		type GroupChatMessage as GroupChatMessageType,
 	} from "$lib/data/groupChat";
 	import { getCurrentUser, getMemberInfo } from "$lib/stores/app.svelte";
-	import { getGroupById } from "$lib/data/groups";
+	import { getGroupById } from "$lib/data/groups.svelte";
 	import { Icon, Button, TextField } from "m3-svelte";
 	import iconArrowBack from "@ktibow/iconset-material-symbols/arrow-back";
 	import iconSend from "@ktibow/iconset-material-symbols/send";

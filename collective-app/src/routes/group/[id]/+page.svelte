@@ -40,8 +40,18 @@
 		setPostOnboardingChatStarted,
 		getGroupChatBadgeCount,
 		setGroupChatBadgeCount,
+		// Trip planning imports
+		getTripGroup,
+		getTripGroupChatStarted,
+		setTripGroupChatStarted,
+		updateTripGroup,
+		isTripPlanningActive,
+		showTypingIndicatorWithContext,
+		hideTypingIndicator,
+		startTypingIndicatorExit,
+		TRIP_THINKING_TEXTS,
 	} from "$lib/stores/app.svelte";
-	import { viewMyTasksScenario, postOnboardingGroupScenario } from "$lib/data/scenarios";
+	import { viewMyTasksScenario, postOnboardingGroupScenario, tripPlanningGroupScenario } from "$lib/data/scenarios";
 	import type { Message, QuickReply } from "$lib/data/scenarios";
 	import { getItemsByUser, type CoordinatedItem } from "$lib/data/items";
 	import {
@@ -49,7 +59,7 @@
 		getGroupWeekAnalytics,
 		getGroupMonthAnalytics,
 	} from "$lib/data/analytics";
-	import { getGroupById } from "$lib/data/groups";
+	import { getGroupById } from "$lib/data/groups.svelte";
 	import { addGroupChatMessage, removeGroupChatMessage, type GroupChatMessage as GroupChatMessageType } from "$lib/data/groupChat";
 	import { getPrimaryView, getModeLabel } from "$lib/utils/modeHelpers";
 
@@ -62,7 +72,13 @@
 	let onboardingGroupCreated = $derived(getOnboardingGroupCreated());
 	let postOnboardingChatStarted = $derived(getPostOnboardingChatStarted());
 	
-	// Get group - either from real groups or construct from onboarding data
+	// Check if this is a trip planning group
+	let isTripGroup = $derived(groupId === 'barcelona-march-2025' || groupId.startsWith('trip-'));
+	let tripGroupData = $derived(getTripGroup());
+	let tripGroupChatStarted = $derived(getTripGroupChatStarted());
+	let isTripPlanningMode = $derived(isTripPlanningActive());
+	
+	// Get group - either from real groups or construct from onboarding/trip data
 	let group = $derived(
 		isOnboardingGroup && onboardingGroupData
 			? {
@@ -71,6 +87,17 @@
 				icon: onboardingGroupData.icon,
 				type: 'household' as const,
 				member_count: onboardingGroupData.memberCount,
+				is_active: true,
+				avatars: [],
+				pending_count: 0
+			}
+			: isTripGroup && tripGroupData
+			? {
+				id: tripGroupData.id,
+				name: tripGroupData.name,
+				icon: tripGroupData.icon,
+				type: 'trip' as const,
+				member_count: tripGroupData.memberCount,
 				is_active: true,
 				avatars: [],
 				pending_count: 0
@@ -634,6 +661,296 @@
 			// Open group chat view
 			groupChatOpen = true;
 		}
+		// ========== TRIP PLANNING HANDLERS ==========
+		else if (value === "invite_friends" || value === "keep_planning") {
+			// Show flight options after a brief search
+			setTimeout(async () => {
+				showTypingIndicatorWithContext(TRIP_THINKING_TEXTS);
+				await new Promise(resolve => setTimeout(resolve, 2500));
+				startTypingIndicatorExit();
+				await new Promise(resolve => setTimeout(resolve, 400));
+				hideTypingIndicator();
+				
+				// Add flight options message
+				const flightMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-3');
+				if (flightMsg) {
+					addMessage(flightMsg);
+				}
+				
+				// Add recommendation after brief delay
+				setTimeout(() => {
+					const recMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-4');
+					if (recMsg) {
+						sendAIResponse(recMsg.content, recMsg.ui_elements);
+					}
+				}, 1500);
+			}, 500);
+		} else if (value === "see_option3") {
+			setTimeout(() => {
+				sendAIResponse(
+					"✈️ Option 3 - Premium\n\nIberia\nMar 14-19 (Fri-Wed) • Direct\n$612/person\n\nTotal: $2,448 for 4 people\n\n✓ Best flight times\n✓ Premium airline (4.7★)\n✓ Extra legroom available",
+					{
+						quick_replies: [
+							{ label: "Vote for Option 3", value: "vote_option3" },
+							{ label: "Back to all options", value: "see_all_options" }
+						]
+					}
+				);
+			}, 1000);
+		} else if (value === "share_options" || value === "vote_option1" || value === "vote_option2" || value === "vote_option3") {
+			// Show share/invite flow
+			setTimeout(() => {
+				const shareMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-5');
+				if (shareMsg) {
+					sendAIResponse(shareMsg.content, shareMsg.ui_elements);
+				}
+			}, 1000);
+		} else if (value === "copy_link" || value === "share_text" || value === "share_whatsapp" || value === "send_invite") {
+			// Confirm invite sent and start friend joining simulation
+			setTimeout(() => {
+				const confirmMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-6');
+				if (confirmMsg) {
+					sendAIResponse(confirmMsg.content, confirmMsg.ui_elements);
+				}
+				
+				// Simulate Jerone joining after 3 seconds
+				setTimeout(() => {
+					simulateJeroneJoining();
+				}, 3000);
+			}, 1000);
+		} else if (value === "find_hotels" || value === "wait_for_group") {
+			if (value === "find_hotels") {
+				// Start hotel search
+				setTimeout(async () => {
+					showTypingIndicatorWithContext(['Searching hotels...', 'Checking availability...', 'Comparing prices...', 'Finding best locations...']);
+					await new Promise(resolve => setTimeout(resolve, 3000));
+					startTypingIndicatorExit();
+					await new Promise(resolve => setTimeout(resolve, 400));
+					hideTypingIndicator();
+					
+					const progressMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-10');
+					if (progressMsg) {
+						sendAIResponse(progressMsg.content, progressMsg.ui_elements);
+					}
+				}, 500);
+			} else {
+				setTimeout(() => {
+					sendAIResponse(
+						"No problem! I'll wait for everyone to join before we continue.\n\nIn the meantime, feel free to share the invite link with your friends.",
+						{
+							quick_replies: [
+								{ label: "Copy invite link", value: "copy_link" },
+								{ label: "I'll share later", value: "share_later" }
+							]
+						}
+					);
+				}, 1000);
+			}
+		} else if (value === "vote_option1_confirm" || value === "vote_option2_confirm") {
+			// User votes after Jerone
+			const option = value === "vote_option1_confirm" ? "Option 1" : "Option 2";
+			setTimeout(() => {
+				const consensusMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-9');
+				if (consensusMsg) {
+					sendAIResponse(consensusMsg.content, consensusMsg.ui_elements);
+				}
+			}, 1000);
+		} else if (value === "find_hotels_after_vote" || value === "wait_for_everyone") {
+			if (value === "find_hotels_after_vote") {
+				setTimeout(async () => {
+					showTypingIndicatorWithContext(['Searching hotels...', 'Checking availability...', 'Comparing prices...', 'Finding best locations...']);
+					await new Promise(resolve => setTimeout(resolve, 3000));
+					startTypingIndicatorExit();
+					await new Promise(resolve => setTimeout(resolve, 400));
+					hideTypingIndicator();
+					
+					const progressMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-10');
+					if (progressMsg) {
+						sendAIResponse(progressMsg.content, progressMsg.ui_elements);
+					}
+				}, 500);
+			} else {
+				setTimeout(() => {
+					sendAIResponse(
+						"Got it! I'll wait for the other 2 members to join and vote.\n\nYou can always come back here to check the status.",
+						{
+							quick_replies: [
+								{ label: "Back to Feed", value: "back_to_feed" }
+							]
+						}
+					);
+				}, 1000);
+			}
+		} else if (value === "back_to_feed" || value === "view_group" || value === "share_later") {
+			if (value === "back_to_feed") {
+				goto("/groups");
+			}
+			// view_group and share_later just keep the user on the page
+		} else if (value === "review_hotels") {
+			setTimeout(() => {
+				sendAIResponse(
+					"Here are 4 great hotel options in Gothic Quarter:\n\n🏨 Hotel 1 - Best Value\nHotel Barcelona Center\n$89/night • 4.3★\n\n🏨 Hotel 2 - Best Location\nH10 Montcada\n$125/night • 4.6★\n\n🏨 Hotel 3 - Best for Groups\nAparthotel Mariano Cubi\n$156/night (2 rooms) • 4.4★\n\n🏨 Hotel 4 - Luxury Pick\nMercer Hotel Barcelona\n$215/night • 4.8★",
+					{
+						quick_replies: [
+							{ label: "Vote for Hotel 1", value: "vote_hotel1" },
+							{ label: "Vote for Hotel 2", value: "vote_hotel2" },
+							{ label: "See more options", value: "more_hotels" }
+						]
+					}
+				);
+			}, 1000);
+		}
+		// ========== JERONE GREETING HANDLERS ==========
+		else if (value === "greet_jerone_hi" || value === "greet_jerone_share") {
+			// Switch to group chat immediately
+			groupChatOpen = true;
+			
+			// Add system message about Jerone joining
+			const systemMessage: GroupChatMessageType = {
+				id: `gc-system-${Date.now()}`,
+				sender: 'system',
+				sender_name: 'System',
+				avatar: '',
+				content: 'Jerone joined the group',
+				timestamp: new Date().toISOString(),
+				type: 'system'
+			};
+			addGroupChatMessage(groupId, systemMessage);
+			
+			// Small delay before user message appears
+			setTimeout(() => {
+				// Add Nishi's greeting
+				const userGreeting: GroupChatMessageType = {
+					id: `gc-user-${Date.now()}`,
+					sender: currentUser,
+					sender_name: memberInfo?.name || 'Nishi',
+					avatar: memberInfo?.avatar || '👤',
+					content: value === "greet_jerone_hi"
+						? "Hey Jerone! Welcome aboard! 👋"
+						: "Hey Jerone! Welcome to the trip planning! 🎉 Check out these flight options I found:",
+					timestamp: new Date().toISOString()
+				};
+				addGroupChatMessage(groupId, userGreeting);
+				
+				// If sharing findings, add flight cards after the greeting
+				if (value === "greet_jerone_share") {
+					setTimeout(() => {
+						// Get the flight cards from the scenario
+						const flightMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-3');
+						
+						// Add flight options as a message with cards (from Nishi)
+						const flightCardsMessage: GroupChatMessageType = {
+							id: `gc-flights-${Date.now()}`,
+							sender: currentUser,
+							sender_name: memberInfo?.name || 'Nishi',
+							avatar: memberInfo?.avatar || '👤',
+							content: '',
+							timestamp: new Date().toISOString(),
+							ui_elements: flightMsg?.ui_elements
+						};
+						addGroupChatMessage(groupId, flightCardsMessage);
+					}, 400);
+				}
+				
+				// Show Jerone typing after user message
+				const typingIndicatorId = `gc-typing-${Date.now()}`;
+				setTimeout(() => {
+					const typingMessage: GroupChatMessageType = {
+						id: typingIndicatorId,
+						sender: 'jerone',
+						sender_name: 'Jerone',
+						avatar: '👨🏾',
+						content: '',
+						timestamp: new Date().toISOString(),
+						type: 'typing'
+					};
+					addGroupChatMessage(groupId, typingMessage);
+					
+					// After typing, Jerone responds
+					setTimeout(() => {
+						removeGroupChatMessage(groupId, typingIndicatorId);
+						
+						const jeroneResponse: GroupChatMessageType = {
+							id: `gc-jerone-${Date.now()}`,
+							sender: 'jerone',
+							sender_name: 'Jerone',
+							avatar: '👨🏾',
+							content: value === "greet_jerone_hi" 
+								? "Thanks! Excited for Barcelona! 🇪🇸 What have you found so far?"
+								: "Nice! Let me check these out... 👀",
+							timestamp: new Date().toISOString()
+						};
+						addGroupChatMessage(groupId, jeroneResponse);
+						
+						// If user shared findings, Jerone votes (shown in group chat)
+						if (value === "greet_jerone_share") {
+							// AI injects vote card after a brief delay (from scenario)
+							setTimeout(() => {
+								const voteCardMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-vote-card');
+								if (voteCardMsg) {
+									const voteCard: GroupChatMessageType = {
+										id: `gc-vote-card-${Date.now()}`,
+										sender: 'system',
+										sender_name: 'AI',
+										avatar: '🤖',
+										content: voteCardMsg.content,
+										timestamp: new Date().toISOString(),
+										ui_elements: voteCardMsg.ui_elements
+									};
+									addGroupChatMessage(groupId, voteCard);
+								}
+								
+								// Jerone types after vote card
+								const typingId2 = `gc-typing2-${Date.now()}`;
+								setTimeout(() => {
+									const typingMsg2: GroupChatMessageType = {
+										id: typingId2,
+										sender: 'jerone',
+										sender_name: 'Jerone',
+										avatar: '👨🏾',
+										content: '',
+										timestamp: new Date().toISOString(),
+										type: 'typing'
+									};
+									addGroupChatMessage(groupId, typingMsg2);
+									
+									// Then Jerone's comment
+									setTimeout(() => {
+										removeGroupChatMessage(groupId, typingId2);
+										const jeroneComment: GroupChatMessageType = {
+											id: `gc-jerone-comment-${Date.now()}`,
+											sender: 'jerone',
+											sender_name: 'Jerone',
+											avatar: '👨🏾',
+											content: "$458 per person and direct - can't beat that combo 💪",
+											timestamp: new Date().toISOString()
+										};
+										addGroupChatMessage(groupId, jeroneComment);
+									}, 1500);
+								}, 800);
+							}, 1500);
+						}
+					}, 2000); // Jerone types for 2 seconds
+				}, value === "greet_jerone_share" ? 1800 : 800); // Delay more if showing cards
+			}, 300);
+		}
+	}
+	
+	// Simulate Jerone joining the group
+	async function simulateJeroneJoining() {
+		// Update trip group data
+		if (tripGroupData) {
+			updateTripGroup({
+				currentMembers: [...tripGroupData.currentMembers, 'Jerone']
+			});
+		}
+		
+		// Show Jerone joined message with greeting options (pauses here for user choice)
+		const joinMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-7');
+		if (joinMsg) {
+			await sendAIResponse(joinMsg.content, joinMsg.ui_elements);
+		}
+		// Note: Flow continues when user selects greeting option (greet_jerone_hi or greet_jerone_share)
 	}
 
 	// Handle back button
@@ -648,7 +965,29 @@
 	}
 
 	// Load initial scenario on mount
-	onMount(() => {
+	onMount(async () => {
+		// Special handling for trip planning group - allow even if group doesn't exist yet
+		if (isTripGroup && tripGroupData) {
+			setCurrentGroup(groupId);
+			
+			// Start trip group chat if not started and conversation is empty
+			if (!tripGroupChatStarted && conversation.length === 0) {
+				setTripGroupChatStarted(true);
+				
+				// Show brief thinking indicator
+				showTypingIndicatorWithContext(TRIP_THINKING_TEXTS);
+				await new Promise(resolve => setTimeout(resolve, 2000));
+				startTypingIndicatorExit();
+				await new Promise(resolve => setTimeout(resolve, 400));
+				hideTypingIndicator();
+				
+				// Load the first messages from trip planning group scenario
+				const initialMessages = tripPlanningGroupScenario.messages.slice(0, 2);
+				initialMessages.forEach((msg) => addMessage(msg));
+			}
+			return;
+		}
+		
 		// Validate group exists and is active
 		if (!group || !group.is_active) {
 			goto("/groups");

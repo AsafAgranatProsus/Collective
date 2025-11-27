@@ -52,7 +52,8 @@ export interface Group {
 	activity_data?: number[]; // Mock data for chart
 }
 
-export const groups: Group[] = [
+// Static/default groups
+const staticGroups: Group[] = [
 	{
 		id: 'brooklyn-apt',
 		name: 'Brooklyn Apartment 4B',
@@ -129,24 +130,69 @@ export const groups: Group[] = [
 	}
 ];
 
+// Dynamic groups (created during scenarios like trip planning)
+let dynamicGroups = $state<Group[]>([]);
+
+// Combined groups array (for backward compatibility)
+export const groups = staticGroups;
+
 /**
- * Get group by ID
+ * Get group by ID (checks both static and dynamic groups)
  */
 export function getGroupById(id: string): Group | undefined {
-	return groups.find(g => g.id === id);
+	return dynamicGroups.find(g => g.id === id) || staticGroups.find(g => g.id === id);
 }
 
 /**
- * Get all groups user belongs to
+ * Get all groups user belongs to (dynamic groups first, then static)
  */
 export function getAllGroups(): Group[] {
-	return groups;
+	return [...dynamicGroups, ...staticGroups];
 }
 
 /**
  * Get only active (clickable) groups
  */
 export function getActiveGroups(): Group[] {
-	return groups.filter(g => g.is_active);
+	return getAllGroups().filter(g => g.is_active);
+}
+
+/**
+ * Add a dynamic group (appears at top of list)
+ */
+export function addDynamicGroup(group: Group): void {
+	// Check if group already exists
+	if (!dynamicGroups.find(g => g.id === group.id)) {
+		dynamicGroups = [group, ...dynamicGroups];
+		console.log('Added dynamic group:', group.name);
+	}
+}
+
+/**
+ * Update a dynamic group
+ */
+export function updateDynamicGroup(id: string, updates: Partial<Group>): void {
+	const index = dynamicGroups.findIndex(g => g.id === id);
+	if (index !== -1) {
+		dynamicGroups[index] = { ...dynamicGroups[index], ...updates };
+		dynamicGroups = [...dynamicGroups]; // Trigger reactivity
+		console.log('Updated dynamic group:', id);
+	}
+}
+
+/**
+ * Remove a dynamic group
+ */
+export function removeDynamicGroup(id: string): void {
+	dynamicGroups = dynamicGroups.filter(g => g.id !== id);
+	console.log('Removed dynamic group:', id);
+}
+
+/**
+ * Clear all dynamic groups (for reset)
+ */
+export function clearDynamicGroups(): void {
+	dynamicGroups = [];
+	console.log('Cleared all dynamic groups');
 }
 

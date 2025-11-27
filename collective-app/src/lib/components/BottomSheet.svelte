@@ -159,7 +159,7 @@
 		position: fixed;
 		inset: 0;
 		background-color: rgb(var(--m3-scheme-scrim) / 0.32);
-		z-index: var(--z-modal-backdrop, 1000);
+		z-index: var(--z-bottom-sheet-backdrop, 474);
 		border: none;
 		cursor: pointer;
 	}
@@ -172,7 +172,7 @@
 		max-height: 90vh;
 		background-color: rgb(var(--m3-scheme-surface-container-low));
 		border-radius: 1.75rem 1.75rem 0 0;
-		z-index: var(--z-drawer, 1001);
+		z-index: var(--z-bottom-sheet, 475);
 		display: flex;
 		flex-direction: column;
 		box-shadow: var(--m3-util-elevation-1);

@@ -90,7 +90,7 @@
 		/* border-top: 1px solid rgb(var(--m3-scheme-outline-variant)); */
 		position: sticky;
 		bottom: 0;
-		z-index: 200;
+		z-index: var(--z-chat-input);
 		backdrop-filter: blur(20px);
 		-webkit-backdrop-filter: blur(20px);
 		border-radius: var(--m3-util-rounding-extra-large) !important;
