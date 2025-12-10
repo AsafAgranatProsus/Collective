@@ -5,6 +5,7 @@
 	import iconSchedule from '@ktibow/iconset-material-symbols/schedule';
 	import iconAttachMoney from '@ktibow/iconset-material-symbols/attach-money';
 	import BottomSheet from './BottomSheet.svelte';
+	import FilterChips from './FilterChips.svelte';
 	
 	let { 
 		isOpen = false, 
@@ -23,7 +24,7 @@
 	
 	// Filter chips for feed level
 	let activeFilter = $state<string>('all');
-	const filters = [
+	const filterOptions = [
 		{ id: 'all', label: 'All' },
 		{ id: 'tasks', label: 'Tasks' },
 		{ id: 'money', label: 'Money' },
@@ -106,22 +107,19 @@
 </script>
 
 <BottomSheet {isOpen} {onClose} title={isFeedLevel ? 'My Memory' : groupName || 'Checklist'}>
-	<div class="checklist-content">
-		<!-- Filter chips (feed level only) -->
+	{#snippet filterArea()}
 		{#if isFeedLevel}
-			<div class="filter-chips">
-				{#each filters as filter}
-					<button 
-						class="filter-chip"
-						class:active={activeFilter === filter.id}
-						onclick={() => activeFilter = filter.id}
-					>
-						{filter.label}
-					</button>
-				{/each}
-			</div>
+			<FilterChips 
+				filters={filterOptions}
+				selectedFilter={activeFilter}
+				onFilterSelect={(filterId) => activeFilter = filterId}
+				showDivider={false}
+				edgeToEdge={true}
+			/>
 		{/if}
-		
+	{/snippet}
+	
+	<div class="checklist-content">
 		<!-- Tasks Section -->
 		{#if showSection('tasks') && filteredTodos.length > 0}
 			<section class="checklist-section">
@@ -234,37 +232,6 @@
 		min-height: 300px;
 		position: relative;
 		padding-bottom: 4rem;
-	}
-	
-	/* Filter Chips */
-	.filter-chips {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid rgb(var(--m3-scheme-outline-variant) / 0.3);
-	}
-	
-	.filter-chip {
-		padding: 0.5rem 1rem;
-		border-radius: 1rem;
-		border: 1px solid rgb(var(--m3-scheme-outline));
-		background: transparent;
-		color: rgb(var(--m3-scheme-on-surface));
-		font-family: var(--font-sans);
-		font-size: 0.875rem;
-		cursor: pointer;
-		transition: all 150ms ease;
-	}
-	
-	.filter-chip:hover {
-		background: rgb(var(--m3-scheme-surface-container-high));
-	}
-	
-	.filter-chip.active {
-		background: rgb(var(--m3-scheme-secondary-container));
-		color: rgb(var(--m3-scheme-on-secondary-container));
-		border-color: transparent;
 	}
 	
 	/* Sections */

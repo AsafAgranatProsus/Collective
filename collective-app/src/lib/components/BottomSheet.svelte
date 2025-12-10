@@ -7,11 +7,13 @@
 		isOpen = false, 
 		onClose,
 		title = '',
+		filterArea,
 		children 
 	} = $props<{
 		isOpen: boolean;
 		onClose: () => void;
 		title?: string;
+		filterArea?: any;
 		children?: any;
 	}>();
 	
@@ -140,8 +142,15 @@
 			</div>
 		{/if}
 		
+		<!-- Filter Area (fixed, edge-to-edge, between header and content) -->
+		{#if filterArea}
+			<div class="sheet-filter-area">
+				{@render filterArea?.()}
+			</div>
+		{/if}
+		
 		<!-- Content -->
-		<div class="sheet-content">
+		<div class="sheet-content custom-scrollbar">
 			{@render children?.()}
 		</div>
 	</div>
@@ -205,13 +214,21 @@
 	}
 	
 	.sheet-header {
-		padding: 0 1.5rem 1rem;
+		padding: 0 1.5rem .75rem 1.5rem;
 	}
 	
 	.sheet-title {
 		margin: 0;
 		color: rgb(var(--m3-scheme-on-surface));
 		font-family: var(--font-sans);
+	}
+	
+	.sheet-filter-area {
+		flex-shrink: 0;
+		/* No padding - filter chips handle their own spacing */
+		padding: 0;
+		/* Allow content to be edge-to-edge */
+		overflow: hidden;
 	}
 	
 	.sheet-content {

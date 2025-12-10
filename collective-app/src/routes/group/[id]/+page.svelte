@@ -10,8 +10,8 @@
 	import TaskCard from "$lib/components/TaskCard.svelte";
 	import ExpenseCard from "$lib/components/ExpenseCard.svelte";
 	import ShoppingCard from "$lib/components/ShoppingCard.svelte";
-	import AnalyticsSummaryCard from "$lib/components/Cards/AnalyticsSummaryCard.svelte";
-	import AnalyticsDetailCard from "$lib/components/Cards/AnalyticsDetailCard.svelte";
+	import AnalyticsSummaryCardCarousel from "$lib/components/Cards/AnalyticsSummaryCardCarousel.svelte";
+	import AnalyticsDetailCardCarousel from "$lib/components/Cards/AnalyticsDetailCardCarousel.svelte";
 	import GroupChat from "$lib/components/GroupChat.svelte";
 	import GlassHeader from "$lib/components/GlassHeader.svelte";
 	import ChecklistSheet from "$lib/components/ChecklistSheet.svelte";
@@ -54,6 +54,7 @@
 	import { viewMyTasksScenario, postOnboardingGroupScenario, tripPlanningGroupScenario } from "$lib/data/scenarios";
 	import type { Message, QuickReply } from "$lib/data/scenarios";
 	import { getItemsByUser, type CoordinatedItem } from "$lib/data/items";
+	import { smartScrollForNewMessage } from "$lib/utils/chatScroll";
 	import {
 		getAllUsersAnalytics,
 		getGroupWeekAnalytics,
@@ -131,6 +132,13 @@
 		}
 	});
 	
+	// Smart scroll when typing indicator appears
+	$effect(() => {
+		if (typingVisible && messagesContainer) {
+			smartScrollForNewMessage(messagesContainer);
+		}
+	});
+	
 	// Scroll to bottom helper
 	function scrollToBottom() {
 		if (messagesContainer) {
@@ -143,10 +151,11 @@
 		}
 	}
 	
-	// Keep scrolling while AI is typing (content is growing)
+	// Keep scrolling while AI is typing (actual text animation, not indicator)
 	$effect(() => {
 		const isAnyTyping = Object.values(messageTypingStates).some(v => v);
-		if (isAnyTyping && messagesContainer) {
+		// Only scroll during text typing, not when typing indicator is showing
+		if (isAnyTyping && !typingVisible && messagesContainer) {
 			const scrollInterval = setInterval(scrollToBottom, 200);
 			return () => clearInterval(scrollInterval);
 		}
@@ -253,6 +262,25 @@
 	function handleSendToGroupChat(content: string) {
 		const trimmed = content.trim();
 		if (trimmed && memberInfo) {
+			// Check if message contains @Collective reference
+			if (trimmed.includes('@Collective')) {
+				// Add user message to group chat first
+				const newMessage: GroupChatMessageType = {
+					id: `gc-${Date.now()}`,
+					sender: currentUser,
+					sender_name: memberInfo.name,
+					avatar: memberInfo.avatar,
+					content: trimmed,
+					timestamp: new Date().toISOString()
+				};
+				addGroupChatMessage(groupId, newMessage);
+				
+				// Route to AI handler for accommodation flow
+				handleCollectiveReference(trimmed);
+				return;
+			}
+			
+			// Regular group chat message
 			const newMessage: GroupChatMessageType = {
 				id: `gc-${Date.now()}`,
 				sender: currentUser,
@@ -266,6 +294,56 @@
 			addGroupChatMessage(groupId, newMessage);
 		}
 	}
+	
+	// Handle @Collective references in group chat
+	function handleCollectiveReference(content: string) {
+		const lowerContent = content.toLowerCase();
+		
+		// Detect accommodation request
+		if (lowerContent.includes('places to stay') || 
+		    lowerContent.includes('accommodation') || 
+		    lowerContent.includes('hotel') ||
+		    lowerContent.includes('where to stay')) {
+			// Start accommodation flow in group chat
+			startAccommodationFlow();
+		}
+	}
+	
+	// Start accommodation question flow in group chat
+	async function startAccommodationFlow() {
+		// Show typing indicator
+		const typingId = `gc-typing-accom-${Date.now()}`;
+		const typingMessage: GroupChatMessageType = {
+			id: typingId,
+			sender: 'system',
+			sender_name: 'Collective',
+			avatar: '🤖',
+			content: '',
+			timestamp: new Date().toISOString(),
+			type: 'typing'
+		};
+		addGroupChatMessage(groupId, typingMessage);
+		
+		// Wait a bit, then show first question
+		setTimeout(() => {
+			removeGroupChatMessage(groupId, typingId);
+			
+			// Get accommodation questions from scenario
+			const accomQuestion1 = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-accom-1');
+			if (accomQuestion1) {
+				const aiMessage: GroupChatMessageType = {
+					id: `gc-ai-accom1-${Date.now()}`,
+					sender: 'system',
+					sender_name: 'Collective',
+					avatar: '🤖',
+					content: accomQuestion1.content,
+					timestamp: new Date().toISOString(),
+					ui_elements: accomQuestion1.ui_elements
+				};
+				addGroupChatMessage(groupId, aiMessage);
+			}
+		}, 1500);
+	}
 
 	// Handle quick reply selection
 	function handleQuickReply(
@@ -273,15 +351,13 @@
 		label: string,
 		messageToAdd?: Message,
 	) {
-		// Store selection state AFTER animation completes (600ms animation duration)
+		// Store selection state immediately when morph completes
 		// We find the latest AI message that has these quick replies
 		const lastAiMessage = conversation
 			.filter((m) => m.sender === "ai" && m.ui_elements?.quick_replies)
 			.pop();
 		if (lastAiMessage) {
-			setTimeout(() => {
-				setSelectedReplyId(lastAiMessage.id, value);
-			}, 650); // Slightly after animation completes
+			setSelectedReplyId(lastAiMessage.id, value);
 		}
 
 		// If message is provided (after morph completes), add it
@@ -685,18 +761,12 @@
 					}
 				}, 1500);
 			}, 500);
-		} else if (value === "see_option3") {
-			setTimeout(() => {
-				sendAIResponse(
-					"✈️ Option 3 - Premium\n\nIberia\nMar 14-19 (Fri-Wed) • Direct\n$612/person\n\nTotal: $2,448 for 4 people\n\n✓ Best flight times\n✓ Premium airline (4.7★)\n✓ Extra legroom available",
-					{
-						quick_replies: [
-							{ label: "Vote for Option 3", value: "vote_option3" },
-							{ label: "Back to all options", value: "see_all_options" }
-						]
-					}
-				);
-			}, 1000);
+		} else if (value === "show_flights_again") {
+			// Re-show flight options
+			const flightMsg = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-3');
+			if (flightMsg) {
+				addMessage(flightMsg);
+			}
 		} else if (value === "share_options" || value === "vote_option1" || value === "vote_option2" || value === "vote_option3") {
 			// Show share/invite flow
 			setTimeout(() => {
@@ -934,6 +1004,161 @@
 				}, value === "greet_jerone_share" ? 1800 : 800); // Delay more if showing cards
 			}, 300);
 		}
+		// ========== ACCOMMODATION HANDLERS ==========
+		else if (value.startsWith('accom_style_')) {
+			// User selected accommodation style, show location question in group chat
+			const typingId = `gc-typing-accom2-${Date.now()}`;
+			setTimeout(() => {
+				const typingMessage: GroupChatMessageType = {
+					id: typingId,
+					sender: 'system',
+					sender_name: 'Collective',
+					avatar: '🤖',
+					content: '',
+					timestamp: new Date().toISOString(),
+					type: 'typing'
+				};
+				addGroupChatMessage(groupId, typingMessage);
+				
+				setTimeout(() => {
+					removeGroupChatMessage(groupId, typingId);
+					
+					const accomQuestion2 = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-accom-2');
+					if (accomQuestion2) {
+						const aiMessage: GroupChatMessageType = {
+							id: `gc-ai-accom2-${Date.now()}`,
+							sender: 'system',
+							sender_name: 'Collective',
+							avatar: '🤖',
+							content: accomQuestion2.content,
+							timestamp: new Date().toISOString(),
+							ui_elements: accomQuestion2.ui_elements
+						};
+						addGroupChatMessage(groupId, aiMessage);
+					}
+				}, 1200);
+			}, 500);
+		}
+		else if (value.startsWith('accom_location_')) {
+			// User selected location, show price question in group chat
+			const typingId = `gc-typing-accom3-${Date.now()}`;
+			setTimeout(() => {
+				const typingMessage: GroupChatMessageType = {
+					id: typingId,
+					sender: 'system',
+					sender_name: 'Collective',
+					avatar: '🤖',
+					content: '',
+					timestamp: new Date().toISOString(),
+					type: 'typing'
+				};
+				addGroupChatMessage(groupId, typingMessage);
+				
+				setTimeout(() => {
+					removeGroupChatMessage(groupId, typingId);
+					
+					const accomQuestion3 = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-accom-3');
+					if (accomQuestion3) {
+						const aiMessage: GroupChatMessageType = {
+							id: `gc-ai-accom3-${Date.now()}`,
+							sender: 'system',
+							sender_name: 'Collective',
+							avatar: '🤖',
+							content: accomQuestion3.content,
+							timestamp: new Date().toISOString(),
+							ui_elements: accomQuestion3.ui_elements
+						};
+						addGroupChatMessage(groupId, aiMessage);
+					}
+				}, 1200);
+			}, 500);
+		}
+		else if (value.startsWith('accom_price_')) {
+			// User selected price range, show accommodation options in group chat
+			const typingId = `gc-typing-accom4-${Date.now()}`;
+			setTimeout(() => {
+				const typingMessage: GroupChatMessageType = {
+					id: typingId,
+					sender: 'system',
+					sender_name: 'Collective',
+					avatar: '🤖',
+					content: '',
+					timestamp: new Date().toISOString(),
+					type: 'typing'
+				};
+				addGroupChatMessage(groupId, typingMessage);
+				
+				setTimeout(() => {
+					removeGroupChatMessage(groupId, typingId);
+					
+					const accomOptions = tripPlanningGroupScenario.messages.find(m => m.id === 'trip-group-accom-4');
+					if (accomOptions) {
+						const aiMessage: GroupChatMessageType = {
+							id: `gc-ai-accom4-${Date.now()}`,
+							sender: 'system',
+							sender_name: 'Collective',
+							avatar: '🤖',
+							content: accomOptions.content,
+							timestamp: new Date().toISOString(),
+							ui_elements: accomOptions.ui_elements
+						};
+						addGroupChatMessage(groupId, aiMessage);
+					}
+				}, 2500); // Longer delay to simulate searching
+			}, 500);
+		}
+		else if (value.startsWith('vote_accom')) {
+			// User voted for an accommodation option
+			const optionNum = value.replace('vote_accom', '');
+			const optionNames = ['Hotel Neri', 'El Born Loft', 'Beach Hostel'];
+			const optionName = optionNames[parseInt(optionNum) - 1] || 'an option';
+			
+			// Show confirmation in group chat
+			const typingId = `gc-typing-vote-${Date.now()}`;
+			setTimeout(() => {
+				const typingMessage: GroupChatMessageType = {
+					id: typingId,
+					sender: 'system',
+					sender_name: 'Collective',
+					avatar: '🤖',
+					content: '',
+					timestamp: new Date().toISOString(),
+					type: 'typing'
+				};
+				addGroupChatMessage(groupId, typingMessage);
+				
+				setTimeout(() => {
+					removeGroupChatMessage(groupId, typingId);
+					
+					const confirmMessage: GroupChatMessageType = {
+						id: `gc-vote-confirm-${Date.now()}`,
+						sender: 'system',
+						sender_name: 'Collective',
+						avatar: '🤖',
+						content: `✓ Vote recorded for ${optionName}!\n\nWaiting for Jerone to vote on accommodation.`,
+						timestamp: new Date().toISOString()
+					};
+					addGroupChatMessage(groupId, confirmMessage);
+				}, 1000);
+			}, 500);
+		}
+		else if (value.startsWith('details_accom')) {
+			// Show more details about an accommodation option
+			const optionNum = value.replace('details_accom', '');
+			const optionNames = ['Hotel Neri', 'El Born Loft', 'Beach Hostel'];
+			const optionName = optionNames[parseInt(optionNum) - 1] || 'this option';
+			
+			// Simple acknowledgment
+			const detailsMessage: GroupChatMessageType = {
+				id: `gc-details-${Date.now()}`,
+				sender: 'system',
+				sender_name: 'Collective',
+				avatar: '🤖',
+				content: `Here are more details about ${optionName}:\n\n(Details would be shown in a full implementation)`,
+				timestamp: new Date().toISOString()
+			};
+			addGroupChatMessage(groupId, detailsMessage);
+		}
 	}
 	
 	// Simulate Jerone joining the group
@@ -1077,7 +1302,8 @@
 			{#each conversation as message, index (message.id)}
 				{#if message.sender === "ai"}
 					{@const nextMessage = conversation[index + 1]}
-					{@const isLastBeforeUser = nextMessage?.sender === "user" || !nextMessage}
+					{@const hasSavedReply = !!selectedReplyIds[message.id]}
+					{@const isLastBeforeUser = nextMessage?.sender === "user" || !nextMessage || hasSavedReply}
 					{@const hasCard = 
 						message.ui_elements?.card_schema !== undefined || 
 						(message.ui_elements?.card_schemas !== undefined && message.ui_elements.card_schemas.length > 0)
@@ -1087,6 +1313,7 @@
 					<MessageBubble 
 						{message}
 						{showTimestamp}
+						context="group-chat"
 						onTypingChange={(isTyping) => {
 							messageTypingStates[message.id] = isTyping;
 						}}
@@ -1108,33 +1335,39 @@
 						{@const cardRendered = messageCardStates[message.id] ?? false}
 						{@const canShowButtons = !isTyping && (!hasCard || cardRendered)}
 						{#if !hasUserMessageAfter && canShowButtons}
-							{#if savedSelection}
-								<!-- Show as bubble if already selected -->
-								{@const selectedOption =
-									message.ui_elements.quick_replies.find(
-										(qr) => qr.value === savedSelection,
-									)}
-								<MessageBubble
-									message={{
-										id: `reply-${message.id}`,
-										sender: "user",
-										content: selectedOption?.label || "",
-										timestamp: new Date().toISOString(),
-									}}
-								/>
-							{:else}
-								<!-- Show morphing buttons if not yet selected and not typing -->
-								<MorphReplyButtons
-									options={message.ui_elements.quick_replies.map(
-										(qr) => ({
-											id: qr.value,
-											label: qr.label,
-										}),
-									)}
-									onSelect={(id, label) =>
-										handleQuickReply(id, label)}
-								/>
-							{/if}
+							{@const selectedOption = savedSelection 
+								? message.ui_elements.quick_replies.find((qr) => qr.value === savedSelection)
+								: null}
+							<!-- Grid wrapper to stack both elements in same position -->
+							<div class="reply-stack">
+								<!-- Static bubble (visible when selected) -->
+								<div class="reply-stack-item" class:visible={!!savedSelection}>
+									{#if selectedOption}
+										<MessageBubble
+											context="group-chat"
+											message={{
+												id: `reply-${message.id}`,
+												sender: "user",
+												content: selectedOption.label || "",
+												timestamp: new Date().toISOString(),
+											}}
+										/>
+									{/if}
+								</div>
+								<!-- Morphing buttons (visible when not selected) -->
+								<div class="reply-stack-item" class:visible={!savedSelection}>
+									<MorphReplyButtons
+										options={message.ui_elements.quick_replies.map(
+											(qr) => ({
+												id: qr.value,
+												label: qr.label,
+											}),
+										)}
+										onMorphComplete={(id, label) =>
+											handleQuickReply(id, label)}
+									/>
+								</div>
+							</div>
 						{/if}
 					{/if}
 				{:else}
@@ -1142,20 +1375,24 @@
 					{@const isLastBeforeAI = nextMessage?.sender === "ai" || !nextMessage}
 					{@const showTimestamp = isLastBeforeAI}
 					
-					<MessageBubble {message} {showTimestamp} />
+					<MessageBubble {message} {showTimestamp} context="group-chat" />
 				{/if}
 
 				{#if message.ui_elements?.cards}
-					<div class="cards-container">
-						{#each message.ui_elements.cards as item}
-							{#if item.item_type === "chore"}
-								<TaskCard {item} />
-							{:else if item.item_type === "expense"}
-								<ExpenseCard {item} />
-							{:else if item.item_type === "shopping_item"}
-								<ShoppingCard {item} />
-							{/if}
-						{/each}
+					<div class="cards-carousel-wrapper">
+						<div class="cards-carousel">
+							{#each message.ui_elements.cards as item}
+								<div class="carousel-card-item">
+									{#if item.item_type === "chore"}
+										<TaskCard {item} />
+									{:else if item.item_type === "expense"}
+										<ExpenseCard {item} />
+									{:else if item.item_type === "shopping_item"}
+										<ShoppingCard {item} />
+									{/if}
+								</div>
+							{/each}
+						</div>
 					</div>
 				{/if}
 
@@ -1163,27 +1400,23 @@
 					{@const allUsers = getAllUsersAnalytics()}
 					{@const groupData = getGroupWeekAnalytics()}
 					{@const userData = allUsers[currentUser].week}
-					<div class="cards-container">
-						<AnalyticsSummaryCard
-							userId={currentUser}
-							{userData}
-							{groupData}
-							{allUsers}
-						/>
-					</div>
+					<AnalyticsSummaryCardCarousel
+						userId={currentUser}
+						{userData}
+						{groupData}
+						{allUsers}
+					/>
 				{/if}
 
 				{#if message.ui_elements?.analytics_detail}
 					{@const allUsers = getAllUsersAnalytics()}
 					{@const groupData = getGroupMonthAnalytics()}
 					{@const userData = allUsers[currentUser].month}
-					<div class="cards-container">
-						<AnalyticsDetailCard
-							userId={currentUser}
-							{userData}
-							{groupData}
-						/>
-					</div>
+					<AnalyticsDetailCardCarousel
+						userId={currentUser}
+						{userData}
+						{groupData}
+					/>
 				{/if}
 			{/each}
 
@@ -1199,6 +1432,11 @@
 		onChecklistToggle={() => checklistOpen = !checklistOpen}
 		isChecklistOpen={checklistOpen}
 		placeholder={checklistOpen ? "Add todos, tasks, schedules..." : (groupChatOpen ? "Message group..." : "Type a message...")}
+		enableReferences={groupChatOpen}
+		members={groupChatOpen ? [
+			{ id: currentUser, name: 'You', avatar: memberInfo?.avatar || '👤' },
+			{ id: 'jerone', name: 'Jerone', avatar: '👨🏾' }
+		] : []}
 	/>
 
 	<!-- Checklist Bottom Sheet -->
@@ -1214,6 +1452,8 @@
 		{groupId}
 		isOpen={groupChatOpen}
 		onClose={() => (groupChatOpen = false)}
+		onSendMessage={handleSendMessage}
+		onQuickReply={handleQuickReply}
 	/>
 </div>
 
@@ -1313,30 +1553,73 @@
 		gap: var(--space-3);
 	}
 
+	/* Horizontal carousel for task/expense/shopping cards */
+	.cards-carousel-wrapper {
+		margin: var(--space-3) 0;
+		width: 100%;
+	}
+
+	.cards-carousel {
+		display: flex;
+		gap: var(--space-3);
+		overflow-x: auto;
+		overflow-y: visible;
+		padding: var(--space-2) 0;
+		scroll-behavior: smooth;
+		-webkit-overflow-scrolling: touch;
+		
+		/* Hide scrollbar but keep functionality */
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	.cards-carousel::-webkit-scrollbar {
+		display: none;
+	}
+
+	.carousel-card-item {
+		flex-shrink: 0;
+		width: 280px;
+	}
+
+	.carousel-card-item :global(.card-wrapper),
+	.carousel-card-item :global(.task-card),
+	.carousel-card-item :global(.expense-card),
+	.carousel-card-item :global(.shopping-card) {
+		width: 100%;
+		max-width: none;
+	}
+
 	/* Mobile adjustments */
 	@media (max-width: 640px) {
 		.messages-area {
 			padding: var(--space-4);
+			padding-right: var(--space-2);
 		padding-top: 5rem;
 		}
 	}
 
-	/* Scrollbar styling */
-	.custom-scrollbar::-webkit-scrollbar {
-		width: 8px;
+	/* Grid stack for seamless reply transition */
+	.reply-stack {
+		display: grid;
+		width: 100%;
 	}
 
-	.custom-scrollbar::-webkit-scrollbar-track {
-		background: var(--bg-tertiary);
-		border-radius: var(--radius-full);
+	.reply-stack-item {
+		grid-area: 1 / 1;
+		opacity: 0;
+		pointer-events: none;
 	}
 
-	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: var(--border-secondary);
-		border-radius: var(--radius-full);
+	.reply-stack-item.visible {
+		opacity: 1;
+		pointer-events: auto;
+		/* Instant show */
+		transition: none;
 	}
 
-	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: var(--text-tertiary);
+	.reply-stack-item:not(.visible) {
+		/* Delayed hide - wait for other to be visible first */
+		transition: opacity 0ms 150ms;
 	}
 </style>

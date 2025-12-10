@@ -89,16 +89,18 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'chore',
 		title: 'Clean kitchen',
-		status: 'pending',
+		status: 'completed',
 		assigned_to: ['sarah'],
-		due_date: '2024-11-20T20:00:00Z',
+		due_date: '2025-11-28T20:00:00Z',
+		completed_at: '2025-11-28T19:30:00Z',
+		completed_by: 'sarah',
 		recurrence: 'weekly',
 		metadata: {
 			difficulty: 3,
 			estimated_minutes: 30,
 			location: 'kitchen'
 		},
-		created_at: '2024-11-18T08:00:00Z',
+		created_at: '2025-11-26T08:00:00Z',
 		created_by: 'sarah'
 	},
 	{
@@ -106,15 +108,17 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'chore',
 		title: 'Take out trash',
-		status: 'pending',
+		status: 'completed',
 		assigned_to: ['sarah'],
-		due_date: '2024-11-23T09:00:00Z',
+		due_date: '2025-11-30T09:00:00Z',
+		completed_at: '2025-11-30T08:45:00Z',
+		completed_by: 'sarah',
 		recurrence: 'weekly',
 		metadata: {
 			difficulty: 2,
 			estimated_minutes: 10
 		},
-		created_at: '2024-11-18T08:00:00Z',
+		created_at: '2025-11-26T08:00:00Z',
 		created_by: 'sarah'
 	},
 	{
@@ -122,16 +126,18 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'chore',
 		title: 'Clean bathroom',
-		status: 'pending',
+		status: 'completed',
 		assigned_to: ['mike'],
-		due_date: '2024-11-21T20:00:00Z',
+		due_date: '2025-11-29T20:00:00Z',
+		completed_at: '2025-11-29T19:00:00Z',
+		completed_by: 'mike',
 		recurrence: 'weekly',
 		metadata: {
 			difficulty: 4,
 			estimated_minutes: 45,
 			location: 'bathroom'
 		},
-		created_at: '2024-11-18T08:00:00Z',
+		created_at: '2025-11-26T08:00:00Z',
 		created_by: 'mike'
 	},
 	{
@@ -141,14 +147,14 @@ export const items: CoordinatedItem[] = [
 		title: 'Vacuum living room',
 		status: 'completed',
 		assigned_to: ['jessica'],
-		due_date: '2024-11-22T18:00:00Z',
-		completed_at: '2024-11-22T17:30:00Z',
+		due_date: '2025-11-30T18:00:00Z',
+		completed_at: '2025-11-30T17:30:00Z',
 		completed_by: 'jessica',
 		metadata: {
 			difficulty: 2,
 			estimated_minutes: 20
 		},
-		created_at: '2024-11-18T08:00:00Z',
+		created_at: '2025-11-26T08:00:00Z',
 		created_by: 'jessica'
 	},
 	{
@@ -156,15 +162,17 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'chore',
 		title: 'Do dishes',
-		status: 'overdue',
+		status: 'completed',
 		assigned_to: ['mike'],
-		due_date: '2024-11-19T23:00:00Z',
+		due_date: '2025-11-27T23:00:00Z',
+		completed_at: '2025-11-27T22:45:00Z',
+		completed_by: 'mike',
 		recurrence: 'daily',
 		metadata: {
 			difficulty: 2,
 			estimated_minutes: 15
 		},
-		created_at: '2024-11-18T08:00:00Z',
+		created_at: '2025-11-26T08:00:00Z',
 		created_by: 'mike'
 	},
 	
@@ -174,16 +182,17 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'expense',
 		title: "Groceries (Trader Joe's)",
-		status: 'pending',
+		status: 'completed',
+		completed_at: '2025-11-28T14:30:00Z',
 		metadata: {
 			amount: 94.50,
 			currency: 'USD',
 			paid_by: 'mike',
 			split_method: 'equal',
 			category: 'groceries',
-			date: '2024-11-18'
+			date: '2025-11-26'
 		},
-		created_at: '2024-11-18T14:30:00Z',
+		created_at: '2025-11-26T14:30:00Z',
 		created_by: 'mike'
 	},
 	{
@@ -191,16 +200,17 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'expense',
 		title: 'November utilities',
-		status: 'pending',
+		status: 'completed',
+		completed_at: '2025-11-20T10:00:00Z',
 		metadata: {
 			amount: 168.00,
 			currency: 'USD',
 			paid_by: 'jessica',
 			split_method: 'equal',
 			category: 'utilities',
-			date: '2024-11-15'
+			date: '2025-11-15'
 		},
-		created_at: '2024-11-15T10:00:00Z',
+		created_at: '2025-11-15T10:00:00Z',
 		created_by: 'jessica'
 	},
 	{
@@ -209,16 +219,16 @@ export const items: CoordinatedItem[] = [
 		item_type: 'expense',
 		title: 'WiFi & streaming',
 		status: 'completed',
-		completed_at: '2024-11-10T12:00:00Z',
+		completed_at: '2025-11-10T12:00:00Z',
 		metadata: {
 			amount: 89.99,
 			currency: 'USD',
 			paid_by: 'bob',
 			split_method: 'equal',
 			category: 'subscriptions',
-			date: '2024-11-01'
+			date: '2025-11-01'
 		},
-		created_at: '2024-11-01T10:00:00Z',
+		created_at: '2025-11-01T10:00:00Z',
 		created_by: 'bob'
 	},
 	
@@ -228,8 +238,10 @@ export const items: CoordinatedItem[] = [
 		group_id: 'group-001',
 		item_type: 'shopping_item',
 		title: 'Milk (whole)',
-		status: 'pending',
+		status: 'completed',
 		assigned_to: ['sarah'],
+		completed_at: '2025-11-29T15:00:00Z',
+		completed_by: 'sarah',
 		metadata: {
 			quantity: 1,
 			store: 'bodega on corner',

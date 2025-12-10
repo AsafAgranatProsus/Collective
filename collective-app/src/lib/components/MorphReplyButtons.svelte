@@ -13,6 +13,7 @@
     interface Props {
         options: ReplyOption[];
         onSelect?: (id: string, label: string) => void;
+        onMorphComplete?: (id: string, label: string) => void;
         onReset?: () => void;
         resetButton?: boolean;
     }
@@ -20,6 +21,7 @@
     let {
         options,
         onSelect,
+        onMorphComplete,
         onReset,
         resetButton = false,
     }: Props = $props();
@@ -103,7 +105,7 @@
 
             Flip.from(state, {
                 targets: ".morph-bubble",
-                duration: 0.5,
+                duration: 0.4,
                 ease: "power3.out",
                 absolute: true,
                 scale: true,
@@ -112,8 +114,13 @@
                 onComplete: () => {
                     // Remove inline styles after animation
                     gsap.set(bubble, { clearProps: "borderRadius" });
+                    // Fire callback after morph animation completes
+                    if (onMorphComplete) onMorphComplete(id, label);
                 },
             });
+        } else {
+            // No bubble to animate, fire callback immediately
+            if (onMorphComplete) onMorphComplete(id, label);
         }
     }
 
@@ -148,7 +155,7 @@
 
                 Flip.from(state, {
                     targets: restoredBtn,
-                    duration: 0.5,
+                    duration: 0.4,
                     ease: "power3.inOut",
                     absolute: true,
                     scale: true,
@@ -201,8 +208,7 @@
     .reply-container {
         position: relative;
         width: 100%;
-        /* Ensure container has enough height or layout stability if needed, 
-           but allow it to be flexible based on parent */
+        min-height: 2.5rem;
     }
 
     .options-area {
@@ -265,4 +271,3 @@
         justify-content: flex-end;
     }
 </style>
-

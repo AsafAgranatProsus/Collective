@@ -14,6 +14,7 @@
 	import CardActions from './sections/CardActions.svelte';
 	import CardDivider from './sections/CardDivider.svelte';
 	import CardText from './sections/CardText.svelte';
+	import CardCarousel from './sections/CardCarousel.svelte';
 	
 	let {
 		schema,
@@ -57,6 +58,8 @@
 					<CardDivider {section} />
 				{:else if section.type === 'text'}
 					<CardText {section} />
+				{:else if section.type === 'carousel'}
+					<CardCarousel cards={section.cards} cardWidth={section.cardWidth} onCardAction={onAction} />
 				{/if}
 			{/each}
 		</div>
@@ -97,7 +100,8 @@
 	/* Mobile adjustments */
 	@media (max-width: 640px) {
 		.card-renderer-wrapper {
-			width: 98%;
+			/* width: 98%; */
+			width: 100%;
 		}
 		
 		.card-renderer-content.scrollable {

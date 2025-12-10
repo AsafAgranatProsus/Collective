@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { Message } from '$lib/data/scenarios';
-	import { fly, fade } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import { markMessageAsRendered } from '$lib/stores/app.svelte';
+	import { markMessageAsRendered, markTripPlanningMessageAsRendered, markOnboardingMessageAsRendered } from '$lib/stores/app.svelte';
 	import CardRenderer from '$lib/components/Cards/CardRenderer.svelte';
 	import { formatTime } from '$lib/utils/formatters';
 	
@@ -10,12 +10,14 @@
 		message,
 		showTimestamp = true,
 		onTypingChange = () => {},
-		onCardRendered = () => {}
+		onCardRendered = () => {},
+		context = 'group' // 'group' | 'trip-planning' | 'onboarding' | 'group-chat'
 	} = $props<{ 
 		message: Message;
 		showTimestamp?: boolean;
 		onTypingChange?: (isTyping: boolean) => void;
 		onCardRendered?: () => void;
+		context?: 'group' | 'trip-planning' | 'onboarding' | 'group-chat';
 	}>();
 	
 	// Check if message has a card to render
@@ -106,8 +108,15 @@
 					setTimeout(typeNextChunk, delay);
 				} else {
 					isTyping = false;
-					// Mark this message as fully rendered
-					markMessageAsRendered(message.id);
+					// Mark this message as fully rendered based on context
+					if (context === 'trip-planning') {
+						markTripPlanningMessageAsRendered(message.id);
+					} else if (context === 'onboarding') {
+						markOnboardingMessageAsRendered(message.id);
+					} else {
+						// Default to group conversation marking
+						markMessageAsRendered(message.id);
+					}
 					
 					// Show timestamp after typing completes (with small delay for fade-in)
 					setTimeout(() => {
@@ -196,36 +205,38 @@
 	class:ai={message.sender === 'ai'}
 	class:peer={message.sender === 'peer'}
 	class:typing-active={isTyping && message.sender === 'ai'}
-	in:fly={{ y: 20, duration: 200, delay: 50 }}
 >
-	<div 
-		class="message-bubble" 
-		class:user-bubble={message.sender === 'user'} 
-		class:ai-bubble={message.sender === 'ai'}
-		class:peer-bubble={message.sender === 'peer'}
-		class:typing={isTyping}
-	>
-		<div class="message-content">
-			{#each parsedContent as part, i}
-				{#if part.type === 'h1'}
-					<span class="heading-1">{part.content}</span>
-				{:else if part.type === 'h2'}
-					<span class="heading-2">{part.content}</span>
-				{:else if part.type === 'h3'}
-					<span class="heading-3">{part.content}</span>
-				{:else}
-					<span class="text-content">{part.content}</span>
+	<!-- Only show bubble if there's content to display -->
+	{#if visibleText.trim() || isTyping}
+		<div 
+			class="message-bubble" 
+			class:user-bubble={message.sender === 'user'} 
+			class:ai-bubble={message.sender === 'ai'}
+			class:peer-bubble={message.sender === 'peer'}
+			class:typing={isTyping}
+		>
+			<div class="message-content">
+				{#each parsedContent as part, i}
+					{#if part.type === 'h1'}
+						<span class="heading-1">{part.content}</span>
+					{:else if part.type === 'h2'}
+						<span class="heading-2">{part.content}</span>
+					{:else if part.type === 'h3'}
+						<span class="heading-3">{part.content}</span>
+					{:else}
+						<span class="text-content">{part.content}</span>
+					{/if}
+				{/each}
+				{#if message.sender === 'ai' && isTyping}
+					<span class="typing-cursor">▋</span>
 				{/if}
-			{/each}
-			{#if message.sender === 'ai' && isTyping}
-				<span class="typing-cursor">▋</span>
-			{/if}
+			</div>
 		</div>
-	</div>
-	
-	<!-- Show timestamp after text only if there are no cards -->
-	{#if showTimestamp && !hasCard && showTimestampAfterTyping}
-		<span class="message-timestamp m3-font-body-small" in:fade={{ duration: 300 }}>{formatTime(message.timestamp)}</span>
+		
+		<!-- Show timestamp after text only if there are no cards -->
+		{#if showTimestamp && !hasCard && showTimestampAfterTyping}
+			<span class="message-timestamp m3-font-body-small" in:fade={{ duration: 300 }}>{formatTime(message.timestamp)}</span>
+		{/if}
 	{/if}
 	
 	<!-- Render cards progressively after text completes -->
@@ -248,8 +259,9 @@
 		display: flex;
 		flex-direction: column;
 		margin-bottom: 1rem;
-		animation: slideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+		max-width: 100%;
 	}
+	
 	
 	.message-container.user {
 		align-items: flex-end;
@@ -257,12 +269,6 @@
 	
 	.message-container.ai {
 		align-items: flex-start;
-	}
-	
-	/* Pre-allocate vertical space ONLY for the last AI message while typing */
-	/* Previous messages revert to auto when a new message appears - the scroll jump hides this transition */
-	.message-container.ai:last-child {
-		min-height: clamp(100px, 25vh, 350px);
 	}
 
 	.message-container.peer {
@@ -291,11 +297,6 @@
 		padding-left: .5rem;
 		padding-bottom: .0;
 		font-weight: var(--m3-font-body-semibold, 500);
-	}
-	
-	/* Pre-allocate space during typing - only for last message (via parent selector) */
-	.message-container.ai.typing-active:last-child .ai-bubble.typing {
-		min-height: clamp(80px, 20vh, 300px);
 	}
 
 	.peer-bubble {
@@ -364,16 +365,6 @@
 		padding: 0 0.5rem;
 	}
 	
-	@keyframes slideUp {
-		from {
-			opacity: 0;
-			transform: translateY(10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
 	
 	/* Card container styling */
 	.cards-container {

@@ -3,23 +3,42 @@
 	import type { Message } from '$lib/data/scenarios';
 	import { getCurrentUser } from '$lib/stores/app.svelte';
 	import MessageBubble from './MessageBubble.svelte';
+	import MorphReplyButtons from './MorphReplyButtons.svelte';
 	
-	let { message } = $props<{ message: GroupChatMessage }>();
+	let { message, onQuickReply } = $props<{ 
+		message: GroupChatMessage;
+		onQuickReply?: (value: string, label: string) => void;
+	}>();
 	
 	let currentUser = $derived(getCurrentUser());
 	let isCurrentUser = $derived(message.sender === currentUser);
 	let isSystemMessage = $derived(message.type === 'system');
 	let isTypingMessage = $derived(message.type === 'typing');
+	let isAIMessage = $derived(message.sender === 'system' && message.sender_name === 'Collective');
+	
+	// Detect if message has only cards/UI elements and no text content
+	let hasOnlyCards = $derived(
+		!message.content?.trim() && 
+		(message.ui_elements?.card_schema || 
+		 (message.ui_elements?.card_schemas && message.ui_elements.card_schemas.length > 0))
+	);
 	
 	// Convert GroupChatMessage to Message format for MessageBubble
-	// Use 'peer' for other users in group chat (not 'ai')
+	// Use 'ai' for Collective messages, 'peer' for other users
 	let bubbleMessage = $derived<Message>({
 		id: message.id,
-		sender: isCurrentUser ? 'user' : 'peer',
+		sender: isCurrentUser ? 'user' : isAIMessage ? 'ai' : 'peer',
 		content: message.content,
 		timestamp: message.timestamp,
 		ui_elements: message.ui_elements
 	});
+	
+	// Handle quick reply selection
+	function handleQuickReply(id: string, label: string) {
+		if (onQuickReply) {
+			onQuickReply(id, label);
+		}
+	}
 </script>
 
 {#if isSystemMessage}
@@ -43,20 +62,32 @@
 	</div>
 {:else}
 	<!-- Regular message -->
-	<div class="message-wrapper" class:current-user={isCurrentUser}>
-		<div class="message-content">
-			{#if !isCurrentUser}
+	<div class="message-wrapper" class:current-user={isCurrentUser} class:cards-only={hasOnlyCards}>
+		<div class="message-content" class:cards-only-content={hasOnlyCards}>
+			{#if !isCurrentUser && !hasOnlyCards}
 				<div class="message-header">
 					<span class="sender-avatar">{message.avatar}</span>
 					<span class="sender-name">{message.sender_name}</span>
 				</div>
-			{:else}
+			{:else if isCurrentUser && !hasOnlyCards}
 				<div class="message-header">
 					<span class="sender-name">{message.sender_name}</span>
 				</div>
 			{/if}
 			
-			<MessageBubble message={bubbleMessage} />
+			<MessageBubble message={bubbleMessage} context="group-chat" />
+			
+			{#if message.ui_elements?.quick_replies && !isCurrentUser}
+				<div class="quick-replies-wrapper">
+					<MorphReplyButtons
+						options={message.ui_elements.quick_replies.map(qr => ({
+							id: qr.value,
+							label: qr.label
+						}))}
+						onMorphComplete={handleQuickReply}
+					/>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -95,8 +126,25 @@
 		max-width: 85%;
 	}
 	
+	/* Card-only messages should be full width and centered */
+	.message-wrapper.cards-only {
+		display: flex;
+		justify-content: center;
+	}
+	
+	.message-content.cards-only-content {
+		max-width: 100%;
+		width: 100%;
+		align-items: center;
+	}
+	
 	.message-wrapper.current-user .message-content {
 		align-self: flex-end;
+	}
+	
+	/* Override alignment for card-only messages */
+	.message-wrapper.current-user.cards-only .message-content {
+		align-self: center;
 	}
 	
 	.message-header {
@@ -180,6 +228,11 @@
 		color: rgb(var(--m3-scheme-on-surface-variant));
 		font-family: var(--font-sans);
 		font-style: italic;
+	}
+	
+	.quick-replies-wrapper {
+		margin-top: 0.5rem;
+		margin-left: 0.5rem;
 	}
 </style>
 

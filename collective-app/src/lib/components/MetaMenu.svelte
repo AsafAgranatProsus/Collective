@@ -86,7 +86,7 @@
 	let dragOffset = $state({ x: 0, y: 0 });
 	let menuElement: HTMLDivElement = $state() as any;
 	
-	let expandedSection = $state<string | null>('fonts');
+	let expandedSection = $state<string | null>('scenarios');
 	
 	function toggleSection(section: string) {
 		expandedSection = expandedSection === section ? null : section;
@@ -296,7 +296,32 @@
 			</Button>
 		</div>
 		
-		<div class="menu-content">
+		<div class="menu-content custom-scrollbar">
+			<!-- Scenarios Section -->
+			<div class="menu-section">
+				<button class="section-header" onclick={() => toggleSection('scenarios')}>
+					<span class="m3-font-title-medium">📋 Scenarios</span>
+					<span class="chevron" class:expanded={expandedSection === 'scenarios'}>
+						<Icon icon={iconExpandMore} />
+					</span>
+				</button>
+				{#if expandedSection === 'scenarios'}
+					<div class="section-content" transition:fade={{ duration: 150 }}>
+						<div class="scenario-list">
+							{#each visibleScenarios as scenario}
+								<button 
+									class="custom-option-btn scenario-option"
+									onclick={() => handleScenarioJump(scenario.id)}
+								>
+									<span class="scenario-title m3-font-title-small">{scenario.title}</span>
+									<span class="scenario-desc m3-font-body-small">{scenario.description}</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
+			
 			<!-- Fonts Section -->
 			<div class="menu-section">
 				<button class="section-header" onclick={() => toggleSection('fonts')}>
@@ -418,31 +443,6 @@
 								>
 									<span class="user-avatar">{member.avatar}</span>
 									<span class="user-name m3-font-label-large">{member.name}</span>
-								</button>
-							{/each}
-						</div>
-					</div>
-				{/if}
-			</div>
-			
-			<!-- Scenarios Section -->
-			<div class="menu-section">
-				<button class="section-header" onclick={() => toggleSection('scenarios')}>
-					<span class="m3-font-title-medium">📋 Scenarios</span>
-					<span class="chevron" class:expanded={expandedSection === 'scenarios'}>
-						<Icon icon={iconExpandMore} />
-					</span>
-				</button>
-				{#if expandedSection === 'scenarios'}
-					<div class="section-content" transition:fade={{ duration: 150 }}>
-						<div class="scenario-list">
-							{#each visibleScenarios as scenario}
-								<button 
-									class="custom-option-btn scenario-option"
-									onclick={() => handleScenarioJump(scenario.id)}
-								>
-									<span class="scenario-title m3-font-title-small">{scenario.title}</span>
-									<span class="scenario-desc m3-font-body-small">{scenario.description}</span>
 								</button>
 							{/each}
 						</div>

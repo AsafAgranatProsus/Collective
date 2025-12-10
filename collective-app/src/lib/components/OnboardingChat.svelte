@@ -18,6 +18,7 @@
 		type OnboardingGroup
 	} from '$lib/stores/app.svelte';
 	import ChecklistSheet from './ChecklistSheet.svelte';
+	import { smartScrollForNewMessage } from '$lib/utils/chatScroll';
 	
 	// Checklist bottom sheet state
 	let checklistOpen = $state(false);
@@ -87,6 +88,13 @@
 		}
 	});
 	
+	// Smart scroll when typing indicator appears
+	$effect(() => {
+		if (typingVisible && messagesContainer) {
+			smartScrollForNewMessage(messagesContainer);
+		}
+	});
+	
 	// Scroll to bottom helper - call this whenever we need to scroll
 	function scrollToBottom() {
 		if (messagesContainer) {
@@ -100,11 +108,12 @@
 		}
 	}
 	
-	// Keep scrolling while AI is typing (content is growing)
+	// Keep scrolling while AI is typing (actual text animation, not indicator)
 	$effect(() => {
 		// Check if any message is currently typing
 		const isAnyTyping = Object.values(messageTypingStates).some(v => v);
-		if (isAnyTyping && messagesContainer) {
+		// Only scroll during text typing, not when typing indicator is showing
+		if (isAnyTyping && !typingVisible && messagesContainer) {
 			// Set up interval to keep scrolling while typing
 			const scrollInterval = setInterval(scrollToBottom, 200);
 			return () => clearInterval(scrollInterval);
@@ -150,13 +159,10 @@
 	
 	// Handle quick reply selection
 	async function handleQuickReply(value: string, label: string) {
-		// Find the last AI message with quick replies
+		// Find the last AI message with quick replies - store selection immediately
 		const lastAiMessage = [...messages].reverse().find(m => m.sender === 'ai' && m.ui_elements?.quick_replies);
 		if (lastAiMessage) {
-			// Store selection state AFTER animation completes (600ms animation duration)
-			setTimeout(() => {
-				selectedReplyIds = { ...selectedReplyIds, [lastAiMessage.id]: value };
-			}, 650);
+			selectedReplyIds = { ...selectedReplyIds, [lastAiMessage.id]: value };
 			
 			// Capture group data based on which question was answered
 			if (lastAiMessage.id === 'onboard-3') {
@@ -284,7 +290,8 @@
 			{#each messages as message, index (message.id)}
 				{#if message.sender === 'ai'}
 					{@const nextMessage = messages[index + 1]}
-					{@const isLastBeforeUser = nextMessage?.sender === 'user' || !nextMessage}
+					{@const hasSavedReply = !!selectedReplyIds[message.id]}
+					{@const isLastBeforeUser = nextMessage?.sender === 'user' || !nextMessage || hasSavedReply}
 					{@const hasCard = 
 						message.ui_elements?.card_schema !== undefined || 
 						(message.ui_elements?.card_schemas !== undefined && message.ui_elements.card_schemas.length > 0)
@@ -294,6 +301,7 @@
 					<MessageBubble 
 						{message}
 						{showTimestamp}
+						context="onboarding"
 						onTypingChange={(isTyping) => {
 							messageTypingStates[message.id] = isTyping;
 						}}
@@ -314,31 +322,39 @@
 						}
 						{@const cardRendered = messageCardStates[message.id] ?? false}
 						{@const canShowButtons = !isTyping && (!hasCardOnMsg || cardRendered)}
-						{#if savedSelection && canShowButtons}
-							<!-- Always show saved selection as bubble -->
-							{@const selectedOption =
-								message.ui_elements.quick_replies.find(
-									(qr) => qr.value === savedSelection,
-								)}
-							<MessageBubble
-								message={{
-									id: `reply-${message.id}`,
-									sender: 'user',
-									content: selectedOption?.label || '',
-									timestamp: new Date().toISOString(),
-								}}
-							/>
-						{:else if !hasUserMessageAfter && canShowButtons}
-							<!-- Show morphing buttons only if no user message after and not yet selected -->
-							<MorphReplyButtons
-								options={message.ui_elements.quick_replies.map(
-									(qr) => ({
-										id: qr.value,
-										label: qr.label,
-									}),
-								)}
-								onSelect={(id, label) => handleQuickReply(id, label)}
-							/>
+						{#if !hasUserMessageAfter && canShowButtons}
+							{@const selectedOption = savedSelection 
+								? message.ui_elements.quick_replies.find((qr) => qr.value === savedSelection)
+								: null}
+							<!-- Grid wrapper to stack both elements in same position -->
+							<div class="reply-stack">
+								<!-- Static bubble (visible when selected) -->
+								<div class="reply-stack-item" class:visible={!!savedSelection}>
+									{#if selectedOption}
+										<MessageBubble
+											context="onboarding"
+											message={{
+												id: `reply-${message.id}`,
+												sender: 'user',
+												content: selectedOption.label || '',
+												timestamp: new Date().toISOString(),
+											}}
+										/>
+									{/if}
+								</div>
+								<!-- Morphing buttons (visible when not selected) -->
+								<div class="reply-stack-item" class:visible={!savedSelection}>
+									<MorphReplyButtons
+										options={message.ui_elements.quick_replies.map(
+											(qr) => ({
+												id: qr.value,
+												label: qr.label,
+											}),
+										)}
+										onMorphComplete={(id, label) => handleQuickReply(id, label)}
+									/>
+								</div>
+							</div>
 						{/if}
 					{/if}
 				{:else}
@@ -346,7 +362,7 @@
 					{@const isLastBeforeAI = nextMessage?.sender === 'ai' || !nextMessage}
 					{@const showTimestamp = isLastBeforeAI}
 					
-					<MessageBubble {message} {showTimestamp} />
+					<MessageBubble {message} {showTimestamp} context="onboarding" />
 				{/if}
 			{/each}
 
@@ -390,34 +406,38 @@
 	.messages-container {
 		max-width: 600px;
 		margin: 0 auto;
-		padding-bottom: 1rem;
 	}
 	
-	
-	/* Scrollbar styling */
-	.custom-scrollbar::-webkit-scrollbar {
-		width: 8px;
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-track {
-		background: var(--bg-tertiary);
-		border-radius: var(--radius-full);
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: var(--border-secondary);
-		border-radius: var(--radius-full);
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: var(--text-tertiary);
-	}
 	
 	/* Mobile adjustments */
 	@media (max-width: 640px) {
 		.messages-area {
 			padding: var(--space-4);
 		}
+	}
+
+	/* Grid stack for seamless reply transition */
+	.reply-stack {
+		display: grid;
+		width: 100%;
+	}
+
+	.reply-stack-item {
+		grid-area: 1 / 1;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.reply-stack-item.visible {
+		opacity: 1;
+		pointer-events: auto;
+		/* Instant show */
+		transition: none;
+	}
+
+	.reply-stack-item:not(.visible) {
+		/* Delayed hide - wait for other to be visible first */
+		transition: opacity 0ms 150ms;
 	}
 </style>
 

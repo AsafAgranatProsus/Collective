@@ -3,6 +3,7 @@
 	import { slide, fade } from "svelte/transition";
 	import GroupChatMessage from "./GroupChatMessage.svelte";
 	import GlassHeader from "./GlassHeader.svelte";
+	import ChatInput from "./ChatInput.svelte";
 	import {
 		getGroupChatMessages,
 		addGroupChatMessage,
@@ -14,19 +15,47 @@
 	import iconArrowBack from "@ktibow/iconset-material-symbols/arrow-back";
 	import iconSend from "@ktibow/iconset-material-symbols/send";
 
-	let { groupId, isOpen, onClose } = $props<{
+	let { groupId, isOpen, onClose, onSendMessage, onQuickReply } = $props<{
 		groupId: string;
 		isOpen: boolean;
 		onClose: () => void;
+		onSendMessage?: (content: string) => void;
+		onQuickReply?: (value: string, label: string) => void;
 	}>();
 
 	let messages = $state<GroupChatMessageType[]>([]);
-	let inputValue = $state("");
 	let messagesContainer = $state<HTMLDivElement>();
 
 	let currentUser = $derived(getCurrentUser());
 	let currentMember = $derived(getMemberInfo(currentUser));
 	let group = $derived(getGroupById(groupId));
+	
+	// Get members who have joined the chat (from group chat messages)
+	let chatMembers = $derived.by(() => {
+		const uniqueMembers = new Map<string, { id: string; name: string; avatar: string }>();
+		
+		// Add current user
+		if (currentMember) {
+			uniqueMembers.set(currentUser, {
+				id: currentUser,
+				name: 'You',
+				avatar: currentMember.avatar
+			});
+		}
+		
+		// Add other members who have sent messages
+		messages.forEach(msg => {
+			if (msg.sender !== 'system' && msg.sender !== currentUser && !uniqueMembers.has(msg.sender)) {
+				uniqueMembers.set(msg.sender, {
+					id: msg.sender,
+					name: msg.sender_name,
+					avatar: msg.avatar
+				});
+			}
+		});
+		
+		return Array.from(uniqueMembers.values());
+	});
 
 	// Load messages when component mounts or groupId changes
 	$effect(() => {
@@ -66,11 +95,16 @@
 		}
 	});
 
-	function handleSend(e: Event) {
-		e.preventDefault();
-
-		const trimmed = inputValue.trim();
+	function handleSend(content: string) {
+		const trimmed = content.trim();
 		if (trimmed && currentMember) {
+			// If parent provided onSendMessage, use it (for routing @Collective)
+			if (onSendMessage) {
+				onSendMessage(trimmed);
+				return;
+			}
+			
+			// Otherwise, add to group chat directly
 			const newMessage: GroupChatMessageType = {
 				id: `gc-${Date.now()}`,
 				sender: currentUser,
@@ -86,20 +120,10 @@
 			// Also add to global data store
 			addGroupChatMessage(groupId, newMessage);
 
-			// Clear input
-			inputValue = "";
-
 			// Scroll to bottom
 			if (messagesContainer) {
 				messagesContainer.scrollTop = messagesContainer.scrollHeight;
 			}
-		}
-	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault();
-			handleSend(e);
 		}
 	}
 
@@ -150,34 +174,21 @@
 		</GlassHeader>
 
 		<!-- Messages Area -->
-		<div class="messages-area" bind:this={messagesContainer}>
+		<div class="messages-area custom-scrollbar" bind:this={messagesContainer}>
 			<div class="messages-container">
 				{#each messages as message (message.id)}
-					<GroupChatMessage {message} />
+					<GroupChatMessage {message} onQuickReply={onQuickReply} />
 				{/each}
 			</div>
 		</div>
 
 		<!-- Input Area -->
-		<form class="chat-input-form" onsubmit={handleSend}>
-			<!-- <div class="text-field-wrapper">
-				<TextField
-					bind:value={inputValue}
-					label="Type a message..."
-					type="filled"
-					onkeydown={handleKeydown}
-				/>
-			</div>
-			<Button
-				variant="filled"
-				iconType="full"
-				type="submit"
-				disabled={!inputValue.trim()}
-				aria-label="Send message"
-			>
-				<Icon icon={iconSend} />
-			</Button> -->
-		</form>
+		<ChatInput 
+			onSend={handleSend}
+			placeholder="Type a message..."
+			enableReferences={true}
+			members={chatMembers}
+		/>
 	</div>
 {/if}
 
@@ -234,6 +245,7 @@
 		padding: 1.5rem;
 		overflow-x: hidden;
 		padding-top: 4rem;
+		padding-bottom: 1rem;
 		/* width: 400px; */
 		width: var(--group-chat-width, 400px);
 	}
@@ -241,17 +253,6 @@
 	.messages-container {
 		display: flex;
 		flex-direction: column;
-	}
-
-	.chat-input-form {
-		/* display: flex;
-		align-items: flex-end;
-		gap: 0.75rem;
-		padding: 1rem 1.5rem;
-		border-top: 1px solid rgb(var(--m3-scheme-outline-variant));
-		background-color: rgb(var(--m3-scheme-surface-container-low)); */
-		flex-shrink: 0;
-		min-height: 5rem;
 	}
 
 	/* Mobile: full screen overlay */
@@ -265,30 +266,8 @@
 		.messages-area {
 			padding: 1rem;
 			padding-top: 5rem;
+			padding-bottom: 1rem;
 			width: var(--group-chat-width, 100vw);
 		}
-
-		.chat-input-form {
-			padding: 0.75rem 1rem;
-		}
-	}
-
-	/* Scrollbar styling */
-	.messages-area::-webkit-scrollbar {
-		width: 8px;
-	}
-
-	.messages-area::-webkit-scrollbar-track {
-		background: rgb(var(--m3-scheme-surface-container));
-		border-radius: var(--m3-util-rounding-full);
-	}
-
-	.messages-area::-webkit-scrollbar-thumb {
-		background: rgb(var(--m3-scheme-outline));
-		border-radius: var(--m3-util-rounding-full);
-	}
-
-	.messages-area::-webkit-scrollbar-thumb:hover {
-		background: rgb(var(--m3-scheme-on-surface-variant));
 	}
 </style>

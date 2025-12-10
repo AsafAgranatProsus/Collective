@@ -420,37 +420,69 @@
    CUSTOM SCROLLBAR
    ============================================ */
 
+/* 
+ * Standard scrollbar style for all vertical scrolling content
+ * - Always visible (prevents layout shift)
+ * - Transparent track
+ * - Toned-down thumb that respects theme
+ * - Transparent arrow buttons
+ */
 .custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-secondary) transparent;
+	/* Firefox scrollbar styling */
+	scrollbar-width: thin;
+	scrollbar-color: rgb(var(--m3-scheme-outline-variant) / 0.3) transparent;
+	
+	/* Force scrollbar to always be visible */
+	overflow-y: scroll;
 }
 
+/* Webkit scrollbar styling (Chrome, Safari, Edge) */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+	width: 10px;
+	/* Always show scrollbar even when not scrolling */
 }
 
+/* Transparent track */
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
+	background: transparent;
 }
 
+/* Arrow buttons - transparent/hidden */
+.custom-scrollbar::-webkit-scrollbar-button {
+	display: none;
+	height: 0;
+	background: transparent;
+}
+
+/* Toned-down thumb that respects theme */
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--border-secondary);
-  border-radius: var(--radius-full);
+	background: rgb(var(--m3-scheme-outline-variant) / 0.3);
+	border-radius: var(--m3-util-rounding-full);
+	border: 2px solid transparent;
+	background-clip: padding-box;
+	transition: background-color 0.2s;
 }
 
+/* Slightly more visible on hover */
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
+	background: rgb(var(--m3-scheme-outline-variant) / 0.5);
+	background-clip: padding-box;
+}
+
+/* Active state */
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+	background: rgb(var(--m3-scheme-outline-variant) / 0.7);
+	background-clip: padding-box;
 }
 
 /* Hidden scrollbar - still scrollable but invisible */
 .scrollbar-hidden {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 
 .scrollbar-hidden::-webkit-scrollbar {
-  display: none;
+	display: none;
 }
 
 /* ============================================

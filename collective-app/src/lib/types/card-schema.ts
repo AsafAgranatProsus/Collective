@@ -101,6 +101,12 @@ export interface CardTextSection {
 	color?: 'default' | 'muted' | 'primary';
 }
 
+export interface CardCarouselSection {
+	type: 'carousel';
+	cards: CardSchema[];
+	cardWidth?: number; // Default: 280px
+}
+
 // Union type of all section types
 export type CardSection =
 	| CardHeaderSection
@@ -111,7 +117,8 @@ export type CardSection =
 	| CardComparisonBarSection
 	| CardActionsSection
 	| CardDividerSection
-	| CardTextSection;
+	| CardTextSection
+	| CardCarouselSection;
 
 // ============================================================================
 // TEMPLATE DEFINITIONS

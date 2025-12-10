@@ -9,13 +9,14 @@
 	import OnboardingChat from '$lib/components/OnboardingChat.svelte';
 	import GlassHeader from '$lib/components/GlassHeader.svelte';
 	import { getAllGroups } from '$lib/data/groups.svelte';
-	import { setDemoMenuOpen, setNavigationDirection, getOnboardingMode, getOnboardingGroupCreated, getOnboardingGroup, getActiveScenario, isTripPlanningActive } from '$lib/stores/app.svelte';
+	import { setDemoMenuOpen, setNavigationDirection, getOnboardingMode, getOnboardingGroupCreated, getOnboardingGroup, getActiveScenario, isTripPlanningActive, getTripGroup } from '$lib/stores/app.svelte';
 	import type { Group } from '$lib/data/groups.svelte';
 	import { getAppTabsPosition, getLastActiveTab, setLastActiveTab } from '$lib/stores/features.svelte';
 	import { getNavigationPath } from '$lib/utils/modeHelpers';
 	import { sharedAxisTransition } from 'm3-svelte';
 	
-	const groups = getAllGroups();
+	// Reactive groups list that updates when dynamic groups are added
+	const groups = $derived(getAllGroups());
 	const appTabsPosition = $derived(getAppTabsPosition());
 	
 	// Onboarding mode - hides Groups tab and shows only Feed
@@ -27,12 +28,16 @@
 	// Track when onboarding group is created (triggers tabs to appear)
 	const onboardingGroupCreated = $derived(getOnboardingGroupCreated());
 	
+	// Track when trip group is created
+	const tripGroup = $derived(getTripGroup());
+	const tripGroupCreated = $derived(tripGroup !== null);
+	
 	// Show tabs when: not onboarding, OR onboarding but group is created
 	// Note: Trip planning mode shows tabs (unlike onboarding which hides them initially)
 	const showTabs = $derived(!isOnboarding || onboardingGroupCreated || isTripPlanning);
 	
-	// Show badge on groups tab during onboarding after group is created
-	const showGroupsBadge = $derived(isOnboarding && onboardingGroupCreated);
+	// Show badge on groups tab during onboarding after group is created OR during trip planning after group is created
+	const showGroupsBadge = $derived((isOnboarding && onboardingGroupCreated) || (isTripPlanning && tripGroupCreated));
 	
 	// Get onboarding group data (if available)
 	const onboardingGroup = $derived(getOnboardingGroup());
@@ -155,7 +160,7 @@
 			<OnboardingChat />
 		{:else if activeTab === 'groups'}
 			<!-- Groups List -->
-			<div class="groups-container">
+			<div class="groups-container custom-scrollbar">
 				<div class="groups-list">
 					{#if isOnboarding && onboardingGroupCreated && onboardingGroupAsGroup}
 						<!-- During onboarding: show only the newly created group (minimal card) -->
@@ -222,10 +227,11 @@
 
 <style>
 	.groups-page {
-		min-height: 100vh;
+		height: 100vh; /* Fixed height instead of min-height */
 		display: flex;
 		flex-direction: column;
 		position: relative;
+		overflow: hidden; /* Prevent page from scrolling */
 	}
 	
 	.groups-page.has-bottom-tabs {
@@ -353,7 +359,7 @@
 		max-width: 600px;
 		width: 100%;
 		margin: 0 auto;
-		overflow-y: auto;
+		/* overflow-y handled by custom-scrollbar class */
 	}
 	
 	.groups-list {
@@ -379,7 +385,7 @@
 	/* Mobile responsiveness */
 	@media (max-width: 640px) {
 		.groups-container {
-			padding: 1.5rem 1rem;
+			padding:1.5rem .5rem 1.5rem 1rem
 		}
 	}
 </style>

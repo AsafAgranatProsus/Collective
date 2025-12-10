@@ -1382,112 +1382,158 @@ export const tripPlanningGroupScenario: Scenario = {
 			content: "I found 3 great flight options!",
 			timestamp: new Date().toISOString(),
 			ui_elements: {
-				card_schemas: [
-					{
-						sections: [
-							{
-								type: 'header',
-								title: '✈️ Flight Options'
-							},
-							{
-								type: 'text',
-								content: 'For: Mid-March (flexible dates)\n4 people, round-trip from NYC',
-								size: 'small',
-								color: 'muted'
-							}
-						],
-						maxWidth: 420
-					},
-					{
-						sections: [
-							{
-								type: 'header',
-								title: '✈️ Option 1 - Best Price',
-								icon: 'flight'
-							},
-							{
-								type: 'stat_row',
-								label: 'Norwegian Air',
-								value: '$458/person',
-								highlight: true
-							},
-							{
-								type: 'text',
-								content: 'Mar 12-17 (Wed-Mon) • Direct',
-								size: 'small'
-							},
-							{
-								type: 'text',
-								content: 'Total: $1,832 for 4 people',
-								size: 'small',
-								color: 'muted'
-							},
-							{
-								type: 'list',
-								items: [
-									{ title: 'Good reviews (4.2★)', icon: 'checklist' },
-									{ title: 'Checked bag included', icon: 'checklist' }
-								],
-								style: 'compact'
-							},
-							{
-								type: 'actions',
-								buttons: [
-									{ label: 'Vote for this', value: 'vote_option1', variant: 'filled', primary: true },
-									{ label: 'Details', value: 'details_option1', variant: 'outlined' }
-								],
-								layout: 'row'
-							}
-						],
-						maxWidth: 420
-					},
-					{
-						sections: [
-							{
-								type: 'header',
-								title: '✈️ Option 2 - Better Times',
-								icon: 'flight'
-							},
-							{
-								type: 'stat_row',
-								label: 'Delta',
-								value: '$542/person',
-								highlight: false
-							},
-							{
-								type: 'text',
-								content: 'Mar 13-18 (Thu-Tue) • 1 stop',
-								size: 'small'
-							},
-							{
-								type: 'text',
-								content: 'Total: $2,168 for 4 people',
-								size: 'small',
-								color: 'muted'
-							},
-							{
-								type: 'list',
-								items: [
-									{ title: 'More departure time options', icon: 'checklist' },
-									{ title: 'Better airline reviews (4.6★)', icon: 'checklist' }
-								],
-								style: 'compact'
-							},
-							{
-								type: 'actions',
-								buttons: [
-									{ label: 'Vote for this', value: 'vote_option2', variant: 'filled', primary: true },
-									{ label: 'Details', value: 'details_option2', variant: 'outlined' }
-								],
-								layout: 'row'
-							}
-						],
-						maxWidth: 420
-					}
-				],
-				quick_replies: [
-					{ label: 'See 3rd option', value: 'see_option3' }
-				]
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: '✈️ Flight Options'
+						},
+						{
+							type: 'text',
+							content: 'For: Mid-March (flexible dates)\n4 people, round-trip from NYC',
+							size: 'small',
+							color: 'muted'
+						},
+						{
+							type: 'carousel',
+							cardWidth: 300,
+							cards: [
+								// Option 1 - Best Price
+								{
+									sections: [
+										{
+											type: 'header',
+											title: '✈️ Option 1 - Best Price',
+											icon: 'flight'
+										},
+										{
+											type: 'stat_row',
+											label: 'Norwegian Air',
+											value: '$458/person',
+											highlight: true
+										},
+										{
+											type: 'text',
+											content: 'Mar 12-17 (Wed-Mon) • Direct',
+											size: 'small'
+										},
+										{
+											type: 'text',
+											content: 'Total: $1,832 for 4 people',
+											size: 'small',
+											color: 'muted'
+										},
+										{
+											type: 'list',
+											items: [
+												{ title: 'Checked bag included', icon: 'checklist' }
+											],
+											style: 'compact'
+										},
+										{
+											type: 'actions',
+											buttons: [
+												{ label: 'Vote for this', value: 'vote_option1', variant: 'filled', primary: true },
+												{ label: 'Details', value: 'details_option1', variant: 'outlined' }
+											],
+											layout: 'row'
+										}
+									],
+									variant: 'elevated'
+								},
+								// Option 2 - Better Times
+								{
+									sections: [
+										{
+											type: 'header',
+											title: '✈️ Option 2 - Better Times',
+											icon: 'flight'
+										},
+										{
+											type: 'stat_row',
+											label: 'Delta',
+											value: '$542/person',
+											highlight: true
+										},
+										{
+											type: 'text',
+											content: 'Mar 13-18 (Thu-Tue) • 1 stop',
+											size: 'small'
+										},
+										{
+											type: 'text',
+											content: 'Total: $2,168 for 4 people',
+											size: 'small',
+											color: 'muted'
+										},
+										{
+											type: 'list',
+											items: [
+												{ title: 'More departure time options', icon: 'checklist' }
+											],
+											style: 'compact'
+										},
+										{
+											type: 'actions',
+											buttons: [
+												{ label: 'Vote for this', value: 'vote_option2', variant: 'filled', primary: true },
+												{ label: 'Details', value: 'details_option2', variant: 'outlined' }
+											],
+											layout: 'row'
+										}
+									],
+									variant: 'elevated'
+								},
+								// Option 3 - Premium
+								{
+									sections: [
+										{
+											type: 'header',
+											title: '✈️ Option 3 - Premium',
+											icon: 'flight'
+										},
+										{
+											type: 'stat_row',
+											label: 'Iberia',
+											value: '$612/person',
+											highlight: true
+										},
+										{
+											type: 'text',
+											content: 'Mar 14-19 (Fri-Wed) • Direct',
+											size: 'small'
+										},
+										{
+											type: 'text',
+											content: 'Total: $2,448 for 4 people',
+											size: 'small',
+											color: 'muted'
+										},
+										{
+											type: 'list',
+											items: [
+												{ title: 'Best flight times', icon: 'checklist' },
+												{ title: 'Extra legroom available', icon: 'checklist' }
+											],
+											style: 'compact'
+										},
+										{
+											type: 'actions',
+											buttons: [
+												{ label: 'Vote for this', value: 'vote_option3', variant: 'filled', primary: true },
+												{ label: 'Details', value: 'details_option3', variant: 'outlined' }
+											],
+											layout: 'row'
+										}
+									],
+									variant: 'elevated'
+								}
+							]
+						}
+					],
+					maxWidth: 420
+				}
+				// No quick_replies here - AI recommendation with buttons will follow immediately
 			}
 		},
 		// Step 4: AI recommendation
@@ -1624,6 +1670,218 @@ export const tripPlanningGroupScenario: Scenario = {
 					{ label: 'Vote for Option 2', value: 'vote_option2_confirm' },
 					{ label: 'See options again', value: 'see_options_again' }
 				]
+			}
+		},
+		// Step 8c: AI asks first accommodation question (style)
+		{
+			id: 'trip-group-accom-1',
+			sender: 'ai',
+			content: "Great! Now let's find a place to stay.\n\nWhat style of accommodation are you looking for?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Boutique hotel', value: 'accom_style_boutique' },
+					{ label: 'Modern apartment', value: 'accom_style_apartment' },
+					{ label: 'Budget-friendly', value: 'accom_style_budget' },
+					{ label: 'Flexible', value: 'accom_style_flexible' }
+				]
+			}
+		},
+		// Step 8d: AI asks location preference
+		{
+			id: 'trip-group-accom-2',
+			sender: 'ai',
+			content: "Which area of Barcelona would you prefer?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Gothic Quarter', value: 'accom_location_gothic' },
+					{ label: 'El Born', value: 'accom_location_elborn' },
+					{ label: 'Barceloneta', value: 'accom_location_barceloneta' },
+					{ label: 'Near Sagrada Familia', value: 'accom_location_sagrada' }
+				]
+			}
+		},
+		// Step 8e: AI asks price range
+		{
+			id: 'trip-group-accom-3',
+			sender: 'ai',
+			content: "What's your budget per night?",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				quick_replies: [
+					{ label: 'Budget ($60-80/night)', value: 'accom_price_budget' },
+					{ label: 'Mid-range ($80-120/night)', value: 'accom_price_mid' },
+					{ label: 'Premium ($120+/night)', value: 'accom_price_premium' }
+				]
+			}
+		},
+		// Step 8f: AI presents accommodation options
+		{
+			id: 'trip-group-accom-4',
+			sender: 'ai',
+			content: "Perfect! I found some great options for you:",
+			timestamp: new Date().toISOString(),
+			ui_elements: {
+				card_schema: {
+					sections: [
+						{
+							type: 'header',
+							title: '🏨 Accommodation Options'
+						},
+						{
+							type: 'text',
+							content: 'For: Mar 12-17 (5 nights) • 4 people',
+							size: 'small',
+							color: 'muted'
+						},
+						{
+							type: 'carousel',
+							cardWidth: 300,
+							cards: [
+								// Option 1 - Boutique Hotel
+								{
+									sections: [
+										{
+											type: 'header',
+											title: '🏨 Hotel Neri',
+											subtitle: 'Boutique Hotel',
+											icon: 'hotel'
+										},
+										{
+											type: 'stat_row',
+											label: 'Gothic Quarter',
+											value: '€95/night',
+											highlight: true
+										},
+										{
+											type: 'text',
+											content: 'Total: €475 (5 nights)',
+											size: 'small',
+											color: 'muted'
+										},
+										{
+											type: 'list',
+											items: [
+												{ title: 'Historic building', icon: 'checklist' },
+												{ title: 'Rooftop terrace', icon: 'checklist' },
+												{ title: 'Walking distance to landmarks', icon: 'checklist' }
+											],
+											style: 'compact'
+										},
+										{
+											type: 'stat_row',
+											label: 'Rating',
+											value: '4.8/5'
+										},
+										{
+											type: 'actions',
+											buttons: [
+												{ label: 'Vote for this', value: 'vote_accom1', variant: 'filled', primary: true },
+												{ label: 'Details', value: 'details_accom1', variant: 'outlined' }
+											],
+											layout: 'row'
+										}
+									],
+									variant: 'elevated'
+								},
+								// Option 2 - Modern Apartment
+								{
+									sections: [
+										{
+											type: 'header',
+											title: '🏠 El Born Loft',
+											subtitle: 'Modern Apartment',
+											icon: 'apartment'
+										},
+										{
+											type: 'stat_row',
+											label: 'El Born',
+											value: '€110/night',
+											highlight: true
+										},
+										{
+											type: 'text',
+											content: 'Total: €550 (5 nights)',
+											size: 'small',
+											color: 'muted'
+										},
+										{
+											type: 'list',
+											items: [
+												{ title: 'Full kitchen', icon: 'checklist' },
+												{ title: '2 bedrooms', icon: 'checklist' },
+												{ title: 'Balcony with views', icon: 'checklist' }
+											],
+											style: 'compact'
+										},
+										{
+											type: 'stat_row',
+											label: 'Rating',
+											value: '4.9/5'
+										},
+										{
+											type: 'actions',
+											buttons: [
+												{ label: 'Vote for this', value: 'vote_accom2', variant: 'filled', primary: true },
+												{ label: 'Details', value: 'details_accom2', variant: 'outlined' }
+											],
+											layout: 'row'
+										}
+									],
+									variant: 'elevated'
+								},
+								// Option 3 - Budget Hostel
+								{
+									sections: [
+										{
+											type: 'header',
+											title: '🏖️ Beach Hostel',
+											subtitle: 'Budget-friendly',
+											icon: 'bed'
+										},
+										{
+											type: 'stat_row',
+											label: 'Barceloneta',
+											value: '€68/night',
+											highlight: true
+										},
+										{
+											type: 'text',
+											content: 'Total: €340 (5 nights)',
+											size: 'small',
+											color: 'muted'
+										},
+										{
+											type: 'list',
+											items: [
+												{ title: 'Near beach', icon: 'checklist' },
+												{ title: 'Private room for 4', icon: 'checklist' },
+												{ title: 'Shared kitchen', icon: 'checklist' }
+											],
+											style: 'compact'
+										},
+										{
+											type: 'stat_row',
+											label: 'Rating',
+											value: '4.6/5'
+										},
+										{
+											type: 'actions',
+											buttons: [
+												{ label: 'Vote for this', value: 'vote_accom3', variant: 'filled', primary: true },
+												{ label: 'Details', value: 'details_accom3', variant: 'outlined' }
+											],
+											layout: 'row'
+										}
+									],
+									variant: 'elevated'
+								}
+							]
+						}
+					],
+					maxWidth: 420
+				}
 			}
 		},
 		// Step 9: Both voted same

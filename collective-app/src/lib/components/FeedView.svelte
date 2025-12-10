@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Chip } from 'm3-svelte';
 	import { fly } from 'svelte/transition';
 	import { getAllGroups, addDynamicGroup, type Group } from '$lib/data/groups.svelte';
 	import { 
@@ -35,11 +34,14 @@
 	import ChatInput from './ChatInput.svelte';
 	import ChecklistSheet from './ChecklistSheet.svelte';
 	import GroupCard from './GroupCard.svelte';
+	import FilterChips from './FilterChips.svelte';
+	import { smartScrollForNewMessage } from '$lib/utils/chatScroll';
 	
 	// Checklist bottom sheet state
 	let checklistOpen = $state(false);
 	
-	const groups = getAllGroups();
+	// Reactive groups list that updates when dynamic groups are added
+	const groups = $derived(getAllGroups());
 	const members = getAllMembers();
 	const currentUser = $derived(getCurrentUser());
 	const activeScenario = $derived(getActiveScenario());
@@ -72,10 +74,21 @@
 	let selectedReplyIds = $state<Record<string, string>>({});
 	
 	// Messages container ref for scrolling
-	let messagesContainer: HTMLDivElement;
+	let messagesContainer = $state<HTMLDivElement>();
 	
 	// State for selected filter (normal feed mode)
 	let selectedFilter = $state<string>('all');
+	
+	// Build filter options from groups
+	let filterOptions = $derived.by(() => {
+		const baseFilters = [{ id: 'all', label: 'All' }];
+		const groupFilters = groups.map(g => ({
+			id: g.id,
+			label: g.name,
+			icon: g.icon
+		}));
+		return [...baseFilters, ...groupFilters];
+	});
 	
 	// Derived data: all AI messages from all groups (normal feed mode)
 	interface FeedMessage extends Message {
@@ -129,11 +142,18 @@
 		}
 	});
 	
+	// Smart scroll when typing indicator appears
+	$effect(() => {
+		if (typingVisible && messagesContainer) {
+			smartScrollForNewMessage(messagesContainer);
+		}
+	});
+	
 	// Scroll to bottom helper
 	function scrollToBottom() {
 		if (messagesContainer) {
 			requestAnimationFrame(() => {
-				messagesContainer.scrollTo({
+				messagesContainer?.scrollTo({
 					top: messagesContainer.scrollHeight,
 					behavior: 'smooth'
 				});
@@ -141,10 +161,11 @@
 		}
 	}
 	
-	// Keep scrolling while AI is typing
+	// Keep scrolling while AI is typing (actual text animation, not indicator)
 	$effect(() => {
 		const isAnyTyping = Object.values(messageTypingStates).some(v => v);
-		if (isAnyTyping && messagesContainer) {
+		// Only scroll during text typing, not when typing indicator is showing
+		if (isAnyTyping && !typingVisible && messagesContainer) {
 			const scrollInterval = setInterval(scrollToBottom, 200);
 			return () => clearInterval(scrollInterval);
 		}
@@ -238,13 +259,10 @@
 	
 	// Handle quick reply selection
 	async function handleQuickReply(value: string, label: string) {
-		// Find the last AI message with quick replies
+		// Find the last AI message with quick replies - store selection immediately
 		const lastAiMessage = [...tripMessages].reverse().find(m => m.sender === 'ai' && m.ui_elements?.quick_replies);
 		if (lastAiMessage) {
-			// Store selection state AFTER animation completes
-			setTimeout(() => {
-				selectedReplyIds = { ...selectedReplyIds, [lastAiMessage.id]: value };
-			}, 650);
+			selectedReplyIds = { ...selectedReplyIds, [lastAiMessage.id]: value };
 		}
 		
 		// Handle based on value and progress scenario
@@ -487,14 +505,23 @@
 </script>
 
 <div class="feed-view">
+	<!-- Filter Chips - Always visible for both modes -->
+	<FilterChips 
+		filters={filterOptions}
+		selectedFilter={selectedFilter}
+		onFilterSelect={handleFilterSelect}
+		background="rgb(var(--m3-scheme-surface))"
+	/>
+	
 	{#if isTripPlanningMode}
 		<!-- Trip Planning Conversation Mode -->
-		<div class="messages-feed trip-planning-mode" bind:this={messagesContainer}>
+		<div class="messages-feed trip-planning-mode custom-scrollbar" bind:this={messagesContainer}>
 			<div class="messages-container">
 				{#each tripMessages as message, index (message.id)}
 					{#if message.sender === 'ai'}
 						{@const nextMessage = tripMessages[index + 1]}
-						{@const isLastBeforeUser = nextMessage?.sender === 'user' || !nextMessage}
+						{@const hasSavedReply = !!selectedReplyIds[message.id]}
+						{@const isLastBeforeUser = nextMessage?.sender === 'user' || !nextMessage || hasSavedReply}
 						{@const hasCard = 
 							message.ui_elements?.card_schema !== undefined || 
 							(message.ui_elements?.card_schemas !== undefined && message.ui_elements.card_schemas.length > 0)
@@ -504,6 +531,7 @@
 						<MessageBubble 
 							{message}
 							{showTimestamp}
+							context="trip-planning"
 							onTypingChange={(isTyping) => {
 								messageTypingStates[message.id] = isTyping;
 							}}
@@ -539,30 +567,39 @@
 							{@const cardRendered = messageCardStates[message.id] ?? false}
 							{@const canShowButtons = !isTyping && (!hasCardOnMsg || cardRendered)}
 							
-							{#if savedSelection && canShowButtons}
-								<!-- Show saved selection as bubble -->
-								{@const selectedOption = message.ui_elements.quick_replies.find(
-									(qr) => qr.value === savedSelection
-								)}
-								<MessageBubble
-									message={{
-										id: `reply-${message.id}`,
-										sender: 'user',
-										content: selectedOption?.label || '',
-										timestamp: new Date().toISOString(),
-									}}
-								/>
-							{:else if !hasUserMessageAfter && canShowButtons}
-								<!-- Show morphing buttons -->
-								<MorphReplyButtons
-									options={message.ui_elements.quick_replies.map(
-										(qr) => ({
-											id: qr.value,
-											label: qr.label,
-										}),
-									)}
-									onSelect={(id, label) => handleQuickReply(id, label)}
-								/>
+							{#if !hasUserMessageAfter && canShowButtons}
+								{@const selectedOption = savedSelection 
+									? message.ui_elements.quick_replies.find((qr) => qr.value === savedSelection)
+									: null}
+								<!-- Grid wrapper to stack both elements in same position -->
+								<div class="reply-stack">
+									<!-- Static bubble (visible when selected) -->
+									<div class="reply-stack-item" class:visible={!!savedSelection}>
+										{#if selectedOption}
+											<MessageBubble
+												context="trip-planning"
+												message={{
+													id: `reply-${message.id}`,
+													sender: 'user',
+													content: selectedOption.label || '',
+													timestamp: new Date().toISOString(),
+												}}
+											/>
+										{/if}
+									</div>
+									<!-- Morphing buttons (visible when not selected) -->
+									<div class="reply-stack-item" class:visible={!savedSelection}>
+										<MorphReplyButtons
+											options={message.ui_elements.quick_replies.map(
+												(qr) => ({
+													id: qr.value,
+													label: qr.label,
+												}),
+											)}
+											onMorphComplete={(id, label) => handleQuickReply(id, label)}
+										/>
+									</div>
+								</div>
 							{/if}
 						{/if}
 					{:else}
@@ -570,7 +607,7 @@
 						{@const isLastBeforeAI = nextMessage?.sender === 'ai' || !nextMessage}
 						{@const showTimestamp = isLastBeforeAI}
 						
-						<MessageBubble {message} {showTimestamp} />
+						<MessageBubble {message} {showTimestamp} context="trip-planning" />
 					{/if}
 				{/each}
 
@@ -589,39 +626,13 @@
 		/>
 	{:else}
 		<!-- Normal Feed Mode -->
-		<!-- Filter Chips -->
-		<div class="filter-chips">
-			<!-- Left spacer for visual alignment -->
-			<div class="filter-spacer"></div>
-			
-			<Chip
-				variant="general"
-				selected={selectedFilter === 'all'}
-				onclick={() => handleFilterSelect('all')}
-			>
-				All
-			</Chip>
-			{#each groups as group}
-				<Chip
-					variant="general"
-					selected={selectedFilter === group.id}
-					onclick={() => handleFilterSelect(group.id)}
-				>
-					{group.icon} {group.name}
-				</Chip>
-			{/each}
-			
-			<!-- Right spacer for scroll end padding -->
-			<div class="filter-spacer"></div>
-		</div>
-		
 		<!-- Messages Feed -->
-		<div class="messages-feed">
+		<div class="messages-feed custom-scrollbar">
 			{#if filteredMessages.length === 0}
 				<div class="empty-state">
-					<div class="empty-icon">💬</div>
-					<h3 class="m3-font-title-large">No AI interactions yet</h3>
-					<p class="m3-font-body-medium">Start chatting with your groups to see interactions here</p>
+					<img src="/matisse.png" alt="Empty state illustration" class="empty-image" />
+					<img src="/matisse.png" alt="Empty state illustration" class="empty-image" />
+
 				</div>
 			{:else}
 				{#each filteredMessages as message (message.id)}
@@ -675,53 +686,11 @@
 		overflow: hidden;
 	}
 	
-	
-	.filter-chips {
-		flex-shrink: 0;
-		display: flex;
-		gap: 0.5rem;
-		padding: 1rem 0; /* Remove horizontal padding for edge-to-edge scroll */
-		overflow-x: auto;
-		overflow-y: hidden;
-		background: rgb(var(--m3-scheme-surface));
-		z-index: 100;
-		
-		/* Hide scrollbar */
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-		
-		/* Enable smooth scrolling */
-		scroll-behavior: smooth;
-		-webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
-
-        :global(button) {
-            border-radius: var(--m3-util-rounding-large);
-        }
-	}
-	
-	.filter-chips::-webkit-scrollbar {
-		display: none;
-	}
-	
-	/* Spacer for visual alignment */
-	.filter-spacer {
-		flex-shrink: 0;
-		width: 1.5rem; /* Same as the removed horizontal padding */
-	}
-	
-	/* Ensure chips don't shrink and maintain natural width */
-	.filter-chips :global(.m3-chip),
-	.filter-chips > :global(*:not(.filter-spacer)) {
-		flex-shrink: 0;
-		width: auto;
-		min-width: fit-content;
-	}
-	
 	.messages-feed {
 		flex: 1;
 		min-height: 0; /* Required for flex overflow to work */
-		overflow-y: auto;
-		padding: 1rem 1.5rem;
+		overflow-y: scroll;
+		padding: 1rem 0rem 1rem 1.5rem;
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
@@ -731,13 +700,13 @@
 	.messages-feed.trip-planning-mode {
 		gap: 0;
 		padding: var(--space-5);
+		padding-right: 0;
 		scroll-behavior: smooth;
 	}
 	
 	.messages-container {
 		max-width: 600px;
 		margin: 0 auto;
-		padding-bottom: 1rem;
 		width: 100%;
 	}
 	
@@ -793,66 +762,55 @@
 	
 	.empty-state {
 		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		gap: 1rem;
-		padding: 3rem 1.5rem;
-		color: rgb(var(--m3-scheme-on-surface-variant));
+		display: grid;
+		place-items: center;
 	}
 	
-	.empty-icon {
-		font-size: 4rem;
-		opacity: 0.5;
+	.empty-state > * {
+		grid-area: 1 / 1;
 	}
 	
-	.empty-state h3 {
-		color: rgb(var(--m3-scheme-on-surface));
-		margin: 0;
-	}
-	
-	.empty-state p {
-		margin: 0;
-		max-width: 300px;
-	}
-	
-	/* Scrollbar styling */
-	.messages-feed::-webkit-scrollbar {
-		width: 8px;
-	}
-
-	.messages-feed::-webkit-scrollbar-track {
-		background: var(--bg-tertiary);
-		border-radius: var(--radius-full);
-	}
-
-	.messages-feed::-webkit-scrollbar-thumb {
-		background: var(--border-secondary);
-		border-radius: var(--radius-full);
-	}
-
-	.messages-feed::-webkit-scrollbar-thumb:hover {
-		background: var(--text-tertiary);
+	.empty-image {
+		width: 100%;
+		height: auto;
+		opacity: 0.85;
+		filter: saturate(0.4);
 	}
 	
 	/* Mobile responsiveness */
 	@media (max-width: 640px) {
-		.filter-chips {
-			padding: 0.75rem 0; /* Keep edge-to-edge on mobile */
-		}
-		
-		.filter-spacer {
-			width: 1rem; /* Match mobile padding */
-		}
-		
 		.messages-feed {
 			padding: 1rem;
+			padding-right: .5rem;
 		}
 		
 		.messages-feed.trip-planning-mode {
 			padding: var(--space-4);
+			padding-right: .5rem;
 		}
+	}
+
+	/* Grid stack for seamless reply transition */
+	.reply-stack {
+		display: grid;
+		width: 100%;
+	}
+
+	.reply-stack-item {
+		grid-area: 1 / 1;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.reply-stack-item.visible {
+		opacity: 1;
+		pointer-events: auto;
+		/* Instant show */
+		transition: none;
+	}
+
+	.reply-stack-item:not(.visible) {
+		/* Delayed hide - wait for other to be visible first */
+		transition: opacity 0ms 150ms;
 	}
 </style>
